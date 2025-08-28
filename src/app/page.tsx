@@ -1,8 +1,14 @@
 import Image from "next/image";
+import AuthStatus from "@/components/AuthStatus";
 
 export default function Home() {
   return (
     <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
+      {/* Authentication status component - shows current user or sign-in state */}
+      <div className="w-full max-w-4xl">
+        <AuthStatus />
+      </div>
+      
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
         <Image
           className="dark:invert"
