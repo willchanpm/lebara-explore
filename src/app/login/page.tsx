@@ -97,7 +97,7 @@ export default function LoginPage() {
           color: '#e5e7eb', // Light gray - excellent contrast on dark
           lineHeight: '1.5'
         }}>
-          We've sent a magic link to <strong style={{ color: '#f3f4f6' }}>{email || 'your email'}</strong>
+          We&apos;ve sent a magic link to <strong style={{ color: '#f3f4f6' }}>{email || 'your email'}</strong>
         </p>
         
         {/* Instructions box - dark gray with light text for contrast */}
@@ -126,7 +126,7 @@ export default function LoginPage() {
           }}>
             <li style={{ marginBottom: '8px' }}>Check your email inbox (and spam folder)</li>
             <li style={{ marginBottom: '8px' }}>Click the magic link in the email</li>
-            <li style={{ marginBottom: '0' }}>You'll be automatically signed in!</li>
+            <li style={{ marginBottom: '0' }}>You&apos;ll be automatically signed in!</li>
           </ol>
         </div>
         
@@ -196,7 +196,7 @@ export default function LoginPage() {
           border: '1px solid #1f2937' // Subtle border
         }}>
           <p style={{ margin: '0' }}>
-            Didn't receive the email? Check your spam folder or try resending.
+            Didn&apos;t receive the email? Check your spam folder or try resending.
           </p>
         </div>
       </div>
