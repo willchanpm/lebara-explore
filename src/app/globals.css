@@ -1,26 +1,34 @@
 @import "tailwindcss";
 
+/* Lebara-inspired theme CSS variables */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --brand-primary: #00AEEF;
+  --brand-primary-700: #0099D6;
+  --brand-navy: #0A2A4A;
+  --brand-navy-800: #071D36;
+  --brand-accent: #FF5A5F;
+
+  --bg: #F3F8FC;
+  --card: #FFFFFF;
+  --text: #0E1B2A;
+  --muted: #5D6B7A;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.dark {
+  --bg: #0B1220;
+  --card: #0F1A2B;
+  --text: #E6EEF7;
+  --muted: #9FB3C8;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Apply theme to body */
+html, body { 
+  height: 100%; 
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg); 
+  color: var(--text);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
