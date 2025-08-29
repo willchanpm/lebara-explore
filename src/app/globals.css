@@ -696,9 +696,14 @@ body.login-page-active .main-with-nav {
   transition: all 0.3s ease;
 }
 
-.card-compact:hover {
+.card-compact:hover:not(.home-card-link) {
   box-shadow: 0 8px 30px rgba(10, 42, 74, 0.15);
   transform: scale(1.02);
+}
+
+/* Override hover effects for clickable cards to avoid double scaling */
+.home-card-link:hover {
+  transform: scale(1.02); /* Apply scale to the link itself */
 }
 
 .card-small {
@@ -1023,6 +1028,36 @@ body.login-page-active .main-with-nav {
   color: var(--muted);
   margin-bottom: 0.75rem;
   font-size: 0.875rem;
+}
+
+/* Styles for clickable card links */
+.home-card-link {
+  text-decoration: none; /* Remove default link underline */
+  color: inherit; /* Inherit text color from parent */
+  display: block; /* Make the link take full width */
+  cursor: pointer; /* Show pointer cursor on hover */
+}
+
+.home-card-link:hover {
+  background-color: rgba(255, 255, 255, 0.95); /* Slightly change background on hover */
+}
+
+.home-card-link:active {
+  background-color: rgba(255, 255, 255, 0.9); /* Even more change when pressed */
+}
+
+/* Chevron icon styling */
+.home-card-chevron {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--brand-navy);
+  opacity: 0.7; /* Make it slightly subtle */
+  transition: all 0.2s ease;
+}
+
+.home-card-link:hover .home-card-chevron {
+  opacity: 1; /* Make chevron more visible on hover */
+  transform: translateX(2px); /* Slight movement to the right on hover */
 }
 
 /* Responsive grid for larger screens */

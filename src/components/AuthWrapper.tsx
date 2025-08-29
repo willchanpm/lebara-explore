@@ -15,12 +15,16 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
   const router = useRouter()
   const pathname = usePathname()
 
-  // Skip authentication check for login and auth callback pages
-  if (pathname === '/login' || pathname.startsWith('/auth/')) {
-    return <>{children}</>
-  }
+  // Check if we should skip authentication for login and auth callback pages
+  const shouldSkipAuth = pathname === '/login' || pathname.startsWith('/auth/')
 
   useEffect(() => {
+    // Skip authentication check for login and auth callback pages
+    if (shouldSkipAuth) {
+      setLoading(false)
+      return
+    }
+
     // Check current authentication status
     const checkAuth = async () => {
       try {
@@ -58,7 +62,12 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
 
     // Cleanup subscription
     return () => subscription.unsubscribe()
-  }, [router])
+  }, [router, shouldSkipAuth])
+
+  // Skip authentication check for login and auth callback pages
+  if (shouldSkipAuth) {
+    return <>{children}</>
+  }
 
   // Show loading state while checking authentication
   if (loading) {
