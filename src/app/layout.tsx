@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import BottomNav from "@/components/BottomNav";
-import ProfileIcon from "@/components/ProfileIcon";
+import ConditionalNav from "@/components/ConditionalNav";
+import AuthWrapper from "@/components/AuthWrapper";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -27,14 +27,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-bg text-text`}>
-        {/* Profile icon in top right corner */}
-        <ProfileIcon />
+        {/* Conditional navigation (profile icon and bottom nav) */}
+        <ConditionalNav />
         
         {/* Main content area with proper spacing for bottom navigation */}
-        <main className="min-h-screen pb-24">
-          {children}
+        <main className="main-with-nav">
+          <AuthWrapper>
+            {children}
+          </AuthWrapper>
         </main>
-        <BottomNav />
       </body>
     </html>
   );

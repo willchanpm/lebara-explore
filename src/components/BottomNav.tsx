@@ -5,6 +5,7 @@ import Link from 'next/link'
 
 // Define the navigation items with their paths, labels, and emoji icons
 const navItems = [
+  { path: '/', label: 'Home', icon: '🏠' },
   { path: '/discover', label: 'Discover', icon: '🔍' },
   { path: '/hungry', label: 'Hungry?', icon: '🍽️' },
   { path: '/bingo', label: 'Bingo', icon: '🎯' },

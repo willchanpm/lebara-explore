@@ -1,14 +1,47 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabaseClient'
 
 export default function LoginPage() {
+  const router = useRouter()
+  
   // State variables to manage the form and UI
   const [email, setEmail] = useState('') // Stores the email input value
   const [status, setStatus] = useState('') // Stores the current status message
   const [isLoading, setIsLoading] = useState(false) // Tracks if we're currently sending the magic link
   const [linkSent, setLinkSent] = useState(false) // Tracks if a magic link has been sent
+  const [checkingAuth, setCheckingAuth] = useState(true) // Tracks if we're checking authentication
+
+  // Check if user is already authenticated and redirect if so
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          router.push('/')
+        }
+      } catch (error) {
+        console.error('Error checking auth:', error)
+      } finally {
+        setCheckingAuth(false)
+      }
+    }
+    checkAuth()
+  }, [router])
+
+  // Show loading while checking authentication
+  if (checkingAuth) {
+    return (
+      <div className="login-loading">
+        <div className="login-loading-content">
+          <div className="spinner"></div>
+          <p className="text-muted">Checking authentication...</p>
+        </div>
+      </div>
+    )
+  }
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,58 +93,58 @@ export default function LoginPage() {
   // If magic link was sent, show the "check your inbox" view
   if (linkSent) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center p-6">
-        <div className="max-w-md w-full space-y-8">
+      <div className="login-page-success">
+        <div className="login-container-success">
           {/* Success message */}
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-brand-navy mb-2">
+          <div className="login-hero">
+            <h1 className="success-title">
               Check Your Inbox!
             </h1>
             
-            <p className="text-muted mb-6">
-              We&apos;ve sent a magic link to <strong className="text-brand-navy">{email || 'your email'}</strong>
+            <p className="success-subtitle">
+              We&apos;ve sent a magic link to <strong>{email || 'your email'}</strong>
             </p>
           </div>
 
           {/* Instructions box */}
-          <div className="card p-6">
-            <h3 className="font-semibold text-brand-navy mb-4 text-center text-lg">Next steps</h3>
-            <ol className="text-muted space-y-3 text-sm">
-              <li className="flex items-start">
-                <span className="text-brand-accent mr-3 font-semibold">1.</span>
+          <div className="success-instructions">
+            <h3>Next steps</h3>
+            <ol>
+              <li>
+                <span className="step-number">1.</span>
                 Check your email inbox (and spam folder)
               </li>
-              <li className="flex items-start">
-                <span className="text-brand-accent mr-3 font-semibold">2.</span>
+              <li>
+                <span className="step-number">2.</span>
                 Click the magic link in the email
               </li>
-              <li className="flex items-start">
-                <span className="text-brand-accent mr-3 font-semibold">3.</span>
+              <li>
+                <span className="step-number">3.</span>
                 You&apos;ll be automatically signed in!
               </li>
             </ol>
           </div>
 
           {/* Action buttons */}
-          <div className="flex gap-3">
+          <div className="success-actions">
             <button
               onClick={handleReset}
-              className="btn btn-secondary flex-1 text-sm"
+              className="btn btn-secondary"
             >
               Try Different Email
             </button>
             
             <button
               onClick={() => window.location.reload()}
-              className="btn btn-primary flex-1"
+              className="btn btn-primary"
             >
               Resend Link
             </button>
           </div>
 
           {/* Help text */}
-          <div className="gradient-brand rounded-lebara-lg p-4 border border-border text-center">
-            <p className="text-brand-navy/80 text-sm">
+          <div className="login-help">
+            <p className="login-help-text">
               Didn&apos;t receive the email? Check your spam folder or try resending.
             </p>
           </div>
@@ -121,26 +154,22 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg flex items-center justify-center p-3 sm:p-6">
-      <div className="max-w-sm sm:max-w-md w-full space-y-5 sm:space-y-8 px-2 sm:px-0">
+    <div className="login-page">
+      <div className="login-container">
         {/* Page header */}
-        <div className="text-center">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lebara-lg flex items-center justify-center mb-4 sm:mb-6 bg-card border-2 border-border shadow-lebara mx-auto">
-            <span className="text-2xl sm:text-3xl">🔐</span>
-          </div>
-          
-          <h1 className="text-2xl sm:text-3xl font-bold text-brand-navy mb-2">
+        <div className="login-hero">
+          <h1 className="login-title">
             Login
           </h1>
-          <p className="text-muted text-sm sm:text-base">
+          <p className="login-subtitle">
             Enter your email to receive a magic link
           </p>
         </div>
 
         {/* Magic link form */}
-        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-brand-navy mb-2">
+        <form onSubmit={handleSubmit} className="login-form">
+          <div className="login-form-group">
+            <label htmlFor="email" className="login-label">
               Email Address
             </label>
             <input
@@ -152,13 +181,7 @@ export default function LoginPage() {
               placeholder="your@email.com"
               required
               disabled={isLoading}
-              className="form-input text-base sm:text-lg px-3 sm:px-4 py-3 sm:py-4 w-full"
-              style={{
-                fontSize: '16px', // Prevents zoom on iOS mobile devices
-                minHeight: '44px', // Ensures proper touch target size on mobile
-                width: '100%', // Ensure full width on mobile
-                boxSizing: 'border-box' // Include padding in width calculation
-              }}
+              className="login-input"
             />
           </div>
 
@@ -166,10 +189,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="btn btn-primary w-full py-3 sm:py-4 text-base sm:text-lg"
-            style={{
-              minHeight: '44px' // Ensures proper touch target size on mobile
-            }}
+            className="btn btn-primary login-button"
           >
             {isLoading ? 'Sending...' : 'Send Magic Link'}
           </button>
@@ -177,18 +197,14 @@ export default function LoginPage() {
 
         {/* Status message display */}
         {status && (
-          <div className={`text-center text-sm p-3 sm:p-4 rounded-lebara border ${
-            status.includes('Error') 
-              ? 'bg-red-50 border-red-200 text-red-700' 
-              : 'bg-green-50 border-green-200 text-green-700'
-          }`}>
+          <div className={`login-status ${status.includes('Error') ? 'error' : 'success'}`}>
             {status}
           </div>
         )}
 
         {/* Additional information */}
-        <div className="gradient-brand rounded-lebara-lg p-3 sm:p-4 border border-border text-center">
-          <p className="text-brand-navy/80 text-xs sm:text-sm">
+        <div className="login-help">
+          <p className="login-help-text">
             Click the link in your email to sign in. No password required!
           </p>
         </div>

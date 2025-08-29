@@ -283,6 +283,300 @@ body {
 .z-10 { z-index: 10; }
 .z-50 { z-index: 50; }
 
+/* Main content area styles */
+.main-with-nav {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-bottom: 6rem;
+}
+
+/* Login layout styles */
+.login-layout {
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+/* Override main-with-nav styles for login pages */
+.main-with-nav:has(.login-layout),
+.main-with-nav .login-layout {
+  min-height: auto;
+  padding-bottom: 0;
+}
+
+/* Force override for login pages */
+.main-with-nav .login-layout {
+  min-height: auto !important;
+  padding-bottom: 0 !important;
+}
+
+/* Target the main element when it contains login content */
+.main-with-nav:has(.login-layout) {
+  min-height: auto !important;
+  padding-bottom: 0 !important;
+}
+
+/* Target main element when body has login-page-active class */
+body.login-page-active .main-with-nav {
+  min-height: auto !important;
+  padding-bottom: 0 !important;
+}
+
+/* Nuclear option: completely override main element for login pages */
+.main-with-nav:has(.login-page),
+.main-with-nav:has(.login-page-success),
+.main-with-nav:has(.login-loading) {
+  min-height: auto !important;
+  padding-bottom: 0 !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* Direct targeting for maximum compatibility */
+.main-with-nav .login-page,
+.main-with-nav .login-page-success,
+.main-with-nav .login-loading {
+  min-height: auto !important;
+  padding-bottom: 0 !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* Force the main element itself to not have height constraints when containing login content */
+.main-with-nav:has(.login-page),
+.main-with-nav:has(.login-page-success),
+.main-with-nav:has(.login-loading) {
+  min-height: auto !important;
+  padding-bottom: 0 !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* Last resort: target any element with login classes and force height reset */
+.login-page,
+.login-page-success,
+.login-loading {
+  height: 100vh !important;
+  min-height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+}
+
+/* Complete main element reset for login pages */
+.main-with-nav:has(.login-page),
+.main-with-nav:has(.login-page-success),
+.main-with-nav:has(.login-loading) {
+  all: unset !important;
+  display: block !important;
+  height: auto !important;
+  min-height: auto !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Login page styles */
+.login-loading {
+  height: 100vh;
+  background-color: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-loading-content {
+  text-align: center;
+}
+
+.login-loading-content .spinner {
+  margin: 0 auto;
+}
+
+.login-loading-content p {
+  margin-top: 1rem;
+}
+
+.login-page {
+  height: 100vh;
+  background-color: var(--bg);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1.5rem;
+  padding-top: 6rem;
+}
+
+.login-page-success {
+  height: 100vh;
+  background-color: var(--bg);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1.5rem;
+  padding-top: 6rem;
+}
+
+.login-container {
+  max-width: 24rem;
+  width: 100%;
+}
+
+.login-container-success {
+  max-width: 28rem;
+  width: 100%;
+}
+
+.login-hero {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.login-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--brand-navy);
+}
+
+.login-subtitle {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.login-form {
+  margin-bottom: 1.5rem;
+}
+
+.login-form-group {
+  margin-bottom: 1rem;
+}
+
+.login-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--brand-navy);
+  margin-bottom: 0.5rem;
+}
+
+.login-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background-color: var(--card);
+  color: var(--text);
+  font-size: 1rem;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.login-input:focus {
+  outline: none;
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 3px rgba(255, 49, 130, 0.2);
+}
+
+.login-button {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  min-height: 44px;
+}
+
+.login-status {
+  text-align: center;
+  font-size: 0.875rem;
+  padding: 0.75rem;
+  border-radius: 16px;
+  border: 1px solid;
+  margin-bottom: 1rem;
+}
+
+.login-status.error {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.login-status.success {
+  background-color: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #16a34a;
+}
+
+.login-help {
+  background: linear-gradient(to right, var(--brand-primary), var(--brand-primary-700));
+  border-radius: 24px;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+.login-help-text {
+  color: rgba(10, 42, 74, 0.8);
+  font-size: 0.875rem;
+}
+
+/* Success view styles */
+.success-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--brand-navy);
+}
+
+.success-subtitle {
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+
+.success-subtitle strong {
+  color: var(--brand-navy);
+}
+
+.success-instructions {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.success-instructions h3 {
+  font-weight: 600;
+  color: var(--brand-navy);
+  margin-bottom: 0.75rem;
+  text-align: center;
+  font-size: 1.125rem;
+}
+
+.success-instructions ol {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.success-instructions li {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.success-instructions .step-number {
+  color: var(--brand-accent);
+  margin-right: 0.75rem;
+  font-weight: 600;
+}
+
+.success-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.success-actions .btn {
+  flex: 1;
+  font-size: 0.875rem;
+}
+
 /* Profile icon styles */
 .profile-icon-container {
   position: fixed;
@@ -659,6 +953,84 @@ body {
 .skeleton-button {
   height: 2rem;
   border-radius: 16px;
+}
+
+/* Home page specific styles */
+.home-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--bg);
+  color: var(--text);
+  padding: 1.5rem;
+  padding-bottom: 8rem;
+}
+
+.home-container {
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+.home-hero {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.home-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--brand-navy);
+}
+
+.home-subtitle {
+  font-size: 1.25rem;
+  color: var(--muted);
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.home-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.home-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.home-card-title-section {
+  display: flex;
+  align-items: center;
+}
+
+.home-card-emoji {
+  font-size: 1.875rem;
+  margin-right: 0.75rem;
+}
+
+.home-card-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--brand-navy);
+}
+
+.home-card-subtitle {
+  color: var(--muted);
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+}
+
+/* Responsive grid for larger screens */
+@media (min-width: 768px) {
+  .home-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
 }
 
 /* Discover page specific styles */
