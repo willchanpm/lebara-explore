@@ -1,13 +1,6 @@
-import AuthStatus from "@/components/AuthStatus";
-
 export default function Home() {
   return (
     <div className="min-h-screen bg-bg text-text p-6 pb-32">
-      {/* Header section with app title and auth status */}
-      <div className="max-w-4xl mx-auto mb-6">
-        <AuthStatus />
-      </div>
-      
       {/* Main hero section */}
       <main className="max-w-4xl mx-auto space-y-6">
         {/* App title and description */}
@@ -22,22 +15,41 @@ export default function Home() {
         </div>
 
         {/* Feature cards grid - inspired by Lebara design */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
-          {/* Places Card */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+          {/* Discover Card */}
           <div className="card-compact">
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center">
-                <div className="text-3xl mr-3">☕</div>
-                <h3 className="text-lg font-bold text-brand-navy">Places</h3>
+                <div className="text-3xl mr-3">🗺️</div>
+                <h3 className="text-lg font-bold text-brand-navy">Discover</h3>
               </div>
               <a 
-                href="/places" 
-                className="btn btn-primary"
+                href="/discover" 
+                className="btn btn-primary text-sm py-2 px-3"
+                aria-label="Browse places around Liverpool Street"
               >
-                Explore Places
+                Explore
               </a>
             </div>
-            <p className="text-muted mb-3 text-sm">Discover and explore amazing locations around you</p>
+            <p className="text-muted mb-3 text-sm">Browse places around Liverpool Street</p>
+          </div>
+
+          {/* What's for lunch? Card */}
+          <div className="card-compact">
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-center">
+                <div className="text-3xl mr-3">🍽️</div>
+                <h3 className="text-lg font-bold text-brand-navy">What's for lunch?</h3>
+              </div>
+              <a 
+                href="/hungry" 
+                className="btn btn-primary text-sm py-2 px-3"
+                aria-label="Spin the wheel or ask the AI for lunch options"
+              >
+                Find Food
+              </a>
+            </div>
+            <p className="text-muted mb-3 text-sm">Spin the wheel or ask the AI</p>
           </div>
 
           {/* Bingo Card */}
@@ -49,80 +61,31 @@ export default function Home() {
               </div>
               <a 
                 href="/bingo" 
-                className="btn btn-primary"
+                className="btn btn-primary text-sm py-2 px-3"
+                aria-label="Play the monthly bingo challenge"
               >
-                Play Bingo
+                Play
               </a>
             </div>
-            <p className="text-muted mb-3 text-sm">Play fun bingo games and challenge yourself</p>
+            <p className="text-muted mb-3 text-sm">Play the monthly challenge</p>
           </div>
 
-          {/* Feed Card */}
+          {/* Social / Feed Card */}
           <div className="card-compact">
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center">
-                <div className="text-3xl mr-3">🖼️</div>
-                <h3 className="text-lg font-bold text-brand-navy">Feed</h3>
+                <div className="text-3xl mr-3">👥</div>
+                <h3 className="text-lg font-bold text-brand-navy">Social / Feed</h3>
               </div>
               <a 
-                href="/feed" 
-                className="btn btn-primary"
+                href="/social" 
+                className="btn btn-primary text-sm py-2 px-3"
+                aria-label="See posts and track your history"
               >
-                View Feed
+                View
               </a>
             </div>
-            <p className="text-muted mb-3 text-sm">Browse through beautiful photos and stories</p>
-          </div>
-
-          {/* History Card */}
-          <div className="card-compact">
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex items-center">
-                <div className="text-3xl mr-3">🕰️</div>
-                <h3 className="text-lg font-bold text-brand-navy">History</h3>
-              </div>
-              <a 
-                href="/history" 
-                className="btn btn-primary"
-              >
-                View History
-              </a>
-            </div>
-            <p className="text-muted mb-3 text-sm">Track your journey and revisit memories</p>
-          </div>
-
-          {/* Profile Card */}
-          <div className="card-compact">
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex items-center">
-                <div className="text-3xl mr-3">👤</div>
-                <h3 className="text-lg font-bold text-brand-navy">Profile</h3>
-              </div>
-              <a 
-                href="/profile" 
-                className="btn btn-primary"
-              >
-                View Profile
-              </a>
-            </div>
-            <p className="text-muted mb-3 text-sm">Manage your account and preferences</p>
-          </div>
-
-          {/* Account Card */}
-          <div className="card-compact">
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex items-center">
-                <div className="text-3xl mr-3">🔐</div>
-                <h3 className="text-lg font-bold text-brand-navy">Account</h3>
-              </div>
-              <a 
-                href="/account" 
-                className="btn btn-primary"
-              >
-                Manage Account
-              </a>
-            </div>
-            <p className="text-muted mb-3 text-sm">Access your account settings and security</p>
+            <p className="text-muted mb-3 text-sm">See posts and track your history</p>
           </div>
         </div>
       </main>

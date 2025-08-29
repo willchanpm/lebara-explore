@@ -5,12 +5,10 @@ import Link from 'next/link'
 
 // Define the navigation items with their paths, labels, and emoji icons
 const navItems = [
-  { path: '/', label: 'Home', icon: '🏠' },
-  { path: '/places', label: 'Places', icon: '☕' },
+  { path: '/discover', label: 'Discover', icon: '🔍' },
+  { path: '/hungry', label: 'Hungry?', icon: '🍽️' },
   { path: '/bingo', label: 'Bingo', icon: '🎯' },
   { path: '/feed', label: 'Feed', icon: '🖼️' },
-  { path: '/history', label: 'History', icon: '🕰️' },
-  { path: '/profile', label: 'Profile', icon: '👤' },
 ]
 
 export default function BottomNav() {

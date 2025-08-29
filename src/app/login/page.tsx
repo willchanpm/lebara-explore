@@ -62,12 +62,8 @@ export default function LoginPage() {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center p-6">
         <div className="max-w-md w-full space-y-8">
-          {/* Success icon and message */}
+          {/* Success message */}
           <div className="text-center">
-            <div className="w-20 h-20 rounded-lebara-lg flex items-center justify-center mb-6 bg-card border-2 border-border shadow-lebara mx-auto">
-              <span className="text-3xl">✉️</span>
-            </div>
-            
             <h1 className="text-2xl font-bold text-brand-navy mb-2">
               Check Your Inbox!
             </h1>
@@ -78,19 +74,19 @@ export default function LoginPage() {
           </div>
 
           {/* Instructions box */}
-          <div className="card">
-            <h3 className="font-semibold text-brand-navy mb-3">Next steps:</h3>
-            <ol className="text-muted space-y-2 text-sm">
+          <div className="card p-6">
+            <h3 className="font-semibold text-brand-navy mb-4 text-center text-lg">Next steps</h3>
+            <ol className="text-muted space-y-3 text-sm">
               <li className="flex items-start">
-                <span className="text-brand-accent mr-2">1.</span>
+                <span className="text-brand-accent mr-3 font-semibold">1.</span>
                 Check your email inbox (and spam folder)
               </li>
               <li className="flex items-start">
-                <span className="text-brand-accent mr-2">2.</span>
+                <span className="text-brand-accent mr-3 font-semibold">2.</span>
                 Click the magic link in the email
               </li>
               <li className="flex items-start">
-                <span className="text-brand-accent mr-2">3.</span>
+                <span className="text-brand-accent mr-3 font-semibold">3.</span>
                 You&apos;ll be automatically signed in!
               </li>
             </ol>
@@ -100,7 +96,7 @@ export default function LoginPage() {
           <div className="flex gap-3">
             <button
               onClick={handleReset}
-              className="btn btn-secondary flex-1"
+              className="btn btn-secondary flex-1 text-sm"
             >
               Try Different Email
             </button>
@@ -125,24 +121,24 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg flex items-center justify-center p-6">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen bg-bg flex items-center justify-center p-3 sm:p-6">
+      <div className="max-w-sm sm:max-w-md w-full space-y-5 sm:space-y-8 px-2 sm:px-0">
         {/* Page header */}
         <div className="text-center">
-          <div className="w-20 h-20 rounded-lebara-lg flex items-center justify-center mb-6 bg-card border-2 border-border shadow-lebara mx-auto">
-            <span className="text-3xl">🔐</span>
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lebara-lg flex items-center justify-center mb-4 sm:mb-6 bg-card border-2 border-border shadow-lebara mx-auto">
+            <span className="text-2xl sm:text-3xl">🔐</span>
           </div>
           
-          <h1 className="text-3xl font-bold text-brand-navy mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-brand-navy mb-2">
             Login
           </h1>
-          <p className="text-muted">
+          <p className="text-muted text-sm sm:text-base">
             Enter your email to receive a magic link
           </p>
         </div>
 
         {/* Magic link form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-brand-navy mb-2">
               Email Address
@@ -156,7 +152,13 @@ export default function LoginPage() {
               placeholder="your@email.com"
               required
               disabled={isLoading}
-              className="form-input"
+              className="form-input text-base sm:text-lg px-3 sm:px-4 py-3 sm:py-4 w-full"
+              style={{
+                fontSize: '16px', // Prevents zoom on iOS mobile devices
+                minHeight: '44px', // Ensures proper touch target size on mobile
+                width: '100%', // Ensure full width on mobile
+                boxSizing: 'border-box' // Include padding in width calculation
+              }}
             />
           </div>
 
@@ -164,7 +166,10 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="btn btn-primary w-full"
+            className="btn btn-primary w-full py-3 sm:py-4 text-base sm:text-lg"
+            style={{
+              minHeight: '44px' // Ensures proper touch target size on mobile
+            }}
           >
             {isLoading ? 'Sending...' : 'Send Magic Link'}
           </button>
@@ -172,7 +177,7 @@ export default function LoginPage() {
 
         {/* Status message display */}
         {status && (
-          <div className={`text-center text-sm p-4 rounded-lebara border ${
+          <div className={`text-center text-sm p-3 sm:p-4 rounded-lebara border ${
             status.includes('Error') 
               ? 'bg-red-50 border-red-200 text-red-700' 
               : 'bg-green-50 border-green-200 text-green-700'
@@ -182,8 +187,8 @@ export default function LoginPage() {
         )}
 
         {/* Additional information */}
-        <div className="gradient-brand rounded-lebara-lg p-4 border border-border text-center">
-          <p className="text-brand-navy/80 text-sm">
+        <div className="gradient-brand rounded-lebara-lg p-3 sm:p-4 border border-border text-center">
+          <p className="text-brand-navy/80 text-xs sm:text-sm">
             Click the link in your email to sign in. No password required!
           </p>
         </div>

@@ -1,3 +1,5 @@
+import AuthStatus from "@/components/AuthStatus";
+
 export default function ProfilePage() {
   return (
     <div className="min-h-screen pb-24 bg-bg">
@@ -6,6 +8,11 @@ export default function ProfilePage() {
         <div className="py-6">
           <h1 className="text-3xl font-bold mb-2 text-brand-navy">Profile</h1>
           <p className="text-sm font-medium text-muted">Manage your account</p>
+        </div>
+        
+        {/* Authentication Status */}
+        <div className="mb-8">
+          <AuthStatus />
         </div>
         
         {/* Placeholder content */}

@@ -11,12 +11,13 @@ interface Place {
   category: string
   price_band: string
   url: string
+  maps_url?: string // Optional field for Google Maps URL
   notes?: string // Optional field for additional information
   lat?: number // Optional latitude coordinate
   lon?: number // Optional longitude coordinate
 }
 
-export default function PlacesPage() {
+export default function DiscoverPage() {
   // State variables to manage the component's data and UI state
   const [places, setPlaces] = useState<Place[]>([]) // Stores the list of places
   const [loading, setLoading] = useState(true) // Shows loading spinner while fetching data
@@ -46,35 +47,35 @@ export default function PlacesPage() {
       if (places.length === 0) {
         // No places at all
         return (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-20 h-20 rounded-lebara-lg flex items-center justify-center mb-6 bg-card border-2 border-border shadow-lebara">
-              <span className="text-3xl">🏪</span>
-            </div>
-            <h3 className="text-xl font-semibold mb-3 text-brand-navy">No places yet</h3>
-            <p className="text-base text-muted">Ask the team to add some</p>
+                  <div className="no-places-container">
+          <div className="no-places-icon">
+            <span className="no-places-emoji">🏪</span>
           </div>
+          <h3 className="no-places-title">No places yet</h3>
+          <p className="no-places-subtitle">Ask the team to add some</p>
+        </div>
         )
       } else if (categoryFiltered.length === 0) {
         // No places match the current category filter
         return (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-20 h-20 rounded-lebara-lg flex items-center justify-center mb-6 bg-card border-2 border-border shadow-lebara">
-              <span className="text-3xl">🔍</span>
-            </div>
-            <h3 className="text-xl font-semibold mb-3 text-brand-navy">No places found</h3>
-            <p className="text-base text-muted">Try selecting a different category</p>
+                  <div className="no-places-container">
+          <div className="no-places-icon">
+            <span className="no-places-emoji">🔍</span>
           </div>
+          <h3 className="no-places-title">No places found</h3>
+          <p className="no-places-subtitle">Try selecting a different category</p>
+        </div>
         )
       } else {
         // No places match the search query
         return (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-20 h-20 rounded-lebara-lg flex items-center justify-center mb-6 bg-card border-2 border-border shadow-lebara">
-              <span className="text-3xl">🔍</span>
-            </div>
-            <h3 className="text-xl font-semibold mb-3 text-brand-navy">No search results</h3>
-            <p className="text-base text-muted">Try different search terms or categories</p>
+                  <div className="no-places-container">
+          <div className="no-places-icon">
+            <span className="no-places-emoji">🔍</span>
           </div>
+          <h3 className="no-places-title">No search results</h3>
+          <p className="no-places-subtitle">Try different search terms or categories</p>
+        </div>
         )
       }
     }
@@ -82,7 +83,7 @@ export default function PlacesPage() {
     // Show filtered places
     return (
       <>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="places-grid">
           {filteredPlaces.map((place) => (
             <button
               key={place.id}
@@ -113,10 +114,10 @@ export default function PlacesPage() {
               
               {/* Footer: action buttons */}
               <div className="place-actions">
-                {/* Maps button - only show if coordinates exist */}
-                {place.lat && place.lon && (
+                {/* Maps button - only show if maps_url exists */}
+                {place.maps_url && (
                   <a 
-                    href={`https://www.google.com/maps?q=${place.lat},${place.lon}`}
+                    href={place.maps_url}
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="btn btn-secondary"
@@ -142,7 +143,7 @@ export default function PlacesPage() {
         
         {/* Summary of results */}
         {places.length > 0 && (
-          <div className="mt-6 text-center text-sm text-muted">
+          <div className="results-summary">
             <p>
               {(() => {
                 const totalPlaces = places.length
@@ -214,16 +215,16 @@ export default function PlacesPage() {
   // Show loading state while fetching data
   if (loading) {
     return (
-      <div className="min-h-screen pb-24 bg-bg">
-        <div className="max-w-screen-sm mx-auto md:max-w-3xl p-4">
+      <div className="discover-page">
+        <div className="discover-container">
           {/* Header */}
-          <div className="py-6">
-            <h1 className="text-3xl font-bold mb-2 text-brand-navy">Places</h1>
-            <p className="text-sm font-medium text-muted">Pulled from Supabase</p>
+          <div className="discover-header">
+            <h1 className="discover-title">Discover</h1>
+            <p className="discover-subtitle">Browse places around Liverpool Street</p>
           </div>
           
           {/* Skeleton loading cards */}
-          <div className="space-y-4">
+          <div className="skeleton-container">
             {[1, 2, 3].map((i) => (
               <div key={i} className="skeleton-card">
                 <div className="skeleton-header">
@@ -246,18 +247,18 @@ export default function PlacesPage() {
   // Show error state if something went wrong
   if (error) {
     return (
-      <div className="min-h-screen pb-24 bg-bg">
-        <div className="max-w-screen-sm mx-auto md:max-w-3xl p-4">
+      <div className="discover-page">
+        <div className="discover-container">
           {/* Header */}
-          <div className="py-6">
-            <h1 className="text-3xl font-bold mb-2 text-brand-navy">Places</h1>
-            <p className="text-sm font-medium text-muted">Pulled from Supabase</p>
-          </div>
+          <div className="discover-header">
+            <h1 className="discover-title">Discover</h1>
+            <p className="discover-subtitle">Browse places around Liverpool Street</p>
+        </div>
           
           {/* Error alert */}
           <div className="error-alert">
-            <h2 className="font-semibold mb-1 text-brand-navy">Error Loading Places</h2>
-            <p className="mb-3 text-muted">{error}</p>
+            <h2 className="error-title">Error Loading Places</h2>
+            <p className="error-message">{error}</p>
             <button 
               onClick={() => window.location.reload()} 
               className="btn btn-primary"
@@ -272,12 +273,12 @@ export default function PlacesPage() {
 
   // Show the main content with the places list
   return (
-    <div className="min-h-screen pb-24 bg-bg">
-      <div className="max-w-screen-sm mx-auto md:max-w-3xl p-4">
+    <div className="discover-page">
+      <div className="discover-container">
         {/* Header */}
-        <div className="py-6">
-          <h1 className="text-3xl font-bold mb-2 text-brand-navy">Places</h1>
-          <p className="text-sm font-medium text-muted">Pulled from Supabase</p>
+        <div className="discover-header">
+          <h1 className="discover-title">Discover</h1>
+          <p className="discover-subtitle">Browse places around Liverpool Street</p>
         </div>
 
         {/* Search input */}
@@ -298,7 +299,7 @@ export default function PlacesPage() {
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="search-clear"
+                className="btn btn-primary"
                 aria-label="Clear search"
               >
                 ✕
@@ -308,9 +309,9 @@ export default function PlacesPage() {
         </div>
 
         {/* Filter chips */}
-        <div className="mb-6 px-4">
-          <div className="flex flex-wrap gap-2">
-            {['All', 'market', 'street_food', 'veg', 'vegan', 'coffee', 'Fine_Dining', '24-7', 'activity', 'landmark'].map((category) => (
+        <div className="filter-container">
+          <div className="filter-chips">
+            {['All', 'market', 'street_food', 'veg', 'vegan', 'coffee', 'Fine_Dining', '24_7', 'activity', 'landmark'].map((category) => (
               <button
                 key={category}
                 onClick={() => setActiveFilter(category)}
@@ -323,9 +324,7 @@ export default function PlacesPage() {
         </div>
 
         {/* Filter and display places */}
-        <div className="px-4">
-          {renderPlacesContent()}
-        </div>
+        {renderPlacesContent()}
       </div>
     </div>
   )

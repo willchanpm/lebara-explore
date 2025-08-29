@@ -84,15 +84,15 @@ export default function AuthStatus() {
     return (
       <div className="gradient-brand rounded-lebara border border-border shadow-lebara p-4">
         <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <div className="status-dot success"></div>
-            <p className="text-brand-navy font-medium">
+          <div className="flex items-center space-x-4">
+            <div className="status-dot success mr-2"></div>
+            <p className="text-brand-navy font-medium text-sm">
               Signed in as <span className="font-bold">{user.email}</span>
             </p>
           </div>
           <button
             onClick={handleSignOut}
-            className="btn btn-primary"
+            className="btn btn-primary text-sm py-2 px-6"
           >
             Sign out
           </button>
@@ -111,7 +111,7 @@ export default function AuthStatus() {
         </div>
         <a 
           href="/login" 
-          className="btn btn-primary"
+          className="btn btn-primary text-sm py-2 px-4"
         >
           Sign in
         </a>
