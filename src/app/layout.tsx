@@ -27,7 +27,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-bg text-text`}>
         {/* Main content area with proper spacing for bottom navigation */}
-        <main className="min-h-screen pb-20">
+        <main className="min-h-screen pb-24">
           {children}
         </main>
         <BottomNav />

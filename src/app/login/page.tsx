@@ -73,7 +73,7 @@ export default function LoginPage() {
             </h1>
             
             <p className="text-muted mb-6">
-              We've sent a magic link to <strong className="text-brand-navy">{email || 'your email'}</strong>
+              We&apos;ve sent a magic link to <strong className="text-brand-navy">{email || 'your email'}</strong>
             </p>
           </div>
 
@@ -91,7 +91,7 @@ export default function LoginPage() {
               </li>
               <li className="flex items-start">
                 <span className="text-brand-accent mr-2">3.</span>
-                You'll be automatically signed in!
+                You&apos;ll be automatically signed in!
               </li>
             </ol>
           </div>
@@ -116,7 +116,7 @@ export default function LoginPage() {
           {/* Help text */}
           <div className="gradient-brand rounded-lebara-lg p-4 border border-border text-center">
             <p className="text-brand-navy/80 text-sm">
-              Didn't receive the email? Check your spam folder or try resending.
+              Didn&apos;t receive the email? Check your spam folder or try resending.
             </p>
           </div>
         </div>

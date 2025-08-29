@@ -96,14 +96,11 @@ export default function PlacesPage() {
               <div className="place-header">
                 <div className="place-info">
                   <h3 className="place-name">
-                    {place.name}
+                    {place.name} ({place.price_band})
                   </h3>
-                  <span className="place-price">
-                    {place.price_band}
-                  </span>
                 </div>
                 <span className="place-category">
-                  {place.category.replace('_', ' ')}
+                  {place.category.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                 </span>
               </div>
               
@@ -219,8 +216,8 @@ export default function PlacesPage() {
     return (
       <div className="min-h-screen pb-24 bg-bg">
         <div className="max-w-screen-sm mx-auto md:max-w-3xl p-4">
-          {/* Sticky header */}
-          <div className="sticky top-0 z-10 py-6">
+          {/* Header */}
+          <div className="py-6">
             <h1 className="text-3xl font-bold mb-2 text-brand-navy">Places</h1>
             <p className="text-sm font-medium text-muted">Pulled from Supabase</p>
           </div>
@@ -251,8 +248,8 @@ export default function PlacesPage() {
     return (
       <div className="min-h-screen pb-24 bg-bg">
         <div className="max-w-screen-sm mx-auto md:max-w-3xl p-4">
-          {/* Sticky header */}
-          <div className="sticky top-0 z-10 py-6">
+          {/* Header */}
+          <div className="py-6">
             <h1 className="text-3xl font-bold mb-2 text-brand-navy">Places</h1>
             <p className="text-sm font-medium text-muted">Pulled from Supabase</p>
           </div>
@@ -277,8 +274,8 @@ export default function PlacesPage() {
   return (
     <div className="min-h-screen pb-24 bg-bg">
       <div className="max-w-screen-sm mx-auto md:max-w-3xl p-4">
-        {/* Sticky header */}
-        <div className="sticky top-0 z-10 py-6">
+        {/* Header */}
+        <div className="py-6">
           <h1 className="text-3xl font-bold mb-2 text-brand-navy">Places</h1>
           <p className="text-sm font-medium text-muted">Pulled from Supabase</p>
         </div>

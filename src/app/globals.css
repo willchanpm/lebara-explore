@@ -348,6 +348,21 @@ body {
   transform: scale(1.02);
 }
 
+/* Compact card variant for homepage tiles - reduces vertical space */
+.card-compact {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1rem; /* Reduced from 1.5rem to 1rem */
+  box-shadow: 0 4px 20px rgba(10, 42, 74, 0.1);
+  transition: all 0.3s ease;
+}
+
+.card-compact:hover {
+  box-shadow: 0 8px 30px rgba(10, 42, 74, 0.15);
+  transform: scale(1.02);
+}
+
 .card-small {
   background-color: var(--card);
   border: 1px solid var(--border);
@@ -764,9 +779,9 @@ body {
     min-height: 100dvh; /* Use dynamic viewport height for mobile */
   }
   
-  /* Ensure proper spacing on mobile */
+  /* Ensure proper spacing on mobile - increased for better safety */
   .pb-24 {
-    padding-bottom: 6rem;
+    padding-bottom: 7rem; /* Increased from 6rem to 7rem for mobile */
   }
   
   /* Fix grid layout on mobile */

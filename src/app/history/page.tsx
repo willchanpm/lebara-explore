@@ -20,7 +20,7 @@ export default function HistoryPage() {
           <div className="mt-8 gradient-brand rounded-lebara-lg p-6 shadow-lebara border border-border max-w-md">
             <h4 className="text-lg font-bold text-brand-navy mb-2">📊 Activity Timeline</h4>
             <p className="text-brand-navy/80 text-sm">
-              Soon you'll be able to view your complete journey - places visited, 
+              Soon you&apos;ll be able to view your complete journey - places visited, 
               games played, and memories created!
             </p>
           </div>
