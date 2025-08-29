@@ -14,10 +14,11 @@ export default function Home() {
         {/* App title and description */}
         <div className="text-center space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold text-brand-navy">
-            LStreet Explorer
+            Welcome to Liverpool St Explorer! 🎉
           </h1>
           <p className="text-xl text-muted max-w-2xl mx-auto">
-            Discover amazing places, play bingo, and explore your world with our beautiful app
+            Start your journey by exploring places, playing games, and creating memories. 
+            The world is waiting for you to discover it!
           </p>
         </div>
 
@@ -100,17 +101,6 @@ export default function Home() {
               Manage Account
             </a>
           </div>
-        </div>
-
-        {/* Welcome message for new users */}
-        <div className="gradient-brand rounded-lebara-lg p-8 text-center mt-12">
-          <h2 className="text-2xl font-bold text-brand-navy mb-4">
-            Welcome to LStreet Explorer! 🎉
-          </h2>
-          <p className="text-brand-navy/80 text-lg">
-            Start your journey by exploring places, playing games, and creating memories. 
-            The world is waiting for you to discover it!
-          </p>
         </div>
       </main>
     </div>
