@@ -6,7 +6,7 @@ export default function LunchPage() {
         {/* Page title and subtitle */}
         <div className="text-center space-y-3">
           <h1 className="text-4xl md:text-5xl font-bold text-brand-navy">
-            What's for lunch?
+            What&apos;s for lunch?
           </h1>
           <p className="text-xl text-muted max-w-2xl mx-auto">
             Spin the wheel or ask the AI to pick a nearby spot.

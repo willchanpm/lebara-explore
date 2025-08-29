@@ -39,7 +39,7 @@ export default function Home() {
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center">
                 <div className="text-3xl mr-3">🍽️</div>
-                <h3 className="text-lg font-bold text-brand-navy">What's for lunch?</h3>
+                <h3 className="text-lg font-bold text-brand-navy">What&apos;s for lunch?</h3>
               </div>
               <a 
                 href="/hungry" 
