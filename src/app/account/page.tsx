@@ -57,25 +57,29 @@ export default function AccountPage() {
   const getStatusClasses = () => {
     switch (status) {
       case 'sending':
-        return 'text-blue-600' // Blue for sending state
+        return 'text-brand-accent' // Pink for sending state
       case 'success':
-        return 'text-green-600' // Green for success
+        return 'text-green-500' // Green for success
       case 'error':
-        return 'text-red-600' // Red for errors
+        return 'text-red-500' // Red for errors
       default:
-        return 'text-gray-600' // Default gray color
+        return 'text-muted' // Default muted color
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 pb-24">
+    <div className="min-h-screen flex items-center justify-center bg-bg py-12 px-4 sm:px-6 lg:px-8 pb-24">
       <div className="max-w-md w-full space-y-8">
         {/* Page header */}
-        <div>
-          <h1 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        <div className="text-center">
+          <div className="w-20 h-20 rounded-lebara-lg flex items-center justify-center mb-6 bg-card border-2 border-border shadow-lebara mx-auto">
+            <span className="text-3xl">🔐</span>
+          </div>
+          
+          <h1 className="text-3xl font-bold text-brand-navy mb-2">
             Sign In
           </h1>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="text-muted">
             Enter your email to receive a magic link
           </p>
         </div>
@@ -95,7 +99,7 @@ export default function AccountPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email address"
-              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              className="form-input"
               disabled={status === 'sending'} // Disable input while sending
             />
           </div>
@@ -105,7 +109,7 @@ export default function AccountPage() {
             <button
               type="submit"
               disabled={status === 'sending'} // Disable button while sending
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn btn-primary w-full"
             >
               {status === 'sending' ? 'Sending...' : 'Send Magic Link'}
             </button>
@@ -114,15 +118,16 @@ export default function AccountPage() {
 
         {/* Status message display */}
         {message && (
-          <div className={`text-center text-sm ${getStatusClasses()}`}>
+          <div className={`text-center text-sm p-4 rounded-lebara border ${getStatusClasses()}`}>
             {message}
           </div>
         )}
 
         {/* Additional information */}
-        <div className="text-center text-xs text-gray-500">
-          <p>Click the link in your email to sign in to your account.</p>
-          <p className="mt-1">No password required!</p>
+        <div className="gradient-brand rounded-lebara-lg p-4 border border-border text-center">
+          <p className="text-brand-navy/80 text-sm">
+            Click the link in your email to sign in. No password required!
+          </p>
         </div>
       </div>
     </div>

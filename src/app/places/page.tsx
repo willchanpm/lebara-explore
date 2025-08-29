@@ -47,10 +47,10 @@ export default function PlacesPage() {
         // No places at all
         return (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6 bg-card border-2 border-black/8 dark:border-white/8">
+            <div className="w-20 h-20 rounded-lebara-lg flex items-center justify-center mb-6 bg-card border-2 border-border shadow-lebara">
               <span className="text-3xl">🏪</span>
             </div>
-            <h3 className="text-xl font-semibold mb-3 text-text">No places yet</h3>
+            <h3 className="text-xl font-semibold mb-3 text-brand-navy">No places yet</h3>
             <p className="text-base text-muted">Ask the team to add some</p>
           </div>
         )
@@ -58,10 +58,10 @@ export default function PlacesPage() {
         // No places match the current category filter
         return (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6 bg-card border-2 border-black/8 dark:border-white/8">
+            <div className="w-20 h-20 rounded-lebara-lg flex items-center justify-center mb-6 bg-card border-2 border-border shadow-lebara">
               <span className="text-3xl">🔍</span>
             </div>
-            <h3 className="text-xl font-semibold mb-3 text-text">No places found</h3>
+            <h3 className="text-xl font-semibold mb-3 text-brand-navy">No places found</h3>
             <p className="text-base text-muted">Try selecting a different category</p>
           </div>
         )
@@ -69,10 +69,10 @@ export default function PlacesPage() {
         // No places match the search query
         return (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6 bg-card border-2 border-black/8 dark:border-white/8">
+            <div className="w-20 h-20 rounded-lebara-lg flex items-center justify-center mb-6 bg-card border-2 border-border shadow-lebara">
               <span className="text-3xl">🔍</span>
             </div>
-            <h3 className="text-xl font-semibold mb-3 text-text">No search results</h3>
+            <h3 className="text-xl font-semibold mb-3 text-brand-navy">No search results</h3>
             <p className="text-base text-muted">Try different search terms or categories</p>
           </div>
         )
@@ -82,59 +82,47 @@ export default function PlacesPage() {
     // Show filtered places
     return (
       <>
-        <div className="grid grid-cols-1 md:grid-cols-2 md:gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredPlaces.map((place) => (
             <button
               key={place.id}
-              className="
-                w-full text-left rounded-2xl border p-5 mb-4 focus:outline-none focus:ring-2
-                transition-all duration-200 hover:scale-[1.01]
-                bg-card border-black/8 dark:border-white/8
-              "
+              className="place-card"
               onClick={() => {
                 // Handle card click - could open details modal or navigate
                 console.log('Clicked place:', place.name)
               }}
             >
               {/* Header: name, price, and category pill */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-base leading-tight mb-1 text-text">
+              <div className="place-header">
+                <div className="place-info">
+                  <h3 className="place-name">
                     {place.name}
                   </h3>
-                  <span className="text-sm text-muted">
+                  <span className="place-price">
                     {place.price_band}
                   </span>
                 </div>
-                <span className="
-                  ml-3 inline-flex items-center px-2 py-1 text-xs rounded-full
-                  flex-shrink-0 font-medium
-                  bg-card text-muted border border-black/8 dark:border-white/8
-                ">
+                <span className="place-category">
                   {place.category.replace('_', ' ')}
                 </span>
               </div>
               
               {/* Body: notes/description */}
               {place.notes && (
-                <p className="text-sm leading-relaxed mb-4 text-muted">
+                <p className="place-notes">
                   {place.notes}
                 </p>
               )}
               
               {/* Footer: action buttons */}
-              <div className="flex items-center gap-2">
+              <div className="place-actions">
                 {/* Maps button - only show if coordinates exist */}
                 {place.lat && place.lon && (
                   <a 
                     href={`https://www.google.com/maps?q=${place.lat},${place.lon}`}
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="
-                      flex-1 inline-flex items-center justify-center text-sm font-medium px-3 py-2 rounded-lg
-                      transition-all duration-200 hover:scale-105
-                      bg-card border border-brand text-brand hover:bg-brand/8
-                    "
+                    className="btn btn-secondary"
                     onClick={(e) => e.stopPropagation()} // Prevent card click when clicking link
                   >
                     🗺️ Maps
@@ -145,11 +133,7 @@ export default function PlacesPage() {
                   href={place.url} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="
-                    flex-1 inline-flex items-center justify-center text-sm font-medium px-3 py-2 rounded-lg
-                    transition-all duration-200 hover:scale-105
-                    bg-brand hover:bg-brand-700 text-white
-                  "
+                  className="btn btn-primary"
                   onClick={(e) => e.stopPropagation()} // Prevent card click when clicking link
                 >
                   🌐 Website
@@ -237,25 +221,22 @@ export default function PlacesPage() {
         <div className="max-w-screen-sm mx-auto md:max-w-3xl p-4">
           {/* Sticky header */}
           <div className="sticky top-0 z-10 py-6">
-            <h1 className="text-3xl font-bold mb-2 text-text">Places</h1>
+            <h1 className="text-3xl font-bold mb-2 text-brand-navy">Places</h1>
             <p className="text-sm font-medium text-muted">Pulled from Supabase</p>
           </div>
           
           {/* Skeleton loading cards */}
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse rounded-2xl p-5 bg-card border border-black/8 dark:border-white/8">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-2/3 mb-2"></div>
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
-                  </div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-16 ml-3"></div>
+              <div key={i} className="skeleton-card">
+                <div className="skeleton-header">
+                  <div className="skeleton-text short"></div>
+                  <div className="skeleton-text medium"></div>
                 </div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full mb-4"></div>
-                <div className="flex gap-2">
-                  <div className="flex-1 h-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                  <div className="flex-1 h-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                <div className="skeleton-text full"></div>
+                <div className="skeleton-actions">
+                  <div className="skeleton-button"></div>
+                  <div className="skeleton-button"></div>
                 </div>
               </div>
             ))}
@@ -272,17 +253,17 @@ export default function PlacesPage() {
         <div className="max-w-screen-sm mx-auto md:max-w-3xl p-4">
           {/* Sticky header */}
           <div className="sticky top-0 z-10 py-6">
-            <h1 className="text-3xl font-bold mb-2 text-text">Places</h1>
+            <h1 className="text-3xl font-bold mb-2 text-brand-navy">Places</h1>
             <p className="text-sm font-medium text-muted">Pulled from Supabase</p>
           </div>
           
           {/* Error alert */}
-          <div className="rounded-xl border p-3 text-sm bg-card border-black/8 dark:border-white/8 text-text">
-            <h2 className="font-semibold mb-1">Error Loading Places</h2>
-            <p className="mb-3">{error}</p>
+          <div className="error-alert">
+            <h2 className="font-semibold mb-1 text-brand-navy">Error Loading Places</h2>
+            <p className="mb-3 text-muted">{error}</p>
             <button 
               onClick={() => window.location.reload()} 
-              className="px-3 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors"
+              className="btn btn-primary"
             >
               Try Again
             </button>
@@ -298,40 +279,29 @@ export default function PlacesPage() {
       <div className="max-w-screen-sm mx-auto md:max-w-3xl p-4">
         {/* Sticky header */}
         <div className="sticky top-0 z-10 py-6">
-          <h1 className="text-3xl font-bold mb-2 text-text">Places</h1>
+          <h1 className="text-3xl font-bold mb-2 text-brand-navy">Places</h1>
           <p className="text-sm font-medium text-muted">Pulled from Supabase</p>
         </div>
 
         {/* Search input */}
-        <div className="mb-4 px-4">
+        <div className="search-container">
           <div className="relative">
             <input
               type="text"
               placeholder="Search places by name or notes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="
-                w-full pl-12 pr-12 py-3 rounded-xl text-sm
-                border transition-all duration-200
-                focus:outline-none focus:ring-2 focus:ring-offset-0
-                placeholder:text-sm
-                bg-card text-text border-black/8 dark:border-white/8
-              "
+              className="search-input"
             />
             {/* Search icon */}
-            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-lg text-muted">
+            <div className="search-icon">
               🔍
             </div>
             {/* Clear button - only show when there's text */}
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="
-                  absolute right-3 top-1/2 transform -translate-y-1/2
-                  w-6 h-6 rounded-full flex items-center justify-center
-                  transition-all duration-200 hover:scale-110
-                  bg-muted text-card
-                "
+                className="search-clear"
                 aria-label="Clear search"
               >
                 ✕
@@ -347,14 +317,7 @@ export default function PlacesPage() {
               <button
                 key={category}
                 onClick={() => setActiveFilter(category)}
-                className={`
-                  px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
-                  hover:scale-105 active:scale-95
-                  ${activeFilter === category 
-                    ? 'bg-brand text-white' 
-                    : 'bg-card text-muted border border-black/8 dark:border-white/8'
-                  }
-                `}
+                className={`filter-chip ${activeFilter === category ? 'active' : 'inactive'}`}
               >
                 {category === 'All' ? 'All Places' : category.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
               </button>

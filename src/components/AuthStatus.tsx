@@ -70,8 +70,11 @@ export default function AuthStatus() {
   // Show loading state while fetching user data
   if (loading) {
     return (
-      <div className="p-4 bg-gray-100 rounded-lg">
-        <p className="text-gray-600">Loading authentication status...</p>
+      <div className="card-small">
+        <div className="status-loading">
+          <div className="spinner"></div>
+          <p className="text-muted">Loading authentication status...</p>
+        </div>
       </div>
     )
   }
@@ -79,14 +82,17 @@ export default function AuthStatus() {
   // Show signed in state with user email and sign out button
   if (user) {
     return (
-      <div className="p-4 bg-green-100 border border-green-300 rounded-lg">
-        <div className="flex items-center justify-between">
-          <p className="text-green-800">
-            Signed in as <span className="font-semibold">{user.email}</span>
-          </p>
+      <div className="gradient-brand rounded-lebara border border-border shadow-lebara p-4">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-3">
+            <div className="status-dot success"></div>
+            <p className="text-brand-navy font-medium">
+              Signed in as <span className="font-bold">{user.email}</span>
+            </p>
+          </div>
           <button
             onClick={handleSignOut}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+            className="btn btn-primary"
           >
             Sign out
           </button>
@@ -97,8 +103,19 @@ export default function AuthStatus() {
 
   // Show not signed in state
   return (
-    <div className="p-4 bg-gray-100 border border-gray-300 rounded-lg">
-      <p className="text-gray-600">Not signed in</p>
+    <div className="card-small">
+      <div className="flex justify-between items-center">
+        <div className="flex items-center space-x-3">
+          <div className="status-dot inactive"></div>
+          <p className="text-muted">Not signed in</p>
+        </div>
+        <a 
+          href="/login" 
+          className="btn btn-primary"
+        >
+          Sign in
+        </a>
+      </div>
     </div>
   )
 }
