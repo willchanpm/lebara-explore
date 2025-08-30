@@ -34,7 +34,7 @@ export default function HungryPage() {
             <div className="home-card-header">
               <div className="home-card-title-section">
                 <div className="home-card-emoji">🤖</div>
-                <h3 className="home-card-title">Ask the AI</h3>
+                <h3 className="home-card-title">Ask AI</h3>
               </div>
               <div className="home-card-chevron">›</div>
             </div>

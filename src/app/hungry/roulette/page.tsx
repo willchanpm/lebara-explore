@@ -27,7 +27,6 @@ interface RouletteResult {
 
 export default function LunchRoulettePage() {
   // State for all the form controls
-  const [distance, setDistance] = useState(0.8); // Default distance in km
   const [selectedPrices, setSelectedPrices] = useState<string[]>([]); // Selected price ranges
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // Selected food categories
   
@@ -40,9 +39,6 @@ export default function LunchRoulettePage() {
 
   // Create a reference to the result section for auto-scrolling
   const resultSectionRef = useRef<HTMLDivElement>(null);
-
-  // Broadwalk House coordinates as specified in requirements
-  const ORIGIN = { lat: 51.5210, lon: -0.0812 };
 
   // Price range options
   const priceOptions = ['£', '££', '£££'];
@@ -58,30 +54,7 @@ export default function LunchRoulettePage() {
     { value: 'veg_friendly', label: '🌱 Veg-friendly' }
   ];
 
-  // Utility function to calculate haversine distance between two points in kilometers
-  // This is a mathematical formula to find the great-circle distance between two points on a sphere
-  const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    // Convert degrees to radians (Math.PI / 180 converts degrees to radians)
-    const toRadians = (degrees: number) => degrees * (Math.PI / 180);
-    
-    // Earth's radius in kilometers
-    const R = 6371;
-    
-    // Convert coordinates to radians
-    const dLat = toRadians(lat2 - lat1);
-    const dLon = toRadians(lon2 - lon1);
-    
-    // Apply haversine formula
-    const a = 
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    
-    // Return distance in kilometers
-    return R * c;
-  };
+
 
   // Function to handle price selection (multi-select)
   const togglePrice = (price: string) => {
@@ -120,6 +93,16 @@ export default function LunchRoulettePage() {
         throw new Error('No places found in database');
       }
       
+      // Debug: Log all places and their price bands
+      console.log('All places from database:', data);
+      console.log('Selected prices:', selectedPrices);
+      console.log('Selected categories:', selectedCategories);
+      
+      // Additional debugging: Log each place's price band specifically
+      data.forEach((place: Place) => {
+        console.log(`Place: ${place.name}, Price Band: "${place.price_band}", Category: ${place.category}`);
+      });
+      
       // Apply filters to the fetched data
       let filteredPlaces = data as Place[];
       
@@ -133,41 +116,22 @@ export default function LunchRoulettePage() {
           // For other categories, check if they match the place category
           return selectedCategories.includes(place.category);
         });
+        console.log('After category filtering:', filteredPlaces);
       }
       
       // Filter by selected price bands if any were chosen
       if (selectedPrices.length > 0) {
-        filteredPlaces = filteredPlaces.filter(place => 
-          selectedPrices.includes(place.price_band)
-        );
-      }
-      
-      // Filter by distance if distance slider is set
-      let distanceFiltered = filteredPlaces;
-      if (distance > 0) {
-        // First, filter out places without coordinates
-        const placesWithCoords = filteredPlaces.filter(place => 
-          place.lat !== null && place.lat !== undefined && 
-          place.lon !== null && place.lon !== undefined
-        );
-        
-        // Then apply distance filter
-        distanceFiltered = placesWithCoords.filter(place => {
-          const placeDistance = haversineDistance(
-            ORIGIN.lat, 
-            ORIGIN.lon, 
-            place.lat!, 
-            place.lon!
-          );
-          return placeDistance <= distance;
+        console.log('Before price filtering, places:', filteredPlaces.map(p => ({ name: p.name, price_band: p.price_band })));
+        filteredPlaces = filteredPlaces.filter(place => {
+          const isIncluded = selectedPrices.includes(place.price_band);
+          console.log(`Checking place ${place.name}: price_band="${place.price_band}", selectedPrices=${JSON.stringify(selectedPrices)}, included=${isIncluded}`);
+          return isIncluded;
         });
+        console.log('After price filtering:', filteredPlaces);
       }
       
-      // If distance filtering resulted in no results, fall back to ignoring distance
-      if (distanceFiltered.length === 0 && distance > 0) {
-        console.log('No results with distance filter, falling back to ignoring distance');
-        distanceFiltered = filteredPlaces;
-      }
+      // Distance filtering removed - now using all places that match price and category filters
+      let distanceFiltered = filteredPlaces;
       
       // If still no results, show friendly message
       if (distanceFiltered.length === 0) {
@@ -191,6 +155,9 @@ export default function LunchRoulettePage() {
       // Randomly select one item from the filtered list
       const randomIndex = Math.floor(Math.random() * distanceFiltered.length);
       const selectedPlace = distanceFiltered[randomIndex];
+      
+      console.log('Final selected place:', selectedPlace);
+      console.log('Total filtered places available:', distanceFiltered.length);
       
       // Set the result
       setResult({
@@ -278,44 +245,27 @@ export default function LunchRoulettePage() {
       // Show the roulette result
       return (
         <div className="roulette-result">
-          {/* Success icon and title */}
-          <div className="success-container">
-            <div className="success-spinner">
-              <span className="success-emoji">🎯</span>
-            </div>
-            <h3 className="success-title">
-              Lunch Roulette Result!
-            </h3>
+          {/* Place details */}
+          <div className="place-details">
+            <h4 className="place-name" style={{ textAlign: 'center' }}>
+              {result.place.name}
+            </h4>
             
             {/* Place badges */}
             <div className="result-badges">
+              <span className="badge-price">
+                {result.place.price_band}
+              </span>
               <span className="badge-category">
                 {result.place.category.replace('_', ' ').split(' ').map(word => 
                   word.charAt(0).toUpperCase() + word.slice(1)
                 ).join(' ')}
-              </span>
-              <span className="badge-price">
-                {result.place.price_band}
               </span>
               {result.place.veg_friendly && (
                 <span className="badge-veg">
                   🌱 Veg-friendly
                 </span>
               )}
-            </div>
-          </div>
-          
-          {/* Place details */}
-          <div className="place-details">
-            <h4 className="place-name">
-              {result.place.name}
-            </h4>
-            
-            {/* AI explanation */}
-            <div className="ai-explanation">
-              <p className="explanation-text">
-                &ldquo;This spot matches your criteria perfectly! It&apos;s within your distance range and meets your price and category preferences.&rdquo;
-              </p>
             </div>
             
             {/* Notes if present */}
@@ -335,7 +285,7 @@ export default function LunchRoulettePage() {
                 🗺️ Open in Maps
               </button>
               <button
-                onClick={handleSpin}
+                onClick={handleReroll}
                 className="spin-again-button"
                 aria-label="Spin the roulette again with the same filters"
               >
@@ -379,28 +329,6 @@ export default function LunchRoulettePage() {
 
         {/* Controls section */}
         <div className="roulette-controls">
-          {/* Distance slider */}
-          <div className="distance-section">
-            <label htmlFor="distance" className="distance-label">
-              Maximum Distance
-            </label>
-            <div className="distance-controls">
-              <input
-                type="range"
-                id="distance"
-                min="0.1"
-                max="2.0"
-                step="0.1"
-                value={distance}
-                onChange={(e) => setDistance(parseFloat(e.target.value))}
-                className="distance-slider"
-              />
-              <span className="distance-value">
-                {distance} km
-              </span>
-            </div>
-          </div>
-
           {/* Price chips */}
           <div className="price-section">
             <label className="price-label">
