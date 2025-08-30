@@ -1,21 +1,21 @@
 export default function SocialPage() {
   return (
-    <div className="min-h-screen bg-bg text-text p-6 pb-32">
+    <div className="social-page">
       {/* Main content container */}
-      <main className="max-w-4xl mx-auto space-y-6">
+      <main className="social-container">
         {/* Page title */}
-        <div className="text-center space-y-3">
-          <h1 className="text-4xl md:text-5xl font-bold text-brand-navy">
+        <div className="social-header">
+          <h1 className="social-title">
             Social / Feed
           </h1>
-          <p className="text-xl text-muted max-w-2xl mx-auto">
+          <p className="social-subtitle">
             See posts and track your history.
           </p>
         </div>
 
         {/* Placeholder content */}
-        <div className="text-center mt-8">
-          <p className="text-muted">
+        <div className="social-placeholder">
+          <p className="social-placeholder-text">
             Social feed page coming soon...
           </p>
         </div>

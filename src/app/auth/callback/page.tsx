@@ -92,15 +92,15 @@ export default function AuthCallback() {
   }, [router]) // The router dependency ensures this effect runs when the router changes
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
+    <div className="auth-callback-page">
+      <div className="auth-callback-container">
         {/* Show the current status */}
-        <p className="text-lg mb-4">{status}</p>
+        <p className="auth-callback-status">{status}</p>
         
         {/* Show any errors if they occur */}
         {error && (
-          <div className="text-red-600">
-            <p className="font-semibold">Error:</p>
+          <div className="auth-callback-error">
+            <p className="auth-callback-error-title">Error:</p>
             <p>{error}</p>
           </div>
         )}

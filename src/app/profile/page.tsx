@@ -2,31 +2,31 @@ import AuthStatus from "@/components/AuthStatus";
 
 export default function ProfilePage() {
   return (
-    <div className="min-h-screen pb-24 bg-bg">
-      <div className="max-w-screen-sm mx-auto md:max-w-3xl p-4">
+    <div className="profile-page">
+      <div className="profile-container">
         {/* Header */}
-        <div className="py-6">
-          <h1 className="text-3xl font-bold mb-2 text-brand-navy">Profile</h1>
-          <p className="text-sm font-medium text-muted">Manage your account</p>
+        <div className="profile-header">
+          <h1 className="profile-title">Profile</h1>
+          <p className="profile-subtitle">Manage your account</p>
         </div>
         
         {/* Authentication Status */}
-        <div className="mb-8">
+        <div className="profile-auth-section">
           <AuthStatus />
         </div>
         
         {/* Placeholder content */}
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-20 h-20 rounded-lebara-lg flex items-center justify-center mb-6 bg-card border-2 border-border shadow-lebara">
-            <span className="text-3xl">👤</span>
+        <div className="profile-placeholder">
+          <div className="profile-icon-placeholder">
+            <span className="profile-icon-emoji">👤</span>
           </div>
-          <h3 className="text-xl font-semibold mb-3 text-brand-navy">Profile Feature</h3>
-          <p className="text-base text-muted">This feature is under development</p>
+          <h3 className="profile-feature-title">Profile Feature</h3>
+          <p className="profile-feature-text">This feature is under development</p>
           
           {/* Coming soon card */}
-          <div className="mt-8 gradient-brand rounded-lebara-lg p-6 shadow-lebara border border-border max-w-md">
-            <h4 className="text-lg font-bold text-brand-navy mb-2">⚙️ Personal Settings</h4>
-            <p className="text-brand-navy/80 text-sm">
+          <div className="profile-coming-soon">
+            <h4 className="coming-soon-title">⚙️ Personal Settings</h4>
+            <p className="coming-soon-text">
               Customize your profile, manage preferences, and control your privacy settings 
               in one convenient place!
             </p>

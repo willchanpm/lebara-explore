@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# L Street Explorer
+
+A lunch discovery app for the L Street area, built with Next.js, TypeScript, and Supabase.
+
+## Features
+
+- **Lunch Roulette**: Random restaurant selection with filters
+- **AI Suggestions**: AI-powered lunch recommendations based on mood and constraints
+- **Discover**: Browse and explore local dining options
+- **User Profiles**: Save preferences and dining history
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+ 
+- npm or yarn
+- Supabase account and project
+- OpenAI API key (for AI suggestions)
+
+### Environment Variables
+
+Create a `.env.local` file in the root directory:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Supabase configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# OpenAI API key (required for AI suggestions)
+OPENAI_API_KEY=your_openai_api_key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Set up environment variables
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## AI Lunch Suggestions
 
-## Learn More
+The AI suggestion feature uses OpenAI's GPT-4o-mini model to provide personalized restaurant recommendations based on:
 
-To learn more about Next.js, take a look at the following resources:
+- **Mood chips**: Quick, Cozy, Cheap, Close, Impress, Outdoor
+- **User input**: Free-form text describing preferences
+- **Filters**: Price range and vegetarian-friendly options
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The AI analyzes your request against the available places in the database and returns 3 relevant suggestions with explanations.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Database Schema
 
-## Deploy on Vercel
+The app expects a `places` table in Supabase with the following structure:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```sql
+CREATE TABLE places (
+  id SERIAL PRIMARY KEY,
+  slug TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  category TEXT NOT NULL,
+  price_band TEXT NOT NULL,
+  url TEXT,
+  maps_url TEXT,
+  notes TEXT,
+  lat DECIMAL,
+  lon DECIMAL,
+  veg_friendly BOOLEAN DEFAULT FALSE
+);
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Development
+
+- **Build**: `npm run build`
+- **Lint**: `npm run lint`
+- **Start**: `npm start`
+
+## Tech Stack
+
+- **Frontend**: Next.js 15, React 19, TypeScript
+- **Styling**: Tailwind CSS
+- **Database**: Supabase (PostgreSQL)
+- **AI**: OpenAI GPT-4o-mini
+- **Authentication**: Supabase Auth

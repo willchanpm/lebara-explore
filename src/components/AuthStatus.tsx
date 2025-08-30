@@ -82,17 +82,17 @@ export default function AuthStatus() {
   // Show signed in state with user email and sign out button
   if (user) {
     return (
-      <div className="gradient-brand rounded-lebara border border-border shadow-lebara p-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <div className="status-dot success mr-2"></div>
-            <p className="text-brand-navy font-medium text-sm">
-              Signed in as <span className="font-bold">{user.email}</span>
+      <div className="auth-status-signed-in">
+        <div className="auth-status-content">
+          <div className="auth-status-info">
+            <div className="status-dot success"></div>
+            <p className="auth-status-text">
+              Signed in as <span className="auth-status-email">{user.email}</span>
             </p>
           </div>
           <button
             onClick={handleSignOut}
-            className="btn btn-primary text-sm py-2 px-6"
+            className="btn btn-primary auth-signout-button"
           >
             Sign out
           </button>
@@ -104,14 +104,14 @@ export default function AuthStatus() {
   // Show not signed in state
   return (
     <div className="card-small">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-3">
+      <div className="auth-status-not-signed">
+        <div className="auth-status-info">
           <div className="status-dot inactive"></div>
-          <p className="text-muted">Not signed in</p>
+          <p className="auth-status-text">Not signed in</p>
         </div>
         <a 
           href="/login" 
-          className="btn btn-primary text-sm py-2 px-4"
+          className="btn btn-primary auth-signin-button"
         >
           Sign in
         </a>

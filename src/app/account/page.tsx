@@ -68,24 +68,24 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg py-12 px-4 sm:px-6 lg:px-8 pb-24">
-      <div className="max-w-md w-full space-y-8">
+    <div className="account-page">
+      <div className="account-container">
         {/* Page header */}
-        <div className="text-center">
-          <div className="w-20 h-20 rounded-lebara-lg flex items-center justify-center mb-6 bg-card border-2 border-border shadow-lebara mx-auto">
-            <span className="text-3xl">🔐</span>
+        <div className="account-header">
+          <div className="account-icon">
+            <span className="account-icon-emoji">🔐</span>
           </div>
           
-          <h1 className="text-3xl font-bold text-brand-navy mb-2">
+          <h1 className="account-title">
             Sign In
           </h1>
-          <p className="text-muted">
+          <p className="account-subtitle">
             Enter your email to receive a magic link
           </p>
         </div>
 
         {/* Magic link form */}
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="account-form" onSubmit={handleSubmit}>
           <div>
             <label htmlFor="email" className="sr-only">
               Email address
@@ -118,14 +118,14 @@ export default function AccountPage() {
 
         {/* Status message display */}
         {message && (
-          <div className={`text-center text-sm p-4 rounded-lebara border ${getStatusClasses()}`}>
+          <div className={`account-status ${getStatusClasses()}`}>
             {message}
           </div>
         )}
 
         {/* Additional information */}
-        <div className="gradient-brand rounded-lebara-lg p-4 border border-border text-center">
-          <p className="text-brand-navy/80 text-sm">
+        <div className="account-info">
+          <p className="account-info-text">
             Click the link in your email to sign in. No password required!
           </p>
         </div>

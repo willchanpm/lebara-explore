@@ -83,39 +83,39 @@ export default function BingoPage() {
   const progressPercentage = (completedCount / totalCount) * 100
 
   return (
-    <div className="bg-bg">
-      <div className="max-w-screen-sm mx-auto md:max-w-3xl p-4 pb-20">
+    <div className="bingo-page">
+      <div className="bingo-container">
         {/* Header section with title and subtitle */}
-        <div className="py-6">
-          <h1 className="text-3xl font-bold mb-2 text-brand-navy">Bingo</h1>
-          <p className="text-sm font-medium text-muted">Tick them off as you go</p>
+        <div className="bingo-header">
+          <h1 className="bingo-title">Bingo</h1>
+          <p className="bingo-subtitle">Tick them off as you go</p>
         </div>
         
         {/* Progress section with progress bar and reset button */}
-        <div className="mb-6 p-4 bg-card rounded-2xl border border-border shadow-lebara">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-muted">
+        <div className="bingo-progress">
+          <div className="progress-header">
+            <span className="progress-text">
               Progress: {completedCount} / {totalCount}
             </span>
             <button
               onClick={resetProgress}
-              className="px-4 py-2 text-sm font-medium text-brand-accent hover:text-brand-accent-700 transition-all duration-200 rounded-xl border border-brand-accent/20 hover:bg-brand-accent/10 hover:border-brand-accent/40"
+              className="reset-button"
             >
               Reset
             </button>
           </div>
           
           {/* Progress bar showing completion percentage */}
-          <div className="w-full bg-border rounded-full h-2">
+          <div className="progress-bar">
             <div 
-              className="bg-brand-accent h-2 rounded-full transition-all duration-300 ease-out"
+              className="progress-fill"
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
         </div>
 
         {/* Bingo grid - 3 columns on mobile, 4 columns on medium screens and up */}
-        <div className="grid grid-cols-3 md:grid-cols-4 gap-3 mb-0">
+        <div className="bingo-grid">
           {BINGO_SQUARES.map((square) => {
             const isCompleted = completedSquares.has(square.id)
             
@@ -123,32 +123,26 @@ export default function BingoPage() {
               <button
                 key={square.id}
                 onClick={() => toggleSquare(square.id)}
-                className={`
-                  relative rounded-2xl p-3 text-center border transition-all duration-200 overflow-hidden
-                  ${isCompleted 
-                    ? 'ring-2 ring-brand-accent bg-brand-accent/10' 
-                    : 'bg-card text-text border-border hover:bg-brand/20'
-                  }
-                `}
+                className={`bingo-square ${isCompleted ? 'bingo-square-completed' : 'bingo-square-incomplete'}`}
               >
                 {/* Full tile overlay for completed squares with checkmark */}
                 {isCompleted && (
-                  <div className="absolute top-0 left-0 right-0 bottom-0 bg-brand-accent/20 rounded-2xl flex items-center justify-center">
-                    <div className="w-12 h-12 bg-brand-accent text-white rounded-full flex items-center justify-center text-2xl font-bold shadow-lebara" style={{ width: '48px', height: '48px', borderRadius: '50%' }}>
+                  <div className="bingo-overlay">
+                    <div className="bingo-checkmark">
                       ✓
                     </div>
                   </div>
                 )}
                 
                 {/* Square content: emoji and label */}
-                <div className="space-y-2">
+                <div className="bingo-content">
                   {/* Large emoji at the top */}
-                  <div className="text-3xl">
+                  <div className="bingo-emoji">
                     {square.emoji}
                   </div>
                   
                   {/* Label text below emoji */}
-                  <div className="text-xs font-medium leading-tight">
+                  <div className="bingo-label">
                     {square.label}
                   </div>
                 </div>
@@ -159,10 +153,10 @@ export default function BingoPage() {
 
         {/* Completion message when all squares are done */}
         {completedCount === totalCount && (
-          <div className="mt-6 p-4 bg-brand-accent/10 border border-brand-accent rounded-2xl text-center">
-            <div className="text-2xl mb-2">🎉</div>
-            <h3 className="text-lg font-bold text-brand-accent mb-1">Bingo!</h3>
-            <p className="text-sm text-muted">Congratulations! You&apos;ve completed all the challenges!</p>
+          <div className="bingo-completion">
+            <div className="completion-emoji">🎉</div>
+            <h3 className="completion-title">Bingo!</h3>
+            <p className="completion-text">Congratulations! You&apos;ve completed all the challenges!</p>
           </div>
         )}
       </div>

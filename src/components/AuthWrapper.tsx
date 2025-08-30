@@ -72,10 +72,10 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
   // Show loading state while checking authentication
   if (loading) {
     return (
-      <div className="min-h-screen bg-bg text-text flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="spinner mx-auto"></div>
-          <p className="text-muted">Checking authentication...</p>
+      <div className="auth-wrapper-loading">
+        <div className="auth-wrapper-content">
+          <div className="spinner"></div>
+          <p className="auth-wrapper-text">Checking authentication...</p>
         </div>
       </div>
     )
@@ -85,10 +85,10 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
   if (!user) {
     router.push('/login')
     return (
-      <div className="min-h-screen bg-bg text-text flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="spinner mx-auto"></div>
-          <p className="text-muted">Redirecting to login...</p>
+      <div className="auth-wrapper-loading">
+        <div className="auth-wrapper-content">
+          <div className="spinner"></div>
+          <p className="auth-wrapper-text">Redirecting to login...</p>
         </div>
       </div>
     )
