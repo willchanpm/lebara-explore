@@ -131,7 +131,7 @@ export default function LunchRoulettePage() {
       }
       
       // Distance filtering removed - now using all places that match price and category filters
-      let distanceFiltered = filteredPlaces;
+      const distanceFiltered = filteredPlaces;
       
       // If still no results, show friendly message
       if (distanceFiltered.length === 0) {

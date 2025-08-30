@@ -199,9 +199,9 @@ export default function AskAIPage() {
                 .split('\n')
                 .filter(line => line.trim() !== '') // Remove empty lines
                 .map((line, index) => {
-                  // Parse markdown formatting
-                  const hasBold = line.includes('**');
-                  const hasItalic = line.includes('*');
+                  // Parse markdown formatting - these variables help identify formatting but aren't used in current styling
+                  // const hasBold = line.includes('**');
+                  // const hasItalic = line.includes('*');
                   
                   // Determine the line type for styling
                   const isRestaurantName = line.match(/^\d+\.\s+\*\*([^*]+)\*\*/); // Numbered items with bold names

@@ -38,7 +38,7 @@ export default function HungryPage() {
               </div>
               <div className="home-card-chevron">›</div>
             </div>
-            <p className="home-card-subtitle">Describe your mood and constraints.</p>
+            <p className="home-card-subtitle">Describe your mood and let the AI pick a spot.</p>
           </Link>
         </div>
       </main>
