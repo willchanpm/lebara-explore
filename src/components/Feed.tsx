@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import type { User } from '@supabase/supabase-js'
+import ImageModal from './ImageModal'
 
 // Interface for check-in data from the database
 interface CheckIn {
@@ -13,38 +14,12 @@ interface CheckIn {
   comment: string
   rating: number
   photo_url: string | null
+  author_name: string | null
   created_at: string
+  tile_label?: string
+  tile_description?: string | null
 }
 
-// Local mapping of tile IDs to human-readable labels
-// TODO: Replace this with a proper database join later
-const TILE_LABELS: Record<string, string> = {
-  'try-new-cuisine': 'Try New Cuisine',
-  'cook-at-home': 'Cook at Home',
-  'visit-farmers-market': 'Visit Farmers Market',
-  'eat-seasonal': 'Eat Seasonal',
-  'try-street-food': 'Try Street Food',
-  'dine-outdoors': 'Dine Outdoors',
-  'make-dessert': 'Make Dessert',
-  'learn-recipe': 'Learn New Recipe',
-  'host-dinner': 'Host Dinner',
-  'food-adventure': 'Food Adventure',
-  'breakfast-in-bed': 'Breakfast in Bed',
-  'midnight-snack': 'Midnight Snack',
-  'picnic-lunch': 'Picnic Lunch',
-  'dinner-date': 'Dinner Date',
-  'brunch-weekend': 'Weekend Brunch',
-  'coffee-shop': 'Coffee Shop Visit',
-  'bakery-treat': 'Bakery Treat',
-  'ice-cream': 'Ice Cream',
-  'smoothie-bowl': 'Smoothie Bowl',
-  'pizza-night': 'Pizza Night',
-  'taco-tuesday': 'Taco Tuesday',
-  'sushi-roll': 'Sushi Roll',
-  'burger-joint': 'Burger Joint',
-  'salad-bowl': 'Fresh Salad',
-  'soup-season': 'Soup Season'
-}
 
 // Helper function to format date and time
 function formatDateTime(dateString: string): string {
@@ -56,6 +31,55 @@ function formatDateTime(dateString: string): string {
     minute: '2-digit',
     hour12: false
   }).replace(',', '')
+}
+
+// Helper function to format month names (YYYY-MM to readable format)
+function formatMonthName(monthString: string): string {
+  if (monthString === 'all') return 'All months'
+  
+  try {
+    const [year, month] = monthString.split('-')
+    const date = new Date(parseInt(year), parseInt(month) - 1, 1)
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  } catch {
+    return monthString // Fallback to original string if parsing fails
+  }
+}
+
+// Helper function to convert tile_id to readable title
+function getTileTitle(checkIn: CheckIn): string {
+  // First check if we have enhanced tile data from the database
+  if (checkIn.tile_label && checkIn.tile_description) {
+    return `${checkIn.tile_label}: ${checkIn.tile_description}`
+  } else if (checkIn.tile_label) {
+    return checkIn.tile_label
+  } else if (checkIn.tile_description) {
+    return checkIn.tile_description
+  }
+  
+  // If no tile data available, convert the tile_id to a readable title
+  return checkIn.tile_id
+    .replace(/[-_]/g, ' ') // Replace dashes and underscores with spaces
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ')
+}
+
+// Helper function to get author name with fallbacks
+function getAuthorName(checkIn: CheckIn, currentUser: User | null): string {
+  // If author_name is present, use it
+  if (checkIn.author_name?.trim()) {
+    return checkIn.author_name.trim()
+  }
+  
+  // For current user's own posts, try to get email prefix
+  if (currentUser && checkIn.user_id === currentUser.id && currentUser.email) {
+    const emailPrefix = currentUser.email.split('@')[0]
+    return emailPrefix
+  }
+  
+  // Default fallback
+  return 'Lebara member'
 }
 
 // Helper function to render star rating
@@ -92,6 +116,17 @@ export default function Feed() {
   
   // State for available months (for filter dropdown)
   const [availableMonths, setAvailableMonths] = useState<string[]>([])
+  
+  // State for image modal
+  const [imageModal, setImageModal] = useState<{
+    isOpen: boolean
+    imageUrl: string
+    imageAlt: string
+  }>({
+    isOpen: false,
+    imageUrl: '',
+    imageAlt: ''
+  })
 
   // Get current user on component mount
   useEffect(() => {
@@ -114,7 +149,7 @@ export default function Feed() {
   // Fetch initial check-ins
   useEffect(() => {
     fetchCheckIns()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Function to fetch check-ins from Supabase
   const fetchCheckIns = async (isLoadMore = false) => {
@@ -127,10 +162,13 @@ export default function Feed() {
         setLoading(true)
       }
 
-      // Build the query
+      // Build the query with manual join to bingo_tiles
       let query = supabase
         .from('check_ins')
-        .select('id, user_id, tile_id, board_month, comment, rating, photo_url, created_at')
+        .select(`
+          id, user_id, tile_id, board_month, comment, rating, 
+          photo_url, author_name, created_at
+        `)
         .order('created_at', { ascending: false })
         .limit(20)
 
@@ -156,10 +194,13 @@ export default function Feed() {
       }
 
       if (data) {
+        // Enhance check-ins with tile data
+        const enhancedData = await enhanceCheckInsWithTileData(data)
+        
         if (isLoadMore) {
-          setCheckIns(prev => [...prev, ...data])
+          setCheckIns(prev => [...prev, ...enhancedData])
         } else {
-          setCheckIns(data)
+          setCheckIns(enhancedData)
         }
         
         // Check if we have more results
@@ -178,6 +219,43 @@ export default function Feed() {
     }
   }
 
+  // Function to fetch tile data and enhance check-ins
+  const enhanceCheckInsWithTileData = async (checkInsData: CheckIn[]) => {
+    try {
+      // Get unique tile IDs from check-ins
+      const tileIds = [...new Set(checkInsData.map(checkIn => checkIn.tile_id))]
+      
+      if (tileIds.length === 0) return checkInsData
+      
+      // Fetch tile data from bingo_tiles table
+      const { data: tilesData, error: tilesError } = await supabase
+        .from('bingo_tiles')
+        .select('id, label, description')
+        .in('id', tileIds)
+      
+      if (tilesError) {
+        console.error('Error fetching tile data:', tilesError)
+        return checkInsData
+      }
+      
+      // Create a map of tile_id to tile data
+      const tileMap = new Map()
+      tilesData?.forEach(tile => {
+        tileMap.set(tile.id, tile)
+      })
+      
+      // Enhance check-ins with tile data
+      return checkInsData.map(checkIn => ({
+        ...checkIn,
+        tile_label: tileMap.get(checkIn.tile_id)?.label || null,
+        tile_description: tileMap.get(checkIn.tile_id)?.description || null
+      }))
+    } catch (err) {
+      console.error('Error enhancing check-ins with tile data:', err)
+      return checkInsData
+    }
+  }
+
   // Function to load more check-ins
   const loadMore = () => {
     if (!loadingMore && hasMore) {
@@ -185,19 +263,35 @@ export default function Feed() {
     }
   }
 
-  // Function to apply filters
-  const applyFilters = () => {
-    setCheckIns([]) // Clear current list
-    setHasMore(true) // Reset pagination
-    fetchCheckIns() // Fetch with new filters
+
+  
+  // Function to filter existing check-ins for "My posts only" without refetching
+  const filterMyPosts = (checkInsData: CheckIn[]) => {
+    if (!showMyPosts || !currentUser) {
+      return checkInsData
+    }
+    return checkInsData.filter(checkIn => checkIn.user_id === currentUser.id)
+  }
+  
+  // Function to open image modal
+  const openImageModal = (imageUrl: string, imageAlt: string) => {
+    setImageModal({
+      isOpen: true,
+      imageUrl,
+      imageAlt
+    })
+  }
+  
+  // Function to close image modal
+  const closeImageModal = () => {
+    setImageModal({
+      isOpen: false,
+      imageUrl: '',
+      imageAlt: ''
+    })
   }
 
-  // Apply filters when filter states change
-  useEffect(() => {
-    if (checkIns.length > 0) { // Only apply if we have data
-      applyFilters()
-    }
-  }, [selectedMonth, showMyPosts])
+
 
   // If user is not authenticated, show sign-in CTA
   if (!currentUser) {
@@ -275,47 +369,55 @@ export default function Feed() {
     <div className="feed-component">
       {/* Filters */}
       <div className="feed-filters">
-        <div className="feed-filter-group">
-          <label htmlFor="month-filter" className="feed-filter-label">
-            Month:
-          </label>
+        <div className="simple-month-filter">
+          <label htmlFor="month-select">Month:</label>
           <select
-            id="month-filter"
+            id="month-select"
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="feed-filter-select"
           >
             <option value="all">All months</option>
             {availableMonths.map(month => (
               <option key={month} value={month}>
-                {month}
+                {formatMonthName(month)}
               </option>
             ))}
           </select>
         </div>
         
         <div className="feed-filter-group">
-          <label className="feed-filter-toggle">
-            <input
-              type="checkbox"
-              checked={showMyPosts}
-              onChange={(e) => setShowMyPosts(e.target.checked)}
-              className="feed-filter-checkbox"
-            />
-            <span className="feed-filter-toggle-text">My posts only</span>
-          </label>
+          <div className="feed-filter-toggle">
+            <span className="feed-filter-toggle-text">My posts only:</span>
+            <div className="toggle-switch">
+              <input
+                type="checkbox"
+                checked={showMyPosts}
+                onChange={(e) => setShowMyPosts(e.target.checked)}
+                className="toggle-switch-input"
+                id="my-posts-toggle"
+              />
+              <label htmlFor="my-posts-toggle" className="toggle-switch-label">
+                <span className="toggle-switch-slider"></span>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Check-ins list */}
       <div className="feed-list">
-        {checkIns.map((checkIn) => (
+        {filterMyPosts(checkIns).map((checkIn) => (
           <div key={checkIn.id} className="feed-card">
             {/* Card header with tile label and date */}
             <div className="feed-card-header">
-              <h3 className="feed-card-title">
-                {TILE_LABELS[checkIn.tile_id] || checkIn.tile_id}
+              <div className="feed-card-title-section">
+                              <h3 className="feed-card-title">
+                {getTileTitle(checkIn)}
               </h3>
+                <span className="feed-card-author" title={getAuthorName(checkIn, currentUser)}>
+                  by {getAuthorName(checkIn, currentUser)}
+                </span>
+              </div>
               <time className="feed-card-date" dateTime={checkIn.created_at}>
                 {formatDateTime(checkIn.created_at)}
               </time>
@@ -338,9 +440,18 @@ export default function Feed() {
               {checkIn.photo_url ? (
                 <img
                   src={checkIn.photo_url}
-                  alt={`Check-in photo for ${TILE_LABELS[checkIn.tile_id] || checkIn.tile_id}`}
-                  className="feed-card-image"
+                  alt={`${getAuthorName(checkIn, currentUser)}'s check-in for ${getTileTitle(checkIn)}`}
+                  className="feed-card-image clickable"
                   loading="lazy"
+                  onClick={() => openImageModal(checkIn.photo_url!, `${getAuthorName(checkIn, currentUser)}'s check-in for ${getTileTitle(checkIn)}`)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      openImageModal(checkIn.photo_url!, `${getAuthorName(checkIn, currentUser)}'s check-in for ${getTileTitle(checkIn)}`)
+                    }
+                  }}
                 />
               ) : (
                 <div className="feed-card-photo-placeholder">
@@ -376,6 +487,14 @@ export default function Feed() {
           </button>
         </div>
       )}
+      
+      {/* Image Modal */}
+      <ImageModal
+        isOpen={imageModal.isOpen}
+        onClose={closeImageModal}
+        imageUrl={imageModal.imageUrl}
+        imageAlt={imageModal.imageAlt}
+      />
     </div>
   )
 }

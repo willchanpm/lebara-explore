@@ -407,7 +407,7 @@ export default function BingoModal({
             </button>
             <button
               type="button"
-              className="save-button"
+              className="footer-save-button"
               onClick={handleSave}
               disabled={isLoading || rating === 0}
             >

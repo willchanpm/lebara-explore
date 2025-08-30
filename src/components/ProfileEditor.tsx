@@ -19,8 +19,10 @@ export default function ProfileEditor() {
   // State variables
   const [user, setUser] = useState<User | null>(null)
   const [displayName, setDisplayName] = useState('')
+  const [originalDisplayName, setOriginalDisplayName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
   const [toast, setToast] = useState<ToastState>({
     message: '',
     type: 'success',
@@ -69,8 +71,10 @@ export default function ProfileEditor() {
       // Set display name in input (from profile or empty)
       if (profileData?.display_name) {
         setDisplayName(profileData.display_name)
+        setOriginalDisplayName(profileData.display_name)
       } else {
         setDisplayName('')
+        setOriginalDisplayName('')
       }
       
     } catch (error) {
@@ -129,6 +133,8 @@ export default function ProfileEditor() {
       
       // Update local state
       setDisplayName(trimmedName)
+      setOriginalDisplayName(trimmedName)
+      setIsEditing(false)
       
       // Show success message
       showToast('Display name saved successfully!', 'success')
@@ -142,6 +148,17 @@ export default function ProfileEditor() {
     } finally {
       setIsSaving(false)
     }
+  }
+
+  // Function to enter edit mode
+  const handleEdit = () => {
+    setIsEditing(true)
+  }
+
+  // Function to cancel editing and revert changes
+  const handleCancel = () => {
+    setDisplayName(originalDisplayName)
+    setIsEditing(false)
   }
 
   // Function to use email name (extract prefix before @)
@@ -188,37 +205,66 @@ export default function ProfileEditor() {
               <input
                 id="display-name"
                 type="text"
-                className="form-input"
+                className={`form-input ${!isEditing ? 'form-input-disabled' : ''}`}
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Enter your display name"
                 maxLength={50}
-                disabled={isSaving}
+                disabled={!isEditing || isSaving}
                 aria-describedby="display-name-help"
               />
               <div className="form-help" id="display-name-help">
-                <span className="char-count">{displayName.length}/50</span>
-                {user.email && (
-                  <button
-                    type="button"
-                    onClick={useEmailName}
-                    className="use-email-link"
-                    disabled={isSaving}
-                  >
-                    Use email name
-                  </button>
+                {isEditing ? (
+                  <>
+                    <span className="char-count">{displayName.length}/50</span>
+                    {user.email && (
+                      <button
+                        type="button"
+                        onClick={useEmailName}
+                        className="use-email-link"
+                        disabled={isSaving}
+                      >
+                        Use email name
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <span className="edit-hint">Click Edit to modify</span>
                 )}
               </div>
             </div>
             
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={isSaving || !displayName.trim()}
-              className="btn btn-primary save-button"
-            >
-              {isSaving ? 'Saving...' : 'Save'}
-            </button>
+            <div className="profile-editor-actions">
+              {!isEditing ? (
+                <button
+                  type="button"
+                  onClick={handleEdit}
+                  className="btn btn-primary edit-button"
+                  disabled={isLoading}
+                >
+                  Edit
+                </button>
+              ) : (
+                <div className="edit-actions">
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="btn btn-secondary cancel-button"
+                    disabled={isSaving}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={isSaving || !displayName.trim() || displayName.trim() === originalDisplayName}
+                    className="btn btn-primary save-button"
+                  >
+                    {isSaving ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

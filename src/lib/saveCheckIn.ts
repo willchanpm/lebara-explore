@@ -21,6 +21,7 @@ interface CheckInRecord {
   comment: string
   rating: number
   photo_url: string | null
+  author_name: string | null
   created_at: string
 }
 
@@ -93,6 +94,32 @@ export async function saveCheckIn({
       photoUrl = urlData.publicUrl
     }
     
+    // Get author name for the check-in
+    let authorName = 'Member' // Default fallback
+    
+    try {
+      // Get current user to access email
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.email) {
+        const emailPrefix = user.email.split('@')[0]
+        
+        // Look up profile for display name
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('user_id', userId)
+          .single()
+        
+        // Compute author name: use display_name if available, otherwise email prefix
+        authorName = (profileData?.display_name?.trim()?.length) 
+          ? profileData.display_name.trim() 
+          : emailPrefix
+      }
+    } catch (error) {
+      console.warn('Could not determine author name, using default:', error)
+      // Keep default 'Member' if there's an error
+    }
+    
     // Insert check-in record
     const { data: checkInData, error: insertError } = await supabase
       .from('check_ins')
@@ -102,7 +129,8 @@ export async function saveCheckIn({
         board_month: boardMonth,
         comment: comment.trim(),
         rating: clampedRating,
-        photo_url: photoUrl
+        photo_url: photoUrl,
+        author_name: authorName
       })
       .select()
       .single()

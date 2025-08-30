@@ -17,6 +17,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Lebara Explore",
   description: "Explore places and discover new experiences",
+  icons: {
+    icon: '/AppIcons/Assets.xcassets/AppIcon.appiconset/32.png',
+    shortcut: '/AppIcons/Assets.xcassets/AppIcon.appiconset/32.png',
+    apple: '/AppIcons/Assets.xcassets/AppIcon.appiconset/180.png',
+  },
 };
 
 export default function RootLayout({
