@@ -62,7 +62,7 @@ export default function Home() {
               </div>
               <div className="home-card-chevron">›</div>
             </div>
-            <p className="home-card-subtitle">See posts and track your history</p>
+            <p className="home-card-subtitle">See what others are up to</p>
           </Link>
         </div>
       </main>

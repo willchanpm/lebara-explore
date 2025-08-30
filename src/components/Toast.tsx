@@ -37,24 +37,21 @@ export default function Toast({
 
   if (!isVisible) return null
 
-  const baseClasses = "fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg transition-all duration-300 transform"
-  const typeClasses = type === 'success' 
-    ? "bg-green-500 text-white" 
-    : "bg-red-500 text-white"
-  const animationClasses = isAnimating 
-    ? "translate-x-0 opacity-100" 
-    : "translate-x-full opacity-0"
-
   return (
-    <div className={`${baseClasses} ${typeClasses} ${animationClasses}`}>
-      <div className="flex items-center gap-2">
+    <div 
+      className={`toast ${type === 'success' ? 'toast-success' : 'toast-error'} ${isAnimating ? 'toast-visible' : 'toast-hidden'}`}
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      <div className="toast-content">
         {/* Icon */}
-        <span className="text-lg">
+        <span className="toast-icon" aria-hidden="true">
           {type === 'success' ? '✅' : '❌'}
         </span>
         
         {/* Message */}
-        <span className="font-medium">{message}</span>
+        <span className="toast-message">{message}</span>
         
         {/* Close button */}
         <button
@@ -62,7 +59,8 @@ export default function Toast({
             setIsAnimating(false)
             setTimeout(onClose, 300)
           }}
-          className="ml-2 text-white/80 hover:text-white transition-colors"
+          className="toast-close"
+          aria-label="Close notification"
         >
           ×
         </button>
