@@ -150,12 +150,14 @@ export default function BingoClient({ tiles, month }: BingoClientProps) {
       if (savedSquares) {
         const savedArray = JSON.parse(savedSquares)
         setCompletedSquares(new Set(savedArray))
+        console.log('Loaded completed squares:', savedArray)
       }
       
       // Load completion data
       const savedCompletionData = localStorage.getItem('lsx:bingo:completion:v1')
       if (savedCompletionData) {
         setCompletionData(JSON.parse(savedCompletionData))
+        console.log('Loaded completion data:', JSON.parse(savedCompletionData))
       }
     } catch (error) {
       console.warn('Failed to load bingo progress:', error)
@@ -168,9 +170,11 @@ export default function BingoClient({ tiles, month }: BingoClientProps) {
       // Save completed squares
       const arrayToSave = Array.from(completedSquares)
       localStorage.setItem('lsx:bingo:v1', JSON.stringify(arrayToSave))
+      console.log('Saved completed squares:', arrayToSave)
       
       // Save completion data
       localStorage.setItem('lsx:bingo:completion:v1', JSON.stringify(completionData))
+      console.log('Saved completion data:', completionData)
     } catch (error) {
       console.warn('Failed to save bingo progress:', error)
     }
@@ -192,6 +196,8 @@ export default function BingoClient({ tiles, month }: BingoClientProps) {
   // Function to handle modal save
   const handleModalSave = async (data: BingoCompletionData) => {
     if (selectedTile) {
+      console.log('Modal save called for tile:', selectedTile.id, 'with data:', data)
+      
       // Add completion timestamp
       const completionDataWithTimestamp: StoredCompletionData = {
         ...data,
@@ -199,15 +205,20 @@ export default function BingoClient({ tiles, month }: BingoClientProps) {
       }
       
       // Update completion data
-      setCompletionData(prev => ({
-        ...prev,
-        [selectedTile.id]: completionDataWithTimestamp
-      }))
+      setCompletionData(prev => {
+        const newData = {
+          ...prev,
+          [selectedTile.id]: completionDataWithTimestamp
+        }
+        console.log('Updated completion data:', newData)
+        return newData
+      })
       
       // Mark tile as completed
       const newCompletedSquares = new Set(completedSquares)
       newCompletedSquares.add(selectedTile.id)
       setCompletedSquares(newCompletedSquares)
+      console.log('Updated completed squares:', Array.from(newCompletedSquares))
       
       // Save to localStorage
       saveProgress()

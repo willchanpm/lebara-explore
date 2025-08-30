@@ -110,18 +110,42 @@ export default function BingoModal({
   // Function to start camera for taking photos
   const startCamera = async () => {
     try {
+      console.log('Starting camera...')
+      
       // Request access to the user's camera
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: 'environment' } // Use back camera on mobile
       })
       
+      console.log('Camera access granted, stream:', mediaStream)
+      
       setStream(mediaStream)
       setShowCamera(true)
       
-      // Display the camera feed in the video element
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream
-      }
+      // Wait for React to render the video element before setting srcObject
+      setTimeout(() => {
+        console.log('Setting video srcObject, videoRef.current:', videoRef.current)
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream
+          console.log('Video srcObject set successfully')
+          
+          // Add event listeners to debug video loading
+          videoRef.current.onloadedmetadata = () => {
+            console.log('Video metadata loaded, dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight)
+          }
+          
+          videoRef.current.oncanplay = () => {
+            console.log('Video can play')
+          }
+          
+          videoRef.current.onerror = (e) => {
+            console.error('Video error:', e)
+          }
+        } else {
+          console.error('Video ref is null after timeout')
+        }
+      }, 100) // Small delay to ensure video element is rendered
+      
     } catch (error) {
       console.error('Error accessing camera:', error)
       showToast('Unable to access camera. Please try uploading an image instead.', 'error')
@@ -338,7 +362,13 @@ export default function BingoModal({
                     ref={videoRef}
                     autoPlay
                     playsInline
+                    muted
                     className="camera-video"
+                    style={{ width: '100%', height: '200px', objectFit: 'cover' }}
+                    onLoadStart={() => console.log('Video load started')}
+                    onLoadedData={() => console.log('Video data loaded')}
+                    onCanPlay={() => console.log('Video can play')}
+                    onError={(e) => console.error('Video element error:', e)}
                   />
                   <div className="camera-controls">
                     <button

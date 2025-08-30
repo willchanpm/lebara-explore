@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 // Interface for toast props
 interface ToastProps {
@@ -19,16 +19,11 @@ export default function Toast({
   onClose, 
   duration = 3000 
 }: ToastProps) {
-  const [isAnimating, setIsAnimating] = useState(false)
-
   useEffect(() => {
-    if (isVisible) {
-      setIsAnimating(true)
-      
+    if (isVisible && duration > 0) {
       // Auto-hide after duration
       const timer = setTimeout(() => {
-        setIsAnimating(false)
-        setTimeout(onClose, 300) // Wait for animation to complete
+        onClose()
       }, duration)
       
       return () => clearTimeout(timer)
@@ -39,10 +34,25 @@ export default function Toast({
 
   return (
     <div 
-      className={`toast ${type === 'success' ? 'toast-success' : 'toast-error'} ${isAnimating ? 'toast-visible' : 'toast-hidden'}`}
+      className={`toast toast-visible ${type === 'success' ? 'toast-success' : 'toast-error'}`}
       role="status"
       aria-live="polite"
       aria-atomic="true"
+      style={{
+        position: 'fixed',
+        bottom: '6rem',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 9999,
+        padding: '0.75rem 1rem',
+        borderRadius: '0.5rem',
+        boxShadow: '0 4px 20px rgba(10, 42, 74, 0.15)',
+        backgroundColor: type === 'success' ? '#10b981' : '#ef4444',
+        color: 'white',
+        maxWidth: '24rem',
+        width: 'calc(100% - 2rem)',
+        display: 'block'
+      }}
     >
       <div className="toast-content">
         {/* Icon */}
@@ -55,10 +65,7 @@ export default function Toast({
         
         {/* Close button */}
         <button
-          onClick={() => {
-            setIsAnimating(false)
-            setTimeout(onClose, 300)
-          }}
+          onClick={onClose}
           className="toast-close"
           aria-label="Close notification"
         >

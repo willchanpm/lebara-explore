@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import type { User } from '@supabase/supabase-js'
 import ImageModal from './ImageModal'
+import Toast from './Toast'
 
 // Interface for check-in data from the database
 interface CheckIn {
@@ -18,6 +19,12 @@ interface CheckIn {
   created_at: string
   tile_label?: string
   tile_description?: string | null
+}
+
+// Interface for delete confirmation modal state
+interface DeleteModalState {
+  isOpen: boolean
+  checkIn: CheckIn | null
 }
 
 
@@ -128,6 +135,23 @@ export default function Feed() {
     imageAlt: ''
   })
 
+  // State for delete confirmation modal
+  const [deleteModal, setDeleteModal] = useState<DeleteModalState>({
+    isOpen: false,
+    checkIn: null
+  })
+
+  // State for toast notifications
+  const [toast, setToast] = useState<{
+    message: string
+    type: 'success' | 'error'
+    isVisible: boolean
+  }>({
+    message: '',
+    type: 'success',
+    isVisible: false
+  })
+
   // Get current user on component mount
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -150,6 +174,8 @@ export default function Feed() {
   useEffect(() => {
     fetchCheckIns()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+
 
   // Function to fetch check-ins from Supabase
   const fetchCheckIns = async (isLoadMore = false) => {
@@ -291,6 +317,122 @@ export default function Feed() {
     })
   }
 
+  // Function to open delete confirmation modal
+  const openDeleteModal = (checkIn: CheckIn) => {
+    setDeleteModal({ isOpen: true, checkIn })
+  }
+
+  // Function to close delete confirmation modal
+  const closeDeleteModal = () => {
+    setDeleteModal({ isOpen: false, checkIn: null })
+  }
+
+  // Function to handle successful deletion
+  const handleDeleteSuccess = () => {
+    closeDeleteModal()
+    // Use setTimeout to ensure the modal closes before showing toast
+    setTimeout(() => {
+      showToast('Check-in deleted successfully!', 'success')
+    }, 100)
+    // No need to refetch since we already updated local state
+  }
+
+  // Function to handle deletion error
+  const handleDeleteError = (error: string) => {
+    closeDeleteModal()
+    // Use setTimeout to ensure the modal closes before showing toast
+    setTimeout(() => {
+      showToast(`Error deleting check-in: ${error}`, 'error')
+    }, 100)
+  }
+
+  // Function to delete a check-in
+  const deleteCheckIn = async () => {
+    if (!deleteModal.checkIn || !currentUser) return
+
+    try {
+      // First, delete the photo from storage if it exists
+      if (deleteModal.checkIn.photo_url) {
+        try {
+          // Extract the storage path from the photo URL
+          const storagePath = extractStoragePath(deleteModal.checkIn.photo_url)
+          if (storagePath) {
+            // Remove the photo from Supabase Storage
+            const { error: storageError } = await supabase.storage
+              .from('checkins')
+              .remove([storagePath])
+            
+            if (storageError) {
+              console.warn('Warning: Could not delete photo from storage:', storageError)
+              // Continue with database deletion even if photo deletion fails
+            }
+          }
+        } catch (storageErr) {
+          console.warn('Warning: Error processing photo deletion:', storageErr)
+          // Continue with database deletion even if photo deletion fails
+        }
+      }
+
+      // Delete the check-in record from the database
+      const { error } = await supabase
+        .from('check_ins')
+        .delete()
+        .eq('id', deleteModal.checkIn.id)
+        .eq('user_id', currentUser.id)
+
+      if (error) {
+        throw error
+      }
+
+      // Remove the deleted check-in from local state
+      setCheckIns(prev => prev.filter(checkIn => checkIn.id !== deleteModal.checkIn!.id))
+      
+      handleDeleteSuccess()
+    } catch (err) {
+      console.error('Error deleting check-in:', err)
+      handleDeleteError('Failed to delete check-in. Please try again.')
+    }
+  }
+
+  // Function to extract storage path from photo_url
+  const extractStoragePath = (photoUrl: string | null): string | null => {
+    if (!photoUrl) return null
+    
+    try {
+      // Supabase storage URLs typically look like:
+      // https://[project].supabase.co/storage/v1/object/public/checkins/[path]
+      const url = new URL(photoUrl)
+      
+      // Find the 'checkins' part and extract everything after it
+      const checkinsIndex = url.pathname.indexOf('/checkins/')
+      if (checkinsIndex !== -1) {
+        // Extract the path after '/checkins/' (e.g., "userId/boardMonth/filename")
+        return url.pathname.substring(checkinsIndex + 10) // +10 to skip '/checkins/'
+      }
+      
+      // Fallback: try to extract just the filename from the end
+      const pathParts = url.pathname.split('/')
+      const filename = pathParts[pathParts.length - 1]
+      if (filename && filename.includes('-')) {
+        return filename
+      }
+      
+      return null
+    } catch (error) {
+      console.warn('Could not parse photo URL:', photoUrl, error)
+      return null
+    }
+  }
+
+  // Function to show toast notification
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type, isVisible: true })
+  }
+
+  // Function to close toast
+  const closeToast = () => {
+    setToast(prev => ({ ...prev, isVisible: false }))
+  }
 
 
   // If user is not authenticated, show sign-in CTA
@@ -347,23 +489,7 @@ export default function Feed() {
     )
   }
 
-  // Empty state
-  if (checkIns.length === 0) {
-    return (
-      <div className="feed-empty">
-        <div className="feed-empty-content">
-          <div className="feed-empty-icon">🍽️</div>
-          <h3 className="feed-empty-title">No check-ins yet</h3>
-          <p className="feed-empty-text">
-            Complete a bingo tile to add your first post to the feed!
-          </p>
-          <a href="/bingo" className="btn btn-primary">
-            Start exploring
-          </a>
-        </div>
-      </div>
-    )
-  }
+
 
   return (
     <div className="feed-component">
@@ -404,16 +530,58 @@ export default function Feed() {
         </div>
       </div>
 
-      {/* Check-ins list */}
-      <div className="feed-list">
+      {/* Content based on state */}
+      {loading ? (
+        <div className="feed-skeleton">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="feed-card feed-skeleton-card">
+              <div className="feed-card-header">
+                <div className="feed-skeleton-title"></div>
+                <div className="feed-skeleton-date"></div>
+              </div>
+              <div className="feed-skeleton-stars"></div>
+              <div className="feed-skeleton-comment"></div>
+              <div className="feed-skeleton-photo"></div>
+              <div className="feed-skeleton-chip"></div>
+            </div>
+          ))}
+        </div>
+      ) : error ? (
+        <div className="feed-error">
+          <div className="feed-error-content">
+            <div className="feed-error-icon">⚠️</div>
+            <h3 className="feed-error-title">Something went wrong</h3>
+            <p className="feed-error-text">{error}</p>
+            <button onClick={() => fetchCheckIns()} className="btn btn-primary">
+              Try again
+            </button>
+          </div>
+        </div>
+      ) : checkIns.length === 0 ? (
+        <div className="feed-empty">
+          <div className="feed-empty-content">
+            <div className="feed-empty-icon">🍽️</div>
+            <h3 className="feed-empty-title">No check-ins yet</h3>
+            <p className="feed-empty-text">
+              Complete a bingo tile to add your first post to the feed!
+            </p>
+            <a href="/bingo" className="btn btn-primary">
+              Start exploring
+            </a>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Check-ins list */}
+          <div className="feed-list">
         {filterMyPosts(checkIns).map((checkIn) => (
           <div key={checkIn.id} className="feed-card">
             {/* Card header with tile label and date */}
             <div className="feed-card-header">
               <div className="feed-card-title-section">
-                              <h3 className="feed-card-title">
-                {getTileTitle(checkIn)}
-              </h3>
+                <h3 className="feed-card-title">
+                  {getTileTitle(checkIn)}
+                </h3>
                 <span className="feed-card-author" title={getAuthorName(checkIn, currentUser)}>
                   by {getAuthorName(checkIn, currentUser)}
                 </span>
@@ -460,9 +628,22 @@ export default function Feed() {
               )}
             </div>
 
-            {/* Board month chip */}
-            <div className="feed-card-chip">
-              {checkIn.board_month}
+            {/* Board month chip and delete button container */}
+            <div className="feed-card-bottom">
+              <div className="feed-card-chip">
+                {checkIn.board_month}
+              </div>
+              {/* Delete button - only show for current user's posts */}
+              {currentUser && checkIn.user_id === currentUser.id && (
+                <button
+                  onClick={() => openDeleteModal(checkIn)}
+                  className="feed-card-delete-btn"
+                  aria-label="Delete check-in"
+                  title="Delete this check-in"
+                >
+                  🗑️
+                </button>
+              )}
             </div>
           </div>
         ))}
@@ -487,6 +668,8 @@ export default function Feed() {
           </button>
         </div>
       )}
+        </>
+      )}
       
       {/* Image Modal */}
       <ImageModal
@@ -495,6 +678,47 @@ export default function Feed() {
         imageUrl={imageModal.imageUrl}
         imageAlt={imageModal.imageAlt}
       />
+
+             {/* Delete Confirmation Modal */}
+       {deleteModal.isOpen && deleteModal.checkIn && (
+         <div className="modal-overlay">
+           <div className="modal-content">
+             <div className="modal-header">
+               <h3 className="modal-title">Delete Check-in?</h3>
+             </div>
+             <div className="modal-body">
+               <p>Are you sure you want to delete your check-in about:</p>
+               <div className="delete-modal-details">
+                 <strong>{getTileTitle(deleteModal.checkIn)}</strong>
+                 <span className="delete-modal-date">
+                   {formatDateTime(deleteModal.checkIn.created_at)}
+                 </span>
+               </div>
+               <p className="delete-modal-warning">
+                 This action cannot be undone. The check-in and any associated photo will be permanently removed.
+               </p>
+             </div>
+             <div className="modal-actions">
+               <button onClick={closeDeleteModal} className="btn btn-secondary">
+                 Cancel
+               </button>
+               <button onClick={deleteCheckIn} className="btn btn-danger">
+                 Delete
+               </button>
+             </div>
+           </div>
+         </div>
+       )}
+
+             {/* Toast Notifications */}
+       <Toast
+         message={toast.message}
+         type={toast.type}
+         isVisible={toast.isVisible}
+         onClose={closeToast}
+       />
+       
+
     </div>
   )
 }
