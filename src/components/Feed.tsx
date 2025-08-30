@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabaseClient'
 import type { User } from '@supabase/supabase-js'
 import ImageModal from './ImageModal'
 import Toast from './Toast'
+import { toggleFavorite, getFavoriteStatusForPlaces } from '@/lib/favorites'
 
 // Interface for check-in data from the database
 interface CheckIn {
@@ -19,6 +20,9 @@ interface CheckIn {
   created_at: string
   tile_label?: string
   tile_description?: string | null
+  place_id?: string // Add place_id for favorites functionality
+  place_name?: string // Add place name for display
+  place_category?: string // Add place category for display
 }
 
 // Interface for delete confirmation modal state
@@ -152,6 +156,10 @@ export default function Feed() {
     isVisible: false
   })
 
+  // State for favorites functionality
+  const [userFavorites, setUserFavorites] = useState<Set<string>>(new Set())
+  const [favoritesLoading, setFavoritesLoading] = useState(false)
+
   // Get current user on component mount
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -174,6 +182,13 @@ export default function Feed() {
   useEffect(() => {
     fetchCheckIns()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch user favorites when user changes or check-ins change
+  useEffect(() => {
+    if (currentUser && checkIns.length > 0) {
+      fetchUserFavorites()
+    }
+  }, [currentUser, checkIns]) // eslint-disable-line react-hooks/exhaustive-deps
 
 
 
@@ -235,6 +250,11 @@ export default function Feed() {
         // Extract unique months for filter dropdown
         const months = [...new Set(data.map(checkIn => checkIn.board_month))]
         setAvailableMonths(months)
+        
+        // Refresh favorites after check-ins are loaded
+        if (currentUser) {
+          fetchUserFavorites()
+        }
       }
     } catch (err) {
       console.error('Error fetching check-ins:', err)
@@ -242,6 +262,79 @@ export default function Feed() {
     } finally {
       setLoading(false)
       setLoadingMore(false)
+    }
+  }
+
+  // Function to fetch user favorites
+  const fetchUserFavorites = async () => {
+    if (!currentUser) return
+    
+    try {
+      setFavoritesLoading(true)
+      
+      // Get all place IDs from check-ins to check favorite status
+      const placeIds = checkIns
+        .map(checkIn => checkIn.place_id)
+        .filter(Boolean) as string[]
+      
+      if (placeIds.length === 0) return
+      
+      const { data: favoritedIds, error } = await getFavoriteStatusForPlaces(
+        supabase,
+        currentUser.id,
+        placeIds
+      )
+      
+      if (error) {
+        console.error('Error fetching favorite status:', error)
+        return
+      }
+      
+      if (favoritedIds) {
+        setUserFavorites(favoritedIds)
+      }
+    } catch (err) {
+      console.error('Error fetching user favorites:', err)
+    } finally {
+      setFavoritesLoading(false)
+    }
+  }
+
+  // Function to handle favorite toggle
+  const handleFavoriteToggle = async (placeId: string) => {
+    if (!currentUser || !placeId) return
+    
+    try {
+      const { success, error } = await toggleFavorite(
+        supabase,
+        currentUser.id,
+        placeId
+      )
+      
+      if (success) {
+        // Update local state
+        setUserFavorites(prev => {
+          const newFavorites = new Set(prev)
+          if (newFavorites.has(placeId)) {
+            newFavorites.delete(placeId)
+          } else {
+            newFavorites.add(placeId)
+          }
+          return newFavorites
+        })
+        
+        // Show success toast
+        const isFavorited = userFavorites.has(placeId)
+        showToast(
+          isFavorited ? 'Removed from favorites' : 'Added to favorites',
+          'success'
+        )
+      } else {
+        showToast(error || 'Failed to update favorite', 'error')
+      }
+    } catch (err) {
+      console.error('Error toggling favorite:', err)
+      showToast('Failed to update favorite', 'error')
     }
   }
 
@@ -253,10 +346,20 @@ export default function Feed() {
       
       if (tileIds.length === 0) return checkInsData
       
-      // Fetch tile data from bingo_tiles table
+      // Fetch tile data from bingo_tiles table with place information
       const { data: tilesData, error: tilesError } = await supabase
         .from('bingo_tiles')
-        .select('id, label, description')
+        .select(`
+          id, 
+          label, 
+          description,
+          place_id,
+          places (
+            id,
+            name,
+            category
+          )
+        `)
         .in('id', tileIds)
       
       if (tilesError) {
@@ -270,12 +373,18 @@ export default function Feed() {
         tileMap.set(tile.id, tile)
       })
       
-      // Enhance check-ins with tile data
-      return checkInsData.map(checkIn => ({
-        ...checkIn,
-        tile_label: tileMap.get(checkIn.tile_id)?.label || null,
-        tile_description: tileMap.get(checkIn.tile_id)?.description || null
-      }))
+      // Enhance check-ins with tile data and place information
+      return checkInsData.map(checkIn => {
+        const tileData = tileMap.get(checkIn.tile_id)
+        return {
+          ...checkIn,
+          tile_label: tileData?.label || null,
+          tile_description: tileData?.description || null,
+          place_id: tileData?.place_id || null,
+          place_name: tileData?.places?.name || null,
+          place_category: tileData?.places?.category || null
+        }
+      })
     } catch (err) {
       console.error('Error enhancing check-ins with tile data:', err)
       return checkInsData
@@ -576,7 +685,7 @@ export default function Feed() {
           <div className="feed-list">
         {filterMyPosts(checkIns).map((checkIn) => (
           <div key={checkIn.id} className="feed-card">
-            {/* Card header with tile label and date */}
+            {/* Card header with tile label, date, and favorite button */}
             <div className="feed-card-header">
               <div className="feed-card-title-section">
                 <h3 className="feed-card-title">
@@ -586,9 +695,23 @@ export default function Feed() {
                   by {getAuthorName(checkIn, currentUser)}
                 </span>
               </div>
-              <time className="feed-card-date" dateTime={checkIn.created_at}>
-                {formatDateTime(checkIn.created_at)}
-              </time>
+              <div className="feed-card-header-right">
+                <time className="feed-card-date" dateTime={checkIn.created_at}>
+                  {formatDateTime(checkIn.created_at)}
+                </time>
+                {/* Favorite button - show for all users if place_id exists */}
+                {checkIn.place_id && currentUser && (
+                  <button
+                    onClick={() => handleFavoriteToggle(checkIn.place_id!)}
+                    className={`feed-card-favorite-btn ${userFavorites.has(checkIn.place_id!) ? 'favorited' : ''}`}
+                    aria-label={userFavorites.has(checkIn.place_id!) ? 'Remove from favorites' : 'Add to favorites'}
+                    title={userFavorites.has(checkIn.place_id!) ? 'Remove from favorites' : 'Add to favorites'}
+                    disabled={favoritesLoading}
+                  >
+                    {userFavorites.has(checkIn.place_id!) ? '⭐' : '☆'}
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Star rating */}
@@ -628,22 +751,36 @@ export default function Feed() {
               )}
             </div>
 
-            {/* Board month chip and delete button container */}
+            {/* Board month chip and action buttons container */}
             <div className="feed-card-bottom">
               <div className="feed-card-chip">
                 {checkIn.board_month}
               </div>
-              {/* Delete button - only show for current user's posts */}
-              {currentUser && checkIn.user_id === currentUser.id && (
-                <button
-                  onClick={() => openDeleteModal(checkIn)}
-                  className="feed-card-delete-btn"
-                  aria-label="Delete check-in"
-                  title="Delete this check-in"
-                >
-                  🗑️
-                </button>
-              )}
+              <div className="feed-card-actions">
+                {/* Favorite button - show for all users if place_id exists */}
+                {checkIn.place_id && currentUser && (
+                  <button
+                    onClick={() => handleFavoriteToggle(checkIn.place_id!)}
+                    className={`feed-card-favorite-btn ${userFavorites.has(checkIn.place_id!) ? 'favorited' : ''}`}
+                    aria-label={userFavorites.has(checkIn.place_id!) ? 'Remove from favorites' : 'Add to favorites'}
+                    title={userFavorites.has(checkIn.place_id!) ? 'Remove from favorites' : 'Add to favorites'}
+                    disabled={favoritesLoading}
+                  >
+                    {userFavorites.has(checkIn.place_id!) ? '⭐' : '☆'}
+                  </button>
+                )}
+                {/* Delete button - only show for current user's posts */}
+                {currentUser && checkIn.user_id === currentUser.id && (
+                  <button
+                    onClick={() => openDeleteModal(checkIn)}
+                    className="feed-card-delete-btn"
+                    aria-label="Delete check-in"
+                    title="Delete this check-in"
+                  >
+                    🗑️
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ))}

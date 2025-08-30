@@ -321,7 +321,7 @@ export default function AddPlaceModal({ isOpen, onClose, onPlaceAdded }: AddPlac
                 {errors.url && (
                   <div className="form-error">{errors.url}</div>
                 )}
-                <div className="form-help">Optional - the place's website</div>
+                <div className="form-help">Optional - the place&apos;s website</div>
               </div>
 
               {/* Google Maps URL */}

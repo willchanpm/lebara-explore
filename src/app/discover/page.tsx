@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import AddPlaceModal from '@/components/AddPlaceModal'
+import { toggleFavorite, getFavoriteStatusForPlaces } from '@/lib/favorites'
+import type { User } from '@supabase/supabase-js'
 
 // Define the structure of a place object
 // This helps TypeScript understand what data we're working with
@@ -26,26 +28,145 @@ export default function DiscoverPage() {
   const [places, setPlaces] = useState<Place[]>([]) // Stores the list of places
   const [loading, setLoading] = useState(true) // Shows loading spinner while fetching data
   const [error, setError] = useState<string | null>(null) // Stores any error messages
-  const [activeFilter, setActiveFilter] = useState<string>('All') // Tracks the currently selected filter
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set(['All'])) // Tracks multiple selected filters
   const [searchQuery, setSearchQuery] = useState<string>('') // Stores the search input text
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>('') // Debounced search query for performance
   
   // State for the add place modal
   const [isAddPlaceModalOpen, setIsAddPlaceModalOpen] = useState(false)
+  
+  // State for favorites functionality
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [userFavorites, setUserFavorites] = useState<Set<string>>(new Set())
+  const [favoritesLoading, setFavoritesLoading] = useState(false)
+
+  // Function to fetch places data
+  const fetchPlaces = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      // Query Supabase for all places, ordered by name
+      const { data, error: supabaseError } = await supabase
+        .from('places')
+        .select('*')
+        .order('name')
+
+      // Check if there was an error with the Supabase query
+      if (supabaseError) {
+        throw new Error(supabaseError.message)
+      }
+
+      // Update the places state with the fetched data
+      setPlaces(data || [])
+    } catch (err) {
+      // If anything goes wrong, store the error message
+      setError(err instanceof Error ? err.message : 'An unknown error occurred')
+    } finally {
+      // Always stop loading, whether we succeeded or failed
+      setLoading(false)
+    }
+  }
+
+  // Function to fetch user favorites
+  const fetchUserFavorites = useCallback(async () => {
+    if (!currentUser) return
+    
+    try {
+      setFavoritesLoading(true)
+      
+      // Get all place IDs from places to check favorite status
+      const placeIds = places.map(place => place.id)
+      
+      if (placeIds.length === 0) return
+      
+      const { data: favoritedIds, error } = await getFavoriteStatusForPlaces(
+        supabase,
+        currentUser.id,
+        placeIds
+      )
+      
+      if (error) {
+        console.error('Error fetching favorite status:', error)
+        return
+      }
+      
+      if (favoritedIds) {
+        // Convert numeric IDs to strings for consistency with the Set
+        const stringFavoritedIds = new Set(Array.from(favoritedIds).map(id => id.toString()))
+        setUserFavorites(stringFavoritedIds)
+      }
+    } catch (err) {
+      console.error('Error fetching user favorites:', err)
+    } finally {
+      setFavoritesLoading(false)
+    }
+  }, [currentUser, places])
+
+  // Function to handle favorite toggle
+  const handleFavoriteToggle = async (placeId: number) => {
+    if (!currentUser) return
+    
+    try {
+      const { success, error } = await toggleFavorite(
+        supabase,
+        currentUser.id,
+        placeId
+      )
+      
+      if (success) {
+        // Update local state
+        setUserFavorites(prev => {
+          const newFavorites = new Set(prev)
+          const placeIdStr = placeId.toString()
+          if (newFavorites.has(placeIdStr)) {
+            newFavorites.delete(placeIdStr)
+          } else {
+            newFavorites.add(placeIdStr)
+          }
+          return newFavorites
+        })
+      } else {
+        console.error('Failed to toggle favorite:', error)
+      }
+    } catch (err) {
+      console.error('Error toggling favorite:', err)
+    }
+  }
 
   // Helper function to render the places content
   const renderPlacesContent = () => {
     // First filter by category
     let categoryFiltered: Place[]
     
-    if (activeFilter === 'All') {
+    if (activeFilters.has('All')) {
       categoryFiltered = places
-    } else if (activeFilter === 'User Submitted') {
-      // Filter for user-submitted places
-      categoryFiltered = places.filter(place => place.user_submitted === true)
     } else {
-      // Filter by regular category
-      categoryFiltered = places.filter(place => place.category === activeFilter)
+      categoryFiltered = []
+      
+      // Apply each selected filter
+      activeFilters.forEach(filter => {
+        if (filter === 'User Submitted') {
+          // Filter for user-submitted places
+          const userSubmittedPlaces = places.filter(place => place.user_submitted === true)
+          categoryFiltered = [...categoryFiltered, ...userSubmittedPlaces]
+        } else if (filter === 'Favourites') {
+          // Filter for user's favorite places
+          if (currentUser) {
+            const favoritePlaces = places.filter(place => userFavorites.has(place.id.toString()))
+            categoryFiltered = [...categoryFiltered, ...favoritePlaces]
+          }
+        } else {
+          // Filter by regular category
+          const categoryPlaces = places.filter(place => place.category === filter)
+          categoryFiltered = [...categoryFiltered, ...categoryPlaces]
+        }
+      })
+      
+      // Remove duplicates (in case a place matches multiple filters)
+      categoryFiltered = categoryFiltered.filter((place, index, self) => 
+        index === self.findIndex(p => p.id === place.id)
+      )
     }
     
     // Then filter by search query (case-insensitive)
@@ -72,14 +193,27 @@ export default function DiscoverPage() {
         )
       } else if (categoryFiltered.length === 0) {
         // No places match the current category filter
+        let message = 'Try selecting a different category'
+        let icon = '🔍'
+        
+        if (activeFilters.has('Favourites')) {
+          if (!currentUser) {
+            message = 'Please sign in to view your favorites'
+            icon = '🔐'
+          } else {
+            message = 'You haven&apos;t favorited any places yet'
+            icon = '⭐'
+          }
+        }
+        
         return (
-                  <div className="no-places-container">
-          <div className="no-places-icon">
-            <span className="no-places-emoji">🔍</span>
+          <div className="no-places-container">
+            <div className="no-places-icon">
+              <span className="no-places-emoji">{icon}</span>
+            </div>
+            <h3 className="no-places-title">No places found</h3>
+            <p className="no-places-subtitle">{message}</p>
           </div>
-          <h3 className="no-places-title">No places found</h3>
-          <p className="no-places-subtitle">Try selecting a different category</p>
-        </div>
         )
       } else {
         // No places match the search query
@@ -100,27 +234,53 @@ export default function DiscoverPage() {
       <>
         <div className="places-grid">
           {filteredPlaces.map((place) => (
-            <button
+            <div
               key={place.id}
-              className="place-card"
+              className="place-card clickable"
               onClick={() => {
                 // Handle card click - could open details modal or navigate
                 console.log('Clicked place:', place.name)
               }}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  console.log('Clicked place:', place.name)
+                }
+              }}
             >
-              {/* Header: name, price, and category pill */}
+              {/* Header: name, price, and favorite button */}
               <div className="place-header">
-                <div className="place-info">
-                  <h3 className="place-name">
-                    {place.name} ({place.price_band})
-                  </h3>
-                  {/* Show user-submitted indicator */}
-                  {place.user_submitted && (
-                    <div className="user-submitted-badge">
-                      👥 User Submitted
-                    </div>
-                  )}
+                <h3 className="place-name">
+                  {place.name} ({place.price_band})
+                </h3>
+                {/* Favorite button - show for all users */}
+                {currentUser && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation() // Prevent card click when clicking favorite button
+                      handleFavoriteToggle(place.id)
+                    }}
+                    className={`place-favorite-btn ${userFavorites.has(place.id.toString()) ? 'favorited' : ''}`}
+                    aria-label={userFavorites.has(place.id.toString()) ? 'Remove from favorites' : 'Add to favorites'}
+                    title={userFavorites.has(place.id.toString()) ? 'Remove from favorites' : 'Add to favorites'}
+                    disabled={favoritesLoading}
+                  >
+                    {userFavorites.has(place.id.toString()) ? '⭐' : '☆'}
+                  </button>
+                )}
+              </div>
+              
+              {/* User submitted badge - now below the header */}
+              {place.user_submitted && (
+                <div className="user-submitted-badge">
+                  👥 User Submitted
                 </div>
+              )}
+              
+              {/* Category label - now under the title */}
+              <div className="place-category-section">
                 <span className="place-category">
                   {place.category.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                 </span>
@@ -158,7 +318,7 @@ export default function DiscoverPage() {
                   🌐 Website
                 </a>
               </div>
-            </button>
+            </div>
           ))}
         </div>
         
@@ -171,14 +331,19 @@ export default function DiscoverPage() {
                 const categoryCount = categoryFiltered.length
                 const finalCount = filteredPlaces.length
                 
-                if (debouncedSearchQuery.trim() === '' && activeFilter === 'All') {
+                if (debouncedSearchQuery.trim() === '' && activeFilters.has('All') && activeFilters.size === 1) {
                   return `Found ${totalPlaces} place${totalPlaces === 1 ? '' : 's'}`
                 } else if (debouncedSearchQuery.trim() === '') {
-                  return `Found ${categoryCount} ${activeFilter.replace('_', ' ')} place${categoryCount === 1 ? '' : 's'}`
-                } else if (activeFilter === 'All') {
+                  const filterNames = Array.from(activeFilters).map(filter => 
+                    filter === 'User Submitted' ? 'User Submitted' :
+                    filter === 'Favourites' ? 'Favourites' :
+                    filter.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+                  ).join(', ')
+                  return `Found ${categoryCount} place${categoryCount === 1 ? '' : 's'} in: ${filterNames}`
+                } else if (activeFilters.has('All') && activeFilters.size === 1) {
                   return `Found ${finalCount} place${finalCount === 1 ? '' : 's'} matching "${debouncedSearchQuery}"`
                 } else {
-                  return `Found ${finalCount} ${activeFilter.replace('_', ' ')} place${finalCount === 1 ? '' : 's'} matching "${debouncedSearchQuery}"`
+                  return `Found ${finalCount} place${finalCount === 1 ? '' : 's'} matching "${debouncedSearchQuery}"`
                 }
               })()}
             </p>
@@ -188,38 +353,34 @@ export default function DiscoverPage() {
     )
   }
 
+  // Get current user on component mount
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser()
+        if (error) {
+          console.error('Error fetching user:', error)
+        } else {
+          setCurrentUser(user)
+        }
+      } catch (err) {
+        console.error('Unexpected error:', err)
+      }
+    }
+    
+    getCurrentUser()
+  }, [])
+
+  // Fetch user favorites when user changes or places change
+  useEffect(() => {
+    if (currentUser && places.length > 0) {
+      fetchUserFavorites()
+    }
+  }, [currentUser, places, fetchUserFavorites])
+
   // useEffect runs when the component first loads (on mount)
   // This is where we fetch data from Supabase
   useEffect(() => {
-    // Define an async function to fetch places data
-    const fetchPlaces = async () => {
-      try {
-        // Reset any previous errors
-        setError(null)
-        
-        // Query Supabase for all places, ordered by name
-        // This is the database query you requested
-        const { data, error: supabaseError } = await supabase
-          .from('places')
-          .select('*')
-          .order('name')
-
-        // Check if there was an error with the Supabase query
-        if (supabaseError) {
-          throw new Error(supabaseError.message)
-        }
-
-        // Update the places state with the fetched data
-        setPlaces(data || [])
-      } catch (err) {
-        // If anything goes wrong, store the error message
-        setError(err instanceof Error ? err.message : 'An unknown error occurred')
-      } finally {
-        // Always stop loading, whether we succeeded or failed
-        setLoading(false)
-      }
-    }
-
     // Call the fetch function
     fetchPlaces()
   }, []) // Empty dependency array means this only runs once when component mounts
@@ -331,7 +492,7 @@ export default function DiscoverPage() {
 
         {/* Add Place Section */}
         <div className="add-place-section">
-          <span className="add-place-text">Can't find your favourite? </span>
+          <span className="add-place-text">Can&apos;t find your favourite? </span>
           <button
             onClick={() => setIsAddPlaceModalOpen(true)}
             className="add-place-link-button"
@@ -344,19 +505,60 @@ export default function DiscoverPage() {
         {/* Filter chips */}
         <div className="filter-container">
           <div className="filter-chips">
-            {['All', 'market', 'street_food', 'veg', 'vegan', 'coffee', 'Fine_Dining', '24_7', 'activity', 'landmark', 'other', 'User Submitted'].map((category) => (
+            {['All', 'market', 'street_food', 'veg', 'vegan', 'coffee', 'Fine_Dining', '24_7', 'activity', 'landmark', 'other', 'User Submitted', 'Favourites'].map((category) => (
               <button
                 key={category}
-                onClick={() => setActiveFilter(category)}
-                className={`filter-chip ${activeFilter === category ? 'active' : 'inactive'}`}
+                onClick={() => {
+                  const newFilters = new Set(activeFilters)
+                  if (category === 'All') {
+                    // If clicking 'All', clear other filters and select only 'All'
+                    newFilters.clear()
+                    newFilters.add('All')
+                  } else if (activeFilters.has('All') && activeFilters.size === 1) {
+                    // If only 'All' is selected and clicking another filter, remove 'All' and add the new filter
+                    newFilters.delete('All')
+                    newFilters.add(category)
+                  } else if (newFilters.has(category)) {
+                    // If filter is already selected, remove it
+                    newFilters.delete(category)
+                    // If no filters left, default back to 'All'
+                    if (newFilters.size === 0) {
+                      newFilters.add('All')
+                    }
+                  } else {
+                    // Add the new filter
+                    newFilters.add(category)
+                  }
+                  setActiveFilters(newFilters)
+                }}
+                className={`filter-chip ${activeFilters.has(category) ? 'active' : 'inactive'}`}
+                data-filter={category}
+                data-active={activeFilters.has(category)}
               >
                 {category === 'All' ? 'All Places' : 
-                 category === 'User Submitted' ? '👥 User Submitted' :
-                 category === 'other' ? '🔍 Other' :
+                 category === 'User Submitted' ? 'User Submitted' :
+                 category === 'other' ? 'Other' :
+                 category === 'Favourites' ? '⭐ Favourites' :
                  category.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
               </button>
             ))}
           </div>
+          
+          {/* Clear All Filters button - only show when multiple filters are active */}
+          {activeFilters.size > 1 || (activeFilters.size === 1 && !activeFilters.has('All')) ? (
+            <div className="clear-filters-container">
+              <button
+                onClick={() => {
+                  setActiveFilters(new Set(['All']))
+                }}
+                className="clear-filters-btn"
+                aria-label="Clear all filters"
+                title="Clear all filters and show all places"
+              >
+                🗑️ Clear All
+              </button>
+            </div>
+          ) : null}
         </div>
 
         {/* Filter and display places */}
@@ -384,3 +586,4 @@ export default function DiscoverPage() {
     </div>
   )
 }
+
