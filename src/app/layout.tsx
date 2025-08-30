@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LStreet Explorer",
+  title: "Lebara Explore",
   description: "Explore places and discover new experiences",
 };
 

@@ -2802,6 +2802,14 @@ body.login-page-active .main-with-nav {
   color: var(--muted);
 }
 
+.bingo-month-note {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--muted);
+  font-style: italic;
+  margin-top: 0.25rem;
+}
+
 .bingo-progress {
   margin-bottom: 1.5rem;
   padding: 1rem;
@@ -2872,6 +2880,10 @@ body.login-page-active .main-with-nav {
   transition: all 0.2s ease;
   overflow: hidden;
   cursor: pointer;
+  /* Ensure consistent height for proper title alignment */
+  min-height: 8rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .bingo-square-completed {
@@ -2919,24 +2931,50 @@ body.login-page-active .main-with-nav {
 .bingo-content {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  height: 100%;
+  gap: 0.25rem;
+}
+
+.bingo-title-text {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: center;
+  /* Ensure title stays at the top */
+  flex-shrink: 0;
+}
+
+.bingo-icon {
+  font-size: 1.25rem;
+  text-align: center;
+  margin: 0.25rem 0;
+  /* Center the icon between title and description */
+  flex-shrink: 0;
+  /* Add a subtle background for better visibility */
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.5rem auto;
 }
 
 .bingo-emoji {
   font-size: 1.875rem;
 }
 
-.bingo-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  line-height: 1.25;
-}
-
 .bingo-description {
   font-size: 0.625rem;
   color: var(--muted);
   line-height: 1.2;
-  margin-top: 0.25rem;
+  text-align: center;
+  /* Allow description to fill remaining space */
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .bingo-placeholder {
@@ -2981,6 +3019,10 @@ body.login-page-active .main-with-nav {
   .bingo-grid {
     grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
+  }
+  
+  .bingo-square {
+    min-height: 9rem;
   }
 }
 
