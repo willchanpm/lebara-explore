@@ -5,11 +5,7 @@ import { supabase } from '@/lib/supabaseClient'
 import Toast from './Toast'
 import type { User } from '@supabase/supabase-js'
 
-// Interface for profile data
-interface Profile {
-  user_id: string
-  display_name: string | null
-}
+
 
 // Interface for toast state
 interface ToastState {
@@ -22,7 +18,6 @@ interface ToastState {
 export default function ProfileEditor() {
   // State variables
   const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<Profile | null>(null)
   const [displayName, setDisplayName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -35,7 +30,7 @@ export default function ProfileEditor() {
   // Load user and profile data on mount
   useEffect(() => {
     loadUserAndProfile()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Function to load current user and their profile
   const loadUserAndProfile = async () => {
@@ -71,9 +66,6 @@ export default function ProfileEditor() {
         return
       }
       
-      // Set profile data (or null if no profile exists)
-      setProfile(profileData)
-      
       // Set display name in input (from profile or empty)
       if (profileData?.display_name) {
         setDisplayName(profileData.display_name)
@@ -108,6 +100,11 @@ export default function ProfileEditor() {
       return
     }
     
+    if (!user) {
+      showToast('User not authenticated', 'error')
+      return
+    }
+    
     try {
       setIsSaving(true)
       
@@ -132,7 +129,6 @@ export default function ProfileEditor() {
       
       // Update local state
       setDisplayName(trimmedName)
-      setProfile(prev => prev ? { ...prev, display_name: trimmedName } : { user_id: user.id, display_name: trimmedName })
       
       // Show success message
       showToast('Display name saved successfully!', 'success')

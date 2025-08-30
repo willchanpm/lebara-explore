@@ -59,7 +59,7 @@ function formatDateTime(dateString: string): string {
 }
 
 // Helper function to render star rating
-function renderStars(rating: number): JSX.Element[] {
+function renderStars(rating: number): React.ReactElement[] {
   const stars = []
   for (let i = 0; i < 5; i++) {
     stars.push(
