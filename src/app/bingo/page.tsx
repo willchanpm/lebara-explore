@@ -1,5 +1,31 @@
 import { createServerClient } from '@/lib/supabaseServer'
 
+// Define TypeScript interfaces for our data structures
+// This helps TypeScript understand the shape of our data
+interface Place {
+  id: string
+  name: string
+  category: string
+  slug: string
+  maps_url: string
+}
+
+interface BingoTile {
+  id: string
+  label: string
+  description: string | null
+  place: Place | null
+}
+
+// Interface for the raw Supabase response
+// This represents what Supabase actually returns before we transform it
+interface RawBingoTile {
+  id: string
+  label: string
+  description: string | null
+  places: Place[]
+}
+
 // Function to get the current month in 'YYYY-MM' format
 // This will be used to query bingo tiles for the current month
 function currentMonth() {
@@ -25,7 +51,7 @@ export default async function BingoPage() {
       id,
       label,
       description,
-      place:places (
+      places!inner (
         id,
         name,
         category,
@@ -40,8 +66,17 @@ export default async function BingoPage() {
     console.error('bingo_tiles fetch error', error)
   }
 
+  // Transform the data to match our expected structure
+  // Supabase returns places as an array, so we take the first (and should be only) one
+  const typedTiles: BingoTile[] = (tiles || []).map((tile: RawBingoTile) => ({
+    id: tile.id,
+    label: tile.label,
+    description: tile.description,
+    place: tile.places && tile.places.length > 0 ? tile.places[0] : null
+  }))
+
   // If no tiles are found for this month, show a friendly message
-  if (!tiles || tiles.length === 0) {
+  if (typedTiles.length === 0) {
     return (
       <div className="bingo-page">
         <div className="bingo-container">
@@ -70,7 +105,7 @@ export default async function BingoPage() {
         <div className="bingo-progress">
           <div className="progress-header">
             <span className="progress-text">
-              Progress: 0 / {tiles.length}
+              Progress: 0 / {typedTiles.length}
             </span>
             <button
               className="reset-button"
@@ -92,17 +127,17 @@ export default async function BingoPage() {
 
         {/* Bingo grid - 3 columns on mobile, 4 columns on medium screens and up */}
         <div className="bingo-grid">
-          {tiles.map((tile) => {
+          {typedTiles.map((tile) => {
             return (
               <button
                 key={tile.id}
                 className="bingo-square bingo-square-incomplete"
                 data-tile-id={tile.id}
-                data-place-id={tile.place?.id}
-                data-place-name={tile.place?.name}
-                data-place-category={tile.place?.category}
-                data-place-slug={tile.place?.slug}
-                data-place-maps-url={tile.place?.maps_url}
+                data-place-id={tile.place?.id || ''}
+                data-place-name={tile.place?.name || ''}
+                data-place-category={tile.place?.category || ''}
+                data-place-slug={tile.place?.slug || ''}
+                data-place-maps-url={tile.place?.maps_url || ''}
               >
                 {/* Square content: label (we'll add emojis back later) */}
                 <div className="bingo-content">
