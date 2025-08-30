@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import AddPlaceModal from '@/components/AddPlaceModal'
 
 // Define the structure of a place object
 // This helps TypeScript understand what data we're working with
@@ -15,6 +16,9 @@ interface Place {
   notes?: string // Optional field for additional information
   lat?: number // Optional latitude coordinate
   lon?: number // Optional longitude coordinate
+  veg_friendly?: boolean // Optional field for vegetarian-friendly places
+  user_submitted?: boolean // Optional field to indicate if place was submitted by a user
+  submitted_by?: string // Optional field to store the user ID who submitted the place
 }
 
 export default function DiscoverPage() {
@@ -25,13 +29,24 @@ export default function DiscoverPage() {
   const [activeFilter, setActiveFilter] = useState<string>('All') // Tracks the currently selected filter
   const [searchQuery, setSearchQuery] = useState<string>('') // Stores the search input text
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>('') // Debounced search query for performance
+  
+  // State for the add place modal
+  const [isAddPlaceModalOpen, setIsAddPlaceModalOpen] = useState(false)
 
   // Helper function to render the places content
   const renderPlacesContent = () => {
     // First filter by category
-    const categoryFiltered = activeFilter === 'All' 
-      ? places 
-      : places.filter(place => place.category === activeFilter)
+    let categoryFiltered: Place[]
+    
+    if (activeFilter === 'All') {
+      categoryFiltered = places
+    } else if (activeFilter === 'User Submitted') {
+      // Filter for user-submitted places
+      categoryFiltered = places.filter(place => place.user_submitted === true)
+    } else {
+      // Filter by regular category
+      categoryFiltered = places.filter(place => place.category === activeFilter)
+    }
     
     // Then filter by search query (case-insensitive)
     const filteredPlaces = debouncedSearchQuery.trim() === '' 
@@ -99,6 +114,12 @@ export default function DiscoverPage() {
                   <h3 className="place-name">
                     {place.name} ({place.price_band})
                   </h3>
+                  {/* Show user-submitted indicator */}
+                  {place.user_submitted && (
+                    <div className="user-submitted-badge">
+                      👥 User Submitted
+                    </div>
+                  )}
                 </div>
                 <span className="place-category">
                   {place.category.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
@@ -308,16 +329,31 @@ export default function DiscoverPage() {
           </div>
         </div>
 
+        {/* Add Place Section */}
+        <div className="add-place-section">
+          <span className="add-place-text">Can't find your favourite? </span>
+          <button
+            onClick={() => setIsAddPlaceModalOpen(true)}
+            className="add-place-link-button"
+            aria-label="Add a new place"
+          >
+            Add Place
+          </button>
+        </div>
+
         {/* Filter chips */}
         <div className="filter-container">
           <div className="filter-chips">
-            {['All', 'market', 'street_food', 'veg', 'vegan', 'coffee', 'Fine_Dining', '24_7', 'activity', 'landmark'].map((category) => (
+            {['All', 'market', 'street_food', 'veg', 'vegan', 'coffee', 'Fine_Dining', '24_7', 'activity', 'landmark', 'other', 'User Submitted'].map((category) => (
               <button
                 key={category}
                 onClick={() => setActiveFilter(category)}
                 className={`filter-chip ${activeFilter === category ? 'active' : 'inactive'}`}
               >
-                {category === 'All' ? 'All Places' : category.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                {category === 'All' ? 'All Places' : 
+                 category === 'User Submitted' ? '👥 User Submitted' :
+                 category === 'other' ? '🔍 Other' :
+                 category.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
               </button>
             ))}
           </div>
@@ -326,6 +362,25 @@ export default function DiscoverPage() {
         {/* Filter and display places */}
         {renderPlacesContent()}
       </div>
+      
+      {/* Add Place Modal */}
+      <AddPlaceModal
+        isOpen={isAddPlaceModalOpen}
+        onClose={() => setIsAddPlaceModalOpen(false)}
+        onPlaceAdded={() => {
+          // Refresh the places list when a new place is added
+          fetchPlaces()
+        }}
+      />
+      
+      {/* Floating Action Button */}
+      <button
+        onClick={() => setIsAddPlaceModalOpen(true)}
+        className="fab-add-place"
+        aria-label="Add a new place"
+      >
+        <span className="fab-icon">+</span>
+      </button>
     </div>
   )
 }
