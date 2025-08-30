@@ -23,7 +23,8 @@ interface RawBingoTile {
   id: string
   label: string
   description: string | null
-  places: Place[]
+  month: string
+  place_id: string
 }
 
 // Function to get the current month in 'YYYY-MM' format
@@ -48,6 +49,8 @@ function getActivityIcon(category: string | null): string {
     return '☕'
   } else if (lowerCategory.includes('restaurant') || lowerCategory.includes('dining')) {
     return '🍽️'
+  } else if (lowerCategory.includes('rooftop')) {
+    return '🍸'
   } else if (lowerCategory.includes('bar') || lowerCategory.includes('pub')) {
     return '🍺'
   } else if (lowerCategory.includes('pizza')) {
@@ -80,8 +83,10 @@ function getActivityIcon(category: string | null): string {
     return '🌱'
   } else if (lowerCategory.includes('food truck') || lowerCategory.includes('street food')) {
     return '🚚'
-  } else if (lowerCategory.includes('farm') || lowerCategory.includes('market')) {
+  } else if (lowerCategory.includes('farm')) {
     return '🌾'
+  } else if (lowerCategory.includes('market')) {
+    return '🎪'
   } else if (lowerCategory.includes('wine') || lowerCategory.includes('winery')) {
     return '🍷'
   } else if (lowerCategory.includes('brewery') || lowerCategory.includes('beer')) {
@@ -121,32 +126,20 @@ export default async function BingoPage() {
   const supabase = createServerClient()
 
   // First, try to fetch bingo tiles for the current month
-  let { data: tiles, error } = await supabase
+  // We need to manually join the places table using place_id
+  let { data: tiles } = await supabase
     .from('bingo_tiles')
     .select(`
       id,
       label,
       description,
       month,
-      places!inner (
-        id,
-        name,
-        category,
-        slug,
-        maps_url
-      )
+      place_id
     `)
     .eq('month', month)
 
-  // Log any errors that occur during the fetch
-  if (error) {
-    console.error('bingo_tiles fetch error', error)
-  }
-
   // If no tiles found for current month, try to fetch from the most recent month with tiles
   if (!tiles || tiles.length === 0) {
-    console.log(`No tiles found for current month ${month}, trying to find most recent month with tiles`)
-    
     // First, find the most recent month that has tiles
     const { data: recentMonthData, error: recentMonthError } = await supabase
       .from('bingo_tiles')
@@ -158,7 +151,6 @@ export default async function BingoPage() {
       console.error('Error finding recent month:', recentMonthError)
     } else if (recentMonthData && recentMonthData.length > 0) {
       const fallbackMonth = recentMonthData[0].month
-      console.log(`Found tiles for month ${fallbackMonth}, fetching those instead`)
       
       // Fetch tiles for the fallback month
       const { data: fallbackTiles, error: fallbackError } = await supabase
@@ -168,13 +160,7 @@ export default async function BingoPage() {
           label,
           description,
           month,
-          places!inner (
-            id,
-            name,
-            category,
-            slug,
-            maps_url
-          )
+          place_id
         `)
         .eq('month', fallbackMonth)
       
@@ -188,13 +174,36 @@ export default async function BingoPage() {
     }
   }
 
+  // Now we need to fetch the place data for each tile using the place_id
+  // Let's get all unique place_ids from the tiles
+  const placeIds = [...new Set((tiles || []).map(tile => tile.place_id).filter(Boolean))]
+  
+  // Fetch all the places data
+  let placesData: Record<string, Place> = {}
+  if (placeIds.length > 0) {
+    const { data: places, error: placesError } = await supabase
+      .from('places')
+      .select('id, name, category, slug, maps_url')
+      .in('id', placeIds)
+    
+    if (placesError) {
+      console.error('Error fetching places:', placesError)
+    } else {
+      // Create a lookup map for quick access
+      placesData = (places || []).reduce((acc: Record<string, Place>, place: Place) => {
+        acc[place.id] = place
+        return acc
+      }, {})
+    }
+  }
+  
   // Transform the data to match our expected structure
-  // Supabase returns places as an array, so we take the first (and should be only) one
+  // Now we can properly map each tile to its place data
   const typedTiles: BingoTile[] = (tiles || []).map((tile: RawBingoTile) => ({
     id: tile.id,
     label: tile.label,
     description: tile.description,
-    place: tile.places && tile.places.length > 0 ? tile.places[0] : null
+    place: tile.place_id ? placesData[tile.place_id] || null : null
   }))
 
   // If no tiles are found at all, show a friendly message
@@ -214,8 +223,7 @@ export default async function BingoPage() {
     )
   }
 
-  // Determine the display month for the subtitle
-  const displayMonth = month === currentMonth() ? 'this month' : `from ${month}`
+  // Note: month variable is used in the month note display below
 
   return (
     <div className="bingo-page">
@@ -277,7 +285,7 @@ export default async function BingoPage() {
                   
                   {/* Small icon between title and description */}
                   <div className="bingo-icon">
-                    {getActivityIcon(tile.place?.category || null)}
+                    {tile.place?.category ? getActivityIcon(tile.place.category) : '🍽️'}
                   </div>
                   
                   {/* Description text if available */}
