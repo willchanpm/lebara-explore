@@ -202,68 +202,57 @@ export default function ProfileEditor() {
               <label htmlFor="display-name" className="sr-only">
                 Display Name
               </label>
-              <input
-                id="display-name"
-                type="text"
-                className={`form-input ${!isEditing ? 'form-input-disabled' : ''}`}
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Enter your display name"
-                maxLength={50}
-                disabled={!isEditing || isSaving}
-                aria-describedby="display-name-help"
-              />
-              <div className="form-help" id="display-name-help">
-                {isEditing ? (
-                  <>
-                    <span className="char-count">{displayName.length}/50</span>
-                    {user.email && (
-                      <button
-                        type="button"
-                        onClick={useEmailName}
-                        className="use-email-link"
-                        disabled={isSaving}
-                      >
-                        Use email name
-                      </button>
-                    )}
-                  </>
-                ) : (
-                  <span className="edit-hint">Click Edit to modify</span>
+              <div className="input-with-button">
+                <div className="input-container">
+                  <input
+                    id="display-name"
+                    type="text"
+                    className={`form-input ${!isEditing ? 'form-input-disabled' : ''}`}
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="Enter your display name"
+                    maxLength={50}
+                    disabled={!isEditing || isSaving}
+                  />
+                  {/* Edit icon that appears when not editing */}
+                  {!isEditing && (
+                    <button
+                      type="button"
+                      onClick={handleEdit}
+                      className="edit-icon-button"
+                      disabled={isLoading}
+                      aria-label="Edit display name"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+                  )}
+                </div>
+                
+                {/* Save/Cancel buttons - only show when editing, below the input */}
+                {isEditing && (
+                  <div className="profile-editor-actions">
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      className="btn btn-secondary cancel-button"
+                      disabled={isSaving}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSave}
+                      disabled={isSaving || !displayName.trim() || displayName.trim() === originalDisplayName}
+                      className="btn btn-primary save-button"
+                    >
+                      {isSaving ? 'Saving...' : 'Save'}
+                    </button>
+                  </div>
                 )}
               </div>
-            </div>
-            
-            <div className="profile-editor-actions">
-              {!isEditing ? (
-                <button
-                  type="button"
-                  onClick={handleEdit}
-                  className="btn btn-primary edit-button"
-                  disabled={isLoading}
-                >
-                  Edit
-                </button>
-              ) : (
-                <div className="edit-actions">
-                  <button
-                    type="button"
-                    onClick={handleCancel}
-                    className="btn btn-secondary cancel-button"
-                    disabled={isSaving}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={isSaving || !displayName.trim() || displayName.trim() === originalDisplayName}
-                    className="btn btn-primary save-button"
-                  >
-                    {isSaving ? 'Saving...' : 'Save'}
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         </div>

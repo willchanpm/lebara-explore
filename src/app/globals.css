@@ -5487,3 +5487,59 @@ body.login-page-active .main-with-nav {
   border: 0;
 }
 
+/* New class for input with buttons below the input field */
+.input-with-button {
+  display: flex;
+  flex-direction: column; /* Buttons below input field */
+  gap: 0.5rem;
+  width: 100%;
+}
+
+/* Input container for positioning the edit icon */
+.input-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Make the input field take up full width */
+.input-with-button .form-input {
+  width: 100%;
+  padding-right: 2.5rem; /* Make room for the edit icon */
+}
+
+/* Edit icon button styling */
+.edit-icon-button {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-icon-button:hover {
+  color: var(--brand-accent);
+  background-color: var(--brand-primary);
+}
+
+.edit-icon-button:disabled {
+  color: var(--border);
+  cursor: not-allowed;
+}
+
+/* Action buttons now below the input field, left-aligned */
+.profile-editor-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: flex-start; /* Left-align the buttons */
+}
+
