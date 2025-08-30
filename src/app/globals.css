@@ -2932,6 +2932,24 @@ body.login-page-active .main-with-nav {
   line-height: 1.25;
 }
 
+.bingo-description {
+  font-size: 0.625rem;
+  color: var(--muted);
+  line-height: 1.2;
+  margin-top: 0.25rem;
+}
+
+.bingo-placeholder {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--muted);
+}
+
+.bingo-placeholder p {
+  font-size: 1rem;
+  margin: 0;
+}
+
 .bingo-completion {
   margin-top: 1.5rem;
   padding: 1rem;
