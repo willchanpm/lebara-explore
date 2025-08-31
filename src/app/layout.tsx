@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import ConditionalNav from "@/components/ConditionalNav";
 import AuthWrapper from "@/components/AuthWrapper";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -23,6 +24,40 @@ export const metadata: Metadata = {
     icon: '/AppIcons/Assets.xcassets/AppIcon.appiconset/32.png',
     shortcut: '/AppIcons/Assets.xcassets/AppIcon.appiconset/32.png',
     apple: '/AppIcons/Assets.xcassets/AppIcon.appiconset/180.png',
+    // Additional Apple touch icons for better iOS support
+    other: [
+      {
+        rel: 'apple-touch-icon',
+        url: '/AppIcons/Assets.xcassets/AppIcon.appiconset/180.png',
+        sizes: '180x180',
+      },
+      {
+        rel: 'apple-touch-icon',
+        url: '/AppIcons/Assets.xcassets/AppIcon.appiconset/167.png',
+        sizes: '167x167',
+      },
+      {
+        rel: 'apple-touch-icon',
+        url: '/AppIcons/Assets.xcassets/AppIcon.appiconset/152.png',
+        sizes: '152x152',
+      },
+      {
+        rel: 'apple-touch-icon',
+        url: '/AppIcons/Assets.xcassets/AppIcon.appiconset/120.png',
+        sizes: '120x120',
+      },
+    ],
+  },
+  // iOS Add-to-Home support
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Lebara Explore',
+  },
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'default',
+    'apple-mobile-web-app-title': 'Lebara Explore',
   },
 };
 
@@ -40,6 +75,9 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-bg text-text`}>
         {/* Service Worker registration for PWA functionality */}
         <ServiceWorkerRegister />
+        
+        {/* PWA Install Prompt for Android users */}
+        <PWAInstallPrompt />
         
         {/* Conditional navigation (profile icon and bottom nav) */}
         <ConditionalNav />
