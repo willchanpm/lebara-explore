@@ -38,13 +38,7 @@ interface BingoClientProps {
   month: string
 }
 
-// Function to get the current month in 'YYYY-MM' format
-function currentMonth() {
-  const d = new Date()
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  return `${y}-${m}` // e.g. '2025-01'
-}
+
 
 // Function to get the appropriate icon based on the place category
 // This maps different types of activities to relevant emojis
@@ -246,10 +240,7 @@ export default function BingoClient({ tiles, month }: BingoClientProps) {
         <div className="bingo-header">
           <h1 className="bingo-title">Bingo</h1>
           <p className="bingo-subtitle">Tick them off as you go</p>
-          {/* Show which month's board we're displaying */}
-          {month !== currentMonth() && (
-            <p className="bingo-month-note">Showing board from {month}</p>
-          )}
+
         </div>
         
         {/* Progress section with progress bar and reset button */}
