@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import ConditionalNav from "@/components/ConditionalNav";
 import AuthWrapper from "@/components/AuthWrapper";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
-import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -75,9 +74,6 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-bg text-text`}>
         {/* Service Worker registration for PWA functionality */}
         <ServiceWorkerRegister />
-        
-        {/* PWA Install Prompt for Android users */}
-        <PWAInstallPrompt />
         
         {/* Conditional navigation (profile icon and bottom nav) */}
         <ConditionalNav />

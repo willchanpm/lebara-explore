@@ -1,10 +1,16 @@
 import Link from 'next/link'; // Import Next.js Link component for client-side navigation
+import AndroidInstallBanner from '@/components/AndroidInstallBanner'; // Import the Android install banner
+import IOSInstallBanner from '@/components/IOSInstallBanner'; // Import the iOS install banner
 
 export default function Home() {
   return (
     <div className="home-page">
       {/* Main hero section */}
       <main className="home-container">
+        {/* Install Banners - only show on respective platforms */}
+        <AndroidInstallBanner />
+        <IOSInstallBanner />
+        
         {/* App title and description */}
         <div className="home-hero">
           <h1 className="home-title">
