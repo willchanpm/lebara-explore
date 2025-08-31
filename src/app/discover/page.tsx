@@ -40,6 +40,9 @@ export default function DiscoverPage() {
   const [userFavorites, setUserFavorites] = useState<Set<string>>(new Set())
   const [favoritesLoading, setFavoritesLoading] = useState(false)
 
+  // State for available categories - will be populated dynamically from places data
+  const [availableCategories, setAvailableCategories] = useState<string[]>([])
+
   // Function to fetch places data
   const fetchPlaces = async () => {
     try {
@@ -59,6 +62,12 @@ export default function DiscoverPage() {
 
       // Update the places state with the fetched data
       setPlaces(data || [])
+      
+      // Extract unique categories from the places data and sort them
+      if (data && data.length > 0) {
+        const categories = [...new Set(data.map(place => place.category))].sort()
+        setAvailableCategories(categories)
+      }
     } catch (err) {
       // If anything goes wrong, store the error message
       setError(err instanceof Error ? err.message : 'An unknown error occurred')
@@ -146,11 +155,7 @@ export default function DiscoverPage() {
       
       // Apply each selected filter
       activeFilters.forEach(filter => {
-        if (filter === 'User Submitted') {
-          // Filter for user-submitted places
-          const userSubmittedPlaces = places.filter(place => place.user_submitted === true)
-          categoryFiltered = [...categoryFiltered, ...userSubmittedPlaces]
-        } else if (filter === 'Favourites') {
+        if (filter === 'Favourites') {
           // Filter for user's favorite places
           if (currentUser) {
             const favoritePlaces = places.filter(place => userFavorites.has(place.id.toString()))
@@ -335,7 +340,6 @@ export default function DiscoverPage() {
                   return `Found ${totalPlaces} place${totalPlaces === 1 ? '' : 's'}`
                 } else if (debouncedSearchQuery.trim() === '') {
                   const filterNames = Array.from(activeFilters).map(filter => 
-                    filter === 'User Submitted' ? 'User Submitted' :
                     filter === 'Favourites' ? 'Favourites' :
                     filter.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
                   ).join(', ')
@@ -505,7 +509,8 @@ export default function DiscoverPage() {
         {/* Filter chips */}
         <div className="filter-container">
           <div className="filter-chips">
-            {['All', 'market', 'street_food', 'veg', 'vegan', 'coffee', 'Fine_Dining', '24_7', 'activity', 'landmark', 'other', 'User Submitted', 'Favourites'].map((category) => (
+            {/* Always show 'All' and 'Favourites' filters */}
+            {['All', 'Favourites'].map((category) => (
               <button
                 key={category}
                 onClick={() => {
@@ -535,10 +540,38 @@ export default function DiscoverPage() {
                 data-filter={category}
                 data-active={activeFilters.has(category)}
               >
-                {category === 'All' ? 'All Places' : 
-                 category === 'User Submitted' ? 'User Submitted' :
-                 category === 'other' ? 'Other' :
-                 category === 'Favourites' ? '⭐ Favourites' :
+                {category === 'All' ? 'All Places' : '⭐ Favourites'}
+              </button>
+            ))}
+            
+            {/* Dynamically show categories from the places data */}
+            {availableCategories.map((category) => (
+              <button
+                key={category}
+                onClick={() => {
+                  const newFilters = new Set(activeFilters)
+                  if (activeFilters.has('All') && activeFilters.size === 1) {
+                    // If only 'All' is selected and clicking another filter, remove 'All' and add the new filter
+                    newFilters.delete('All')
+                    newFilters.add(category)
+                  } else if (newFilters.has(category)) {
+                    // If filter is already selected, remove it
+                    newFilters.delete(category)
+                    // If no filters left, default back to 'All'
+                    if (newFilters.size === 0) {
+                      newFilters.add('All')
+                    }
+                  } else {
+                    // Add the new filter
+                    newFilters.add(category)
+                  }
+                  setActiveFilters(newFilters)
+                }}
+                className={`filter-chip ${activeFilters.has(category) ? 'active' : 'inactive'}`}
+                data-filter={category}
+                data-active={activeFilters.has(category)}
+              >
+                {category === 'other' ? 'Other' :
                  category.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
               </button>
             ))}
