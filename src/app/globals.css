@@ -1298,12 +1298,12 @@ body.login-page-active .main-with-nav {
   right: 1.5rem;
   width: 3.5rem;
   height: 3.5rem;
-  background: var(--brand-accent);
+  background: var(--brand-navy-600); /* Medium-dark blue - perfect middle ground */
   color: white;
   border: none;
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(255, 49, 130, 0.4);
+  box-shadow: 0 4px 20px rgba(26, 58, 90, 0.4); /* Updated shadow to match medium-dark blue */
   transition: all 0.3s ease;
   z-index: 100;
   display: flex;
@@ -1314,9 +1314,9 @@ body.login-page-active .main-with-nav {
 }
 
 .fab-add-place:hover {
-  background: var(--brand-accent-700);
+  background: var(--brand-navy); /* Dark navy on hover for good contrast */
   transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 6px 25px rgba(255, 49, 130, 0.5);
+  box-shadow: 0 6px 25px rgba(26, 58, 90, 0.5); /* Updated hover shadow */
 }
 
 .fab-add-place:active {
@@ -1325,7 +1325,7 @@ body.login-page-active .main-with-nav {
 
 .fab-add-place:focus {
   outline: none;
-  box-shadow: 0 0 0 4px rgba(255, 49, 130, 0.3), 0 4px 20px rgba(255, 49, 130, 0.4);
+  box-shadow: 0 0 0 4px rgba(143, 212, 232, 0.3), 0 4px 20px rgba(143, 212, 232, 0.4); /* Updated focus shadow */
 }
 
 /* FAB icon styling */

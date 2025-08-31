@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import ConditionalNav from "@/components/ConditionalNav";
 import AuthWrapper from "@/components/AuthWrapper";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,11 +18,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Lebara Explore",
   description: "Explore places and discover new experiences",
+  manifest: '/manifest.webmanifest',
   icons: {
     icon: '/AppIcons/Assets.xcassets/AppIcon.appiconset/32.png',
     shortcut: '/AppIcons/Assets.xcassets/AppIcon.appiconset/32.png',
     apple: '/AppIcons/Assets.xcassets/AppIcon.appiconset/180.png',
   },
+};
+
+export const viewport = {
+  themeColor: '#ff5aa7',
 };
 
 export default function RootLayout({
@@ -32,6 +38,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-bg text-text`}>
+        {/* Service Worker registration for PWA functionality */}
+        <ServiceWorkerRegister />
+        
         {/* Conditional navigation (profile icon and bottom nav) */}
         <ConditionalNav />
         
