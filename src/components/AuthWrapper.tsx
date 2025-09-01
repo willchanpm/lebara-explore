@@ -23,14 +23,12 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
   // Memoized auth check function to prevent unnecessary re-runs
   const checkAuth = useCallback(async () => {
     try {
-      console.log('Checking authentication...')
       const { data: { user }, error } = await supabase.auth.getUser()
       
       if (error) {
         console.error('Error checking auth:', error)
         setUser(null)
       } else {
-        console.log('Auth check result:', user ? `User ID: ${user.id}` : 'No user')
         setUser(user)
       }
     } catch (err) {
@@ -54,8 +52,6 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
     // Subscribe to authentication state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.id)
-        
         setUser(session?.user ?? null)
         setLoading(false)
         
@@ -72,10 +68,8 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
 
   // Handle redirect to login if not authenticated
   useEffect(() => {
-    console.log('Redirect check:', { user: !!user, loading, shouldSkipAuth })
     if (!user && !loading && !shouldSkipAuth) {
       // Only redirect if we're not already on the login page
-      console.log('Redirecting to login...')
       router.push('/login')
     }
   }, [user, loading, router, shouldSkipAuth])
@@ -83,7 +77,6 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
   // Handle redirect when no user and not loading
   useEffect(() => {
     if (!user && !loading && !shouldSkipAuth) {
-      console.log('No user, redirecting to login')
       router.push('/login')
     }
   }, [user, loading, router, shouldSkipAuth])
@@ -95,23 +88,19 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
 
   // Skip authentication check for login and auth callback pages
   if (shouldSkipAuth) {
-    console.log('Skipping auth for:', pathname)
     return <>{children}</>
   }
 
   // Show loading state while checking authentication
   if (loading) {
-    console.log('Showing loading state - loading:', loading, 'user:', !!user)
     return null // Show nothing while loading
   }
 
   // If we have a user, render the app content
   if (user) {
-    console.log('User authenticated, rendering children')
     return <>{children}</>
   }
 
   // No user and not loading - redirect to login without showing anything
-  console.log('No user, redirecting to login')
   return null // Show nothing while redirecting
 }

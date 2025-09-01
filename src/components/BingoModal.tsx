@@ -110,32 +110,26 @@ export default function BingoModal({
   // Function to start camera for taking photos
   const startCamera = async () => {
     try {
-      console.log('Starting camera...')
-      
       // Request access to the user's camera
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: 'environment' } // Use back camera on mobile
       })
-      
-      console.log('Camera access granted, stream:', mediaStream)
       
       setStream(mediaStream)
       setShowCamera(true)
       
       // Wait for React to render the video element before setting srcObject
       setTimeout(() => {
-        console.log('Setting video srcObject, videoRef.current:', videoRef.current)
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream
-          console.log('Video srcObject set successfully')
           
-          // Add event listeners to debug video loading
+          // Add event listeners for video loading
           videoRef.current.onloadedmetadata = () => {
-            console.log('Video metadata loaded, dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight)
+            // Video metadata loaded
           }
           
           videoRef.current.oncanplay = () => {
-            console.log('Video can play')
+            // Video can play
           }
           
           videoRef.current.onerror = (e) => {
@@ -365,9 +359,7 @@ export default function BingoModal({
                     muted
                     className="camera-video"
                     style={{ width: '100%', height: '200px', objectFit: 'cover' }}
-                    onLoadStart={() => console.log('Video load started')}
-                    onLoadedData={() => console.log('Video data loaded')}
-                    onCanPlay={() => console.log('Video can play')}
+                    
                     onError={(e) => console.error('Video element error:', e)}
                   />
                   <div className="camera-controls">
