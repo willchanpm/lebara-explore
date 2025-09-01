@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import ConditionalNav from "@/components/ConditionalNav";
 import AuthWrapper from "@/components/AuthWrapper";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import { AuthLoadingProvider } from "@/components/AuthLoadingContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -80,9 +81,11 @@ export default function RootLayout({
         
         {/* Main content area with proper spacing for bottom navigation */}
         <main className="main-with-nav">
-          <AuthWrapper>
-            {children}
-          </AuthWrapper>
+          <AuthLoadingProvider>
+            <AuthWrapper>
+              {children}
+            </AuthWrapper>
+          </AuthLoadingProvider>
         </main>
       </body>
     </html>

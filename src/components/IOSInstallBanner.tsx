@@ -20,9 +20,7 @@ export default function IOSInstallBanner() {
   // Get current pathname to only show on homepage
   const pathname = usePathname()
 
-  // TEMPORARY DEBUG: Force show banner for testing
-  // Set this to true to see the banner regardless of platform
-  const DEBUG_FORCE_SHOW = false
+
 
   useEffect(() => {
     // Only run in the browser
@@ -31,28 +29,13 @@ export default function IOSInstallBanner() {
     // Only show on homepage
     if (pathname !== '/') return
 
-    // TEMPORARY DEBUG: Force show banner for testing
-    if (DEBUG_FORCE_SHOW) {
-      console.log('iOS Banner: DEBUG MODE - forcing banner to show')
-      setShowBanner(true)
-      return
-    }
+
 
     // Check if this is iOS Safari (we only show install banner on iOS Safari)
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
     const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)
     
-    // Debug logging
-    console.log('iOS Banner Debug:', {
-      userAgent: navigator.userAgent,
-      isIOS,
-      isSafari,
-      pathname,
-      showBanner: true
-    })
-    
     if (!isIOS || !isSafari) {
-      console.log('iOS Banner: Not showing - platform check failed')
       return
     }
 
@@ -85,7 +68,7 @@ export default function IOSInstallBanner() {
 
     // Show banner immediately for eligible iOS users
     setShowBanner(true)
-  }, [pathname, DEBUG_FORCE_SHOW])
+  }, [pathname])
 
   // Handle dismiss button click (X button)
   const handleDismiss = () => {
@@ -126,17 +109,13 @@ export default function IOSInstallBanner() {
 
   // Don't render if dismissed, installed, or not on homepage
   if (dismissed || isInstalled || pathname !== '/') {
-    console.log('iOS Banner: Not rendering - conditions not met:', { dismissed, isInstalled, pathname })
     return null
   }
 
   // Don't render if not showing
   if (!showBanner) {
-    console.log('iOS Banner: Not rendering - showBanner is false')
     return null
   }
-  
-  console.log('iOS Banner: Rendering component')
   
 
 

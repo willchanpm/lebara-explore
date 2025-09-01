@@ -13,7 +13,9 @@ export default function AuthCallback() {
   const router = useRouter()
 
   useEffect(() => {
-    // This function handles both magic link authentication styles
+    // This function handles authentication callbacks (legacy magic link support)
+    // Note: With OTP authentication, most verification happens in the login page
+    // This callback is kept for backward compatibility and edge cases
     const handleAuthCallback = async () => {
       try {
         // First, try the PKCE-style flow (with ?code= parameter)
@@ -22,7 +24,7 @@ export default function AuthCallback() {
         
         if (code) {
           // PKCE flow: Exchange the temporary code for a user session
-          // This is the key step that completes the magic link login
+          // This handles legacy magic link authentication
           const { data, error: authError } = await supabase.auth.exchangeCodeForSession(code)
           
           if (authError) {
@@ -76,14 +78,23 @@ export default function AuthCallback() {
           }
         }
 
-        // If neither flow has the required parameters, throw an error
-        throw new Error('No authentication code or tokens found in URL')
+        // If neither flow has the required parameters, redirect to login
+        // This handles cases where users land here without proper auth parameters
+        setStatus('No authentication data found. Redirecting to login...')
+        setTimeout(() => {
+          router.push('/login')
+        }, 2000)
         
       } catch (err) {
         // Handle any errors that occur during authentication
         const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred'
         setError(errorMessage)
-        setStatus('Authentication failed')
+        setStatus('Authentication failed. Redirecting to login...')
+        
+        // Redirect to login after showing error
+        setTimeout(() => {
+          router.push('/login')
+        }, 3000)
       }
     }
 

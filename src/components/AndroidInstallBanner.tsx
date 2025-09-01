@@ -35,51 +35,37 @@ export default function AndroidInstallBanner() {
     // Check if this is Android Chrome (we only show install banner on Android Chrome)
     const isAndroidChrome = /Android/.test(navigator.userAgent) && /Chrome/.test(navigator.userAgent)
     
-    // Debug logging
-    console.log('Android Banner Debug:', {
-      userAgent: navigator.userAgent,
-      isAndroidChrome,
-      pathname,
-      showBanner: true
-    })
+
     
     if (!isAndroidChrome) {
-      console.log('Android Banner: Not showing - platform check failed')
       return
     }
 
     // Check if app is already installed (standalone mode)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
                         (navigator as Navigator & { standalone?: boolean }).standalone === true
-    console.log('Android Banner: Standalone check:', { isStandalone })
     if (isStandalone) {
-      console.log('Android Banner: Not showing - app already installed (standalone)')
       setIsInstalled(true)
       return
     }
 
     // Check if user has already installed the app
     const pwaInstalled = localStorage.getItem('pwa_installed')
-    console.log('Android Banner: PWA installed check:', { pwaInstalled })
     if (pwaInstalled === '1') {
-      console.log('Android Banner: Not showing - PWA already installed')
       setIsInstalled(true)
       return
     }
 
     // Check if user has dismissed the banner recently (7 days)
     const dismissedUntil = localStorage.getItem('pwa_install_dismissed_until')
-    console.log('Android Banner: Dismissed check:', { dismissedUntil })
     if (dismissedUntil) {
       const dismissedTimestamp = parseInt(dismissedUntil)
       if (Date.now() < dismissedTimestamp) {
-        console.log('Android Banner: Not showing - user dismissed recently')
         setDismissed(true)
         return
       } else {
         // Clear expired dismissal
         localStorage.removeItem('pwa_install_dismissed_until')
-        console.log('Android Banner: Cleared expired dismissal')
       }
     }
 
@@ -89,7 +75,6 @@ export default function AndroidInstallBanner() {
     // Set a timeout to enable install button even if event hasn't fired yet
     // This prevents the banner from being stuck in "Loading..." state too long
     const enableInstallTimeout = setTimeout(() => {
-      console.log('Enabling install button after timeout')
       // Create a mock prompt event to enable the button
       // This allows users to click install even if the real event is delayed
       const mockPrompt = {
@@ -104,8 +89,6 @@ export default function AndroidInstallBanner() {
 
     // Listen for the beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
-      console.log('PWA install prompt available')
-      
       // Prevent the default mini-infobar from appearing
       e.preventDefault()
       
@@ -115,7 +98,6 @@ export default function AndroidInstallBanner() {
 
     // Listen for successful installation
     const handleAppInstalled = () => {
-      console.log('PWA was installed')
       setShowBanner(false)
       setDeferredPrompt(null)
       setIsInstalled(true)
@@ -193,17 +175,13 @@ export default function AndroidInstallBanner() {
 
   // Don't render if dismissed, installed, or not on homepage
   if (dismissed || isInstalled || pathname !== '/') {
-    console.log('Android Banner: Not rendering - conditions not met:', { dismissed, isInstalled, pathname })
     return null
   }
 
   // Don't render if we don't have the install prompt yet (banner will show but install button disabled)
   if (!showBanner) {
-    console.log('Android Banner: Not rendering - showBanner is false')
     return null
   }
-  
-  console.log('Android Banner: Rendering component')
 
   return (
     <div 
