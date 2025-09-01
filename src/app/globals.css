@@ -915,6 +915,136 @@ body.login-page-active .main-with-nav {
   color: var(--muted);
 }
 
+/* OTP-specific input styles */
+.otp-input {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid var(--border);
+  border-radius: 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 0.5rem;
+  background-color: var(--card);
+  color: var(--text);
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.otp-input:focus {
+  outline: none;
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 4px rgba(255, 49, 130, 0.15);
+  transform: translateY(-1px);
+}
+
+.otp-input::placeholder {
+  color: var(--muted);
+  letter-spacing: 0.5rem;
+}
+
+.otp-input:disabled {
+  background-color: var(--bg);
+  color: var(--muted);
+  cursor: not-allowed;
+  border-color: var(--border);
+  box-shadow: none;
+  transform: none;
+}
+
+/* OTP input container with underscores */
+.otp-input-container {
+  position: relative;
+  width: 100%;
+}
+
+.otp-underscores {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.otp-underscore {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 0 0.25rem;
+  min-width: 1.5rem;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.otp-underscore.filled {
+  color: var(--text);
+  transform: scale(1.1);
+}
+
+/* OTP form container */
+.otp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+/* Success actions with better spacing */
+.success-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.success-actions .btn {
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.success-actions .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(10, 42, 74, 0.15);
+}
+
+.success-actions .btn:active {
+  transform: translateY(0);
+}
+
+.otp-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.otp-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+
+.otp-help-text {
+  font-size: 0.875rem;
+  color: var(--muted);
+  text-align: center;
+  margin: 0;
+}
+
+.otp-verify-button {
+  margin-top: 0.5rem;
+}
+
 /* Filter chip styles */
 .filter-chip {
   padding: 0.5rem 1rem;

@@ -64,6 +64,14 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
     return () => subscription.unsubscribe()
   }, [router, shouldSkipAuth])
 
+  // Handle redirect to login if not authenticated
+  useEffect(() => {
+    if (!user && !loading && !shouldSkipAuth) {
+      // Only redirect if we're not already on the login page
+      router.push('/login')
+    }
+  }, [user, loading, router, shouldSkipAuth])
+
   // Skip authentication check for login and auth callback pages
   if (shouldSkipAuth) {
     return <>{children}</>
@@ -83,7 +91,6 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
 
   // Redirect to login if not authenticated
   if (!user) {
-    router.push('/login')
     return (
       <div className="auth-wrapper-loading">
         <div className="auth-wrapper-content">
