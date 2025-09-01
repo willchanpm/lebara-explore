@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import { useAuthLoading } from '@/components/AuthLoadingContext'
 
 export default function AccountPage() {
+  const { isNavigating } = useAuthLoading()
+  
   // State variables to manage the form and UI
   const [email, setEmail] = useState('') // Stores the email input value
   const [otpCode, setOtpCode] = useState('') // Stores the 6-digit OTP code
@@ -165,6 +168,88 @@ export default function AccountPage() {
     }
   }
 
+  // Handle OTP paste events
+  const handleOtpPaste = (e: React.ClipboardEvent, index: number) => {
+    e.preventDefault()
+    const pastedText = e.clipboardData.getData('text')
+    const digits = pastedText.replace(/\D/g, '').slice(0, 6) // Get only digits, max 6
+    
+    if (digits.length > 0) {
+      const newOtpCode = otpCode.split('')
+      
+      // Fill in the boxes starting from the current index
+      for (let i = 0; i < digits.length && index + i < 6; i++) {
+        newOtpCode[index + i] = digits[i]
+      }
+      
+      setOtpCode(newOtpCode.join(''))
+      
+      // Focus the next empty box or the last box if all filled
+      const nextEmptyIndex = newOtpCode.findIndex(char => !char)
+      if (nextEmptyIndex !== -1 && nextEmptyIndex < 6) {
+        const nextBox = document.querySelector(`input[data-index="${nextEmptyIndex}"]`) as HTMLInputElement
+        if (nextBox) {
+          nextBox.focus()
+        }
+      } else {
+        // All boxes filled, focus the last one
+        const lastBox = document.querySelector(`input[data-index="5"]`) as HTMLInputElement
+        if (lastBox) {
+          lastBox.focus()
+        }
+      }
+    }
+  }
+
+  // Handle individual OTP box changes
+  const handleOtpBoxChange = (index: number, value: string) => {
+    const digit = value.replace(/\D/g, '') // Only allow digits
+    
+    // Check if this is a paste operation (multiple digits)
+    if (digit.length > 1) {
+      // Handle paste: distribute digits across boxes
+      const pastedCode = digit.slice(0, 6) // Take first 6 digits
+      const newOtpCode = otpCode.split('')
+      
+      // Fill in the boxes with pasted digits
+      for (let i = 0; i < pastedCode.length && index + i < 6; i++) {
+        newOtpCode[index + i] = pastedCode[i]
+      }
+      
+      const newCode = newOtpCode.join('')
+      setOtpCode(newCode)
+      
+      // Focus the next empty box or the last box if all filled
+      const nextEmptyIndex = newOtpCode.findIndex(char => !char)
+      if (nextEmptyIndex !== -1 && nextEmptyIndex < 6) {
+        const nextBox = document.querySelector(`input[data-index="${nextEmptyIndex}"]`) as HTMLInputElement
+        if (nextBox) {
+          nextBox.focus()
+        }
+      } else {
+        // All boxes filled, focus the last one
+        const lastBox = document.querySelector(`input[data-index="5"]`) as HTMLInputElement
+        if (lastBox) {
+          lastBox.focus()
+        }
+      }
+    } else if (digit.length === 1) {
+      // Single digit input (normal typing)
+      const newOtpCode = otpCode.split('')
+      newOtpCode[index] = digit
+      const newCode = newOtpCode.join('')
+      setOtpCode(newCode)
+      
+      // Auto-focus next box if digit entered
+      if (index < 5) {
+        const nextBox = document.querySelector(`input[data-index="${index + 1}"]`) as HTMLInputElement
+        if (nextBox) {
+          nextBox.focus()
+        }
+      }
+    }
+  }
+
   // Function to reset the form
   const handleReset = () => {
     setOtpSent(false)
@@ -231,10 +316,10 @@ export default function AccountPage() {
             <div>
               <button
                 type="submit"
-                disabled={status === 'sending'} // Disable button while sending
+                disabled={status === 'sending' || isNavigating} // Disable button while sending or navigating
                 className="btn btn-primary w-full"
               >
-                {status === 'sending' ? 'Sending Code...' : 'Send Verification Code'}
+                {status === 'sending' ? 'Sending Code...' : isNavigating ? 'Redirecting...' : 'Send Verification Code'}
               </button>
             </div>
           </form>
@@ -245,33 +330,27 @@ export default function AccountPage() {
                 Verification code
               </label>
                           <div className="otp-input-container">
-              <input
-                id="otp"
-                name="otp"
-                type="text"
-                autoComplete="one-time-code"
-                required
-                value={otpCode}
-                onChange={handleOtpChange}
-                placeholder="000000"
-                maxLength={6}
-                className="otp-input"
-                disabled={status === 'verifying'} // Disable input while verifying
-                autoFocus
-              />
-              <div className="otp-underscores">
-                {Array.from({ length: 6 }, (_, i) => (
-                  <span 
-                    key={i} 
-                    className={`otp-underscore ${i < otpCode.length ? 'filled' : ''}`}
-                  >
-                    {otpCode[i] || '_'}
-                  </span>
-                ))}
-              </div>
+              {Array.from({ length: 6 }, (_, i) => (
+                <input
+                  key={i}
+                  type="text"
+                  maxLength={1}
+                  value={otpCode[i] || ''}
+                  onChange={(e) => handleOtpBoxChange(i, e.target.value)}
+                  onPaste={(e) => handleOtpPaste(e, i)}
+                  className="otp-input-box"
+                  disabled={status === 'verifying'}
+                  autoFocus={i === 0}
+                  autoComplete="one-time-code"
+                  data-index={i}
+                />
+              ))}
             </div>
               <p className="text-sm text-muted mt-2 text-center">
                 Enter the 6-digit code sent to {email}
+              </p>
+              <p className="otp-paste-hint">
+                💡 Tip: You can copy and paste the entire code
               </p>
             </div>
 
@@ -279,10 +358,10 @@ export default function AccountPage() {
             <div>
               <button
                 type="submit"
-                disabled={status === 'verifying' || otpCode.length !== 6}
+                disabled={status === 'verifying' || otpCode.length !== 6 || isNavigating}
                 className="btn btn-primary w-full"
               >
-                {status === 'verifying' ? 'Verifying...' : 'Verify Code'}
+                {status === 'verifying' ? 'Verifying...' : isNavigating ? 'Redirecting...' : 'Verify Code'}
               </button>
             </div>
 
@@ -291,11 +370,12 @@ export default function AccountPage() {
               <button
                 type="button"
                 onClick={handleResendOtp}
-                disabled={resendCooldown > 0 || status === 'sending'}
+                disabled={resendCooldown > 0 || status === 'sending' || isNavigating}
                 className="btn btn-outline w-full"
               >
                 {status === 'sending' ? 'Sending...' : 
                  resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 
+                 isNavigating ? 'Redirecting...' :
                  'Resend Code'}
               </button>
             </div>
@@ -305,6 +385,7 @@ export default function AccountPage() {
               <button
                 type="button"
                 onClick={handleReset}
+                disabled={isNavigating}
                 className="btn btn-secondary w-full"
               >
                 Try Different Email

@@ -954,39 +954,66 @@ body.login-page-active .main-with-nav {
   transform: none;
 }
 
-/* OTP input container with underscores */
-.otp-input-container {
-  position: relative;
-  width: 100%;
+/* Individual OTP input boxes */
+.otp-input-box {
+  width: 3.5rem;
+  height: 3.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  background-color: var(--card);
+  color: var(--text);
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+  margin: 0 0.25rem;
 }
 
-.otp-underscores {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+.otp-input-box:focus {
+  outline: none;
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 3px rgba(255, 49, 130, 0.15);
+  transform: translateY(-1px);
+}
+
+.otp-input-box:disabled {
+  background-color: var(--bg);
+  color: var(--muted);
+  cursor: not-allowed;
+  border-color: var(--border);
+  box-shadow: none;
+  transform: none;
+}
+
+.otp-input-box::placeholder {
+  color: var(--muted);
+}
+
+/* OTP input container for individual boxes */
+.otp-input-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  pointer-events: none;
-  z-index: 1;
+  gap: 0.5rem;
+  margin: 1rem 0;
 }
 
-.otp-underscore {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--muted);
-  margin: 0 0.25rem;
-  min-width: 1.5rem;
-  text-align: center;
-  transition: all 0.2s ease;
+/* Mobile responsiveness for OTP boxes */
+@media (max-width: 480px) {
+  .otp-input-box {
+    width: 3rem;
+    height: 3rem;
+    font-size: 1.25rem;
+    margin: 0 0.125rem;
+  }
+  
+  .otp-input-container {
+    gap: 0.25rem;
+  }
 }
 
-.otp-underscore.filled {
-  color: var(--text);
-  transform: scale(1.1);
-}
+
 
 /* OTP form container */
 .otp-form {
@@ -1039,6 +1066,14 @@ body.login-page-active .main-with-nav {
   color: var(--muted);
   text-align: center;
   margin: 0;
+}
+
+.otp-paste-hint {
+  font-size: 0.75rem;
+  color: var(--brand-accent);
+  text-align: center;
+  margin: 0.5rem 0 0 0;
+  font-style: italic;
 }
 
 .otp-verify-button {
@@ -3597,29 +3632,7 @@ body.login-page-active .main-with-nav {
   font-weight: 600;
 }
 
-/* AuthWrapper Component Styles */
-.auth-wrapper-loading {
-  min-height: 100vh;
-  min-height: 100dvh;
-  background-color: var(--bg);
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
-.auth-wrapper-content {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-}
-
-.auth-wrapper-text {
-  color: var(--muted);
-}
 
 /* Fix for remaining text-muted class */
 .text-muted {

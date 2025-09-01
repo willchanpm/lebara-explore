@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabaseClient'
+import { useAuthLoading } from '@/components/AuthLoadingContext'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { setIsNavigating, isNavigating } = useAuthLoading()
   
   // State variables to manage the form and UI
   const [email, setEmail] = useState('') // Stores the email input value
@@ -23,10 +25,12 @@ export default function LoginPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
+          setCheckingAuth(false) // User is authenticated, stop checking
           router.push('/')
         }
       } catch (error) {
         console.error('Error checking auth:', error)
+        setCheckingAuth(false) // Stop checking on error
       } finally {
         setCheckingAuth(false)
       }
@@ -61,12 +65,20 @@ export default function LoginPage() {
     }
   }, [otpCode, otpSent])
 
+  // Cleanup effect to ensure checkingAuth is reset when component unmounts
+  useEffect(() => {
+    return () => {
+      setCheckingAuth(false)
+    }
+  }, [])
+
+
+
   // Show loading while checking authentication
   if (checkingAuth) {
     return (
       <div className="login-loading">
         <div className="login-loading-content">
-          <div className="spinner"></div>
           <p className="text-muted">Checking authentication...</p>
         </div>
       </div>
@@ -139,10 +151,19 @@ export default function LoginPage() {
         // Success! User is now logged in
         setStatus('Login successful! Redirecting...')
         
-        // Wait a moment to show the success message, then redirect to home
+        // Set global navigation loading state
+        setIsNavigating(true)
+        
+        // Reset checkingAuth state since user is now authenticated
+        setCheckingAuth(false)
+        
+        // Redirect immediately - the simplified AuthWrapper will handle the rest
+        router.push('/')
+        
+        // Reset navigation state after a short delay
         setTimeout(() => {
-          router.push('/')
-        }, 1500)
+          setIsNavigating(false)
+        }, 1000)
       } else {
         throw new Error('Authentication failed - no user data received')
       }
@@ -203,6 +224,88 @@ export default function LoginPage() {
     }
   }
 
+  // Handle OTP paste events
+  const handleOtpPaste = (e: React.ClipboardEvent, index: number) => {
+    e.preventDefault()
+    const pastedText = e.clipboardData.getData('text')
+    const digits = pastedText.replace(/\D/g, '').slice(0, 6) // Get only digits, max 6
+    
+    if (digits.length > 0) {
+      const newOtpCode = otpCode.split('')
+      
+      // Fill in the boxes starting from the current index
+      for (let i = 0; i < digits.length && index + i < 6; i++) {
+        newOtpCode[index + i] = digits[i]
+      }
+      
+      setOtpCode(newOtpCode.join(''))
+      
+      // Focus the next empty box or the last box if all filled
+      const nextEmptyIndex = newOtpCode.findIndex(char => !char)
+      if (nextEmptyIndex !== -1 && nextEmptyIndex < 6) {
+        const nextBox = document.querySelector(`input[data-index="${nextEmptyIndex}"]`) as HTMLInputElement
+        if (nextBox) {
+          nextBox.focus()
+        }
+      } else {
+        // All boxes filled, focus the last one
+        const lastBox = document.querySelector(`input[data-index="5"]`) as HTMLInputElement
+        if (lastBox) {
+          lastBox.focus()
+        }
+      }
+    }
+  }
+
+  // Handle individual OTP box changes
+  const handleOtpBoxChange = (index: number, value: string) => {
+    const digit = value.replace(/\D/g, '') // Only allow digits
+    
+    // Check if this is a paste operation (multiple digits)
+    if (digit.length > 1) {
+      // Handle paste: distribute digits across boxes
+      const pastedCode = digit.slice(0, 6) // Take first 6 digits
+      const newOtpCode = otpCode.split('')
+      
+      // Fill in the boxes with pasted digits
+      for (let i = 0; i < pastedCode.length && index + i < 6; i++) {
+        newOtpCode[index + i] = pastedCode[i]
+      }
+      
+      const newCode = newOtpCode.join('')
+      setOtpCode(newCode)
+      
+      // Focus the next empty box or the last box if all filled
+      const nextEmptyIndex = newOtpCode.findIndex(char => !char)
+      if (nextEmptyIndex !== -1 && nextEmptyIndex < 6) {
+        const nextBox = document.querySelector(`input[data-index="${nextEmptyIndex}"]`) as HTMLInputElement
+        if (nextBox) {
+          nextBox.focus()
+        }
+      } else {
+        // All boxes filled, focus the last one
+        const lastBox = document.querySelector(`input[data-index="5"]`) as HTMLInputElement
+        if (lastBox) {
+          lastBox.focus()
+        }
+      }
+    } else if (digit.length === 1) {
+      // Single digit input (normal typing)
+      const newOtpCode = otpCode.split('')
+      newOtpCode[index] = digit
+      const newCode = newOtpCode.join('')
+      setOtpCode(newCode)
+      
+      // Auto-focus next box if digit entered
+      if (index < 5) {
+        const nextBox = document.querySelector(`input[data-index="${index + 1}"]`) as HTMLInputElement
+        if (nextBox) {
+          nextBox.focus()
+        }
+      }
+    }
+  }
+
   // If OTP was sent, show the verification code input view
   if (otpSent) {
     return (
@@ -226,43 +329,37 @@ export default function LoginPage() {
                 Verification Code
               </label>
               <div className="otp-input-container">
-                <input
-                  id="otp"
-                  name="otp"
-                  type="text"
-                  value={otpCode}
-                  onChange={handleOtpChange}
-                  placeholder="000000"
-                  maxLength={6}
-                  required
-                  disabled={isVerifying}
-                  className="otp-input"
-                  autoComplete="one-time-code"
-                  autoFocus
-                />
-                <div className="otp-underscores">
-                  {Array.from({ length: 6 }, (_, i) => (
-                    <span 
-                      key={i} 
-                      className={`otp-underscore ${i < otpCode.length ? 'filled' : ''}`}
-                    >
-                      {otpCode[i] || '_'}
-                    </span>
-                  ))}
-                </div>
+                {Array.from({ length: 6 }, (_, i) => (
+                  <input
+                    key={i}
+                    type="text"
+                    maxLength={1}
+                    value={otpCode[i] || ''}
+                    onChange={(e) => handleOtpBoxChange(i, e.target.value)}
+                    onPaste={(e) => handleOtpPaste(e, i)}
+                    className="otp-input-box"
+                    disabled={isVerifying}
+                    autoFocus={i === 0}
+                    autoComplete="one-time-code"
+                    data-index={i}
+                  />
+                ))}
               </div>
               <p className="otp-help-text">
                 Enter the 6-digit code from your email
+              </p>
+              <p className="otp-paste-hint">
+                💡 Tip: You can copy and paste the entire code
               </p>
             </div>
 
             {/* Verify button */}
             <button
               type="submit"
-              disabled={isVerifying || otpCode.length !== 6}
+              disabled={isVerifying || otpCode.length !== 6 || isNavigating}
               className="btn btn-primary otp-verify-button"
             >
-              {isVerifying ? 'Verifying...' : 'Verify Code'}
+              {isVerifying ? 'Verifying...' : isNavigating ? 'Redirecting...' : 'Verify Code'}
             </button>
           </form>
 
@@ -270,6 +367,7 @@ export default function LoginPage() {
           <div className="success-actions">
             <button
               onClick={handleReset}
+              disabled={isNavigating}
               className="btn btn-secondary"
             >
               Try Different Email
@@ -277,11 +375,12 @@ export default function LoginPage() {
             
             <button
               onClick={handleResendOtp}
-              disabled={resendCooldown > 0 || isLoading}
+              disabled={resendCooldown > 0 || isLoading || isNavigating}
               className="btn btn-outline"
             >
               {isLoading ? 'Sending...' : 
                resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 
+               isNavigating ? 'Redirecting...' :
                'Resend Code'}
             </button>
           </div>
