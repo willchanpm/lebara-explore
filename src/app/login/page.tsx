@@ -40,12 +40,56 @@ export default function LoginPage() {
     }
   }, [resendCooldown])
 
+  // Handle OTP verification using server action
+  const handleVerifyOtp = async () => {
+    if (otpCode.length !== 6) {
+      setStatus('Please enter the complete 6-digit code')
+      return
+    }
+
+    try {
+      setIsVerifying(true) // Show verifying state
+      setStatus('Verifying code...')
+
+      // Set global navigation loading state
+      setIsNavigating(true)
+
+      // Use server action to verify OTP
+      const result = await verifyOtpAction(email.trim(), otpCode)
+      
+      if (!result.success) {
+        // If there's an error, show it to the user
+        setStatus(`Error: ${result.error}`)
+        setOtpCode('') // Clear the OTP input
+        setIsNavigating(false) // Reset navigation state
+      }
+      // If successful, the server action will redirect automatically
+      // No need to handle success case here
+      
+    } catch (err: unknown) {
+      // Check if this is a Next.js redirect (which is expected on success)
+      if (err && typeof err === 'object' && 'digest' in err && 
+          typeof err.digest === 'string' && err.digest.startsWith('NEXT_REDIRECT')) {
+        // This is a successful redirect, don't show error
+        return
+      }
+      
+      // Catch any unexpected errors
+      setStatus('Invalid verification code. Please try again.')
+      setOtpCode('') // Clear the OTP input
+      setIsNavigating(false) // Reset navigation state
+      console.error('OTP verification error:', err)
+    } finally {
+      setIsVerifying(false) // Always reset verifying state
+    }
+  }
+
   // Auto-submit OTP when 6 digits are entered
   useEffect(() => {
     if (otpCode.length === 6 && otpSent) {
       handleVerifyOtp()
     }
-  }, [otpCode, otpSent])
+  }, [otpCode, otpSent, handleVerifyOtp])
 
   // Handle form submission - send OTP
   const handleSubmit = async (e: React.FormEvent) => {
@@ -87,43 +131,6 @@ export default function LoginPage() {
     }
   }
 
-  // Handle OTP verification using server action
-  const handleVerifyOtp = async () => {
-    if (otpCode.length !== 6) {
-      setStatus('Please enter the complete 6-digit code')
-      return
-    }
-
-    try {
-      setIsVerifying(true) // Show verifying state
-      setStatus('Verifying code...')
-
-      // Set global navigation loading state
-      setIsNavigating(true)
-
-      // Use server action to verify OTP
-      const result = await verifyOtpAction(email.trim(), otpCode)
-      
-      if (!result.success) {
-        // If there's an error, show it to the user
-        setStatus(`Error: ${result.error}`)
-        setOtpCode('') // Clear the OTP input
-        setIsNavigating(false) // Reset navigation state
-      }
-      // If successful, the server action will redirect automatically
-      // No need to handle success case here
-      
-    } catch (err) {
-      // Catch any unexpected errors
-      setStatus('Invalid verification code. Please try again.')
-      setOtpCode('') // Clear the OTP input
-      setIsNavigating(false) // Reset navigation state
-      console.error('OTP verification error:', err)
-    } finally {
-      setIsVerifying(false) // Always reset verifying state
-    }
-  }
-
   // Handle resend OTP
   const handleResendOtp = async () => {
     if (resendCooldown > 0) return // Don't allow resend during cooldown
@@ -153,12 +160,42 @@ export default function LoginPage() {
     }
   }
 
-  // Handle OTP input change
-  const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    // Only allow digits and limit to 6 characters
-    if (/^\d{0,6}$/.test(value)) {
-      setOtpCode(value)
+  // Handle OTP input change for individual digits
+  const handleOtpChange = (index: number, value: string) => {
+    // Only allow single digits for individual input
+    if (/^\d$/.test(value) || value === '') {
+      const newOtpCode = otpCode.split('')
+      newOtpCode[index] = value
+      setOtpCode(newOtpCode.join(''))
+      
+      // Auto-focus next input
+      if (value && index < 5) {
+        const nextInput = document.getElementById(`otp-${index + 1}`)
+        nextInput?.focus()
+      }
+    }
+  }
+
+  // Handle paste event
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault()
+    const pastedData = e.clipboardData.getData('text')
+    
+    // Extract only digits and limit to 6
+    const digits = pastedData.replace(/\D/g, '').slice(0, 6)
+    setOtpCode(digits)
+    
+    // Focus the last filled input or the last input if all are filled
+    const lastIndex = Math.min(digits.length - 1, 5)
+    const lastInput = document.getElementById(`otp-${lastIndex}`)
+    lastInput?.focus()
+  }
+
+  // Handle backspace
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otpCode[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-${index - 1}`)
+      prevInput?.focus()
     }
   }
 
@@ -166,51 +203,76 @@ export default function LoginPage() {
     <div className="login-page">
       <div className="login-container">
         {/* Header */}
-        <div className="login-header">
-          <h1 className="login-title">Welcome Back</h1>
-          <p className="login-subtitle">Sign in to your account</p>
+        <div className="login-header" style={{ textAlign: 'center' }}>
+          <h1 className="login-title">
+            {otpSent ? 'Check your email' : 'Welcome'}
+          </h1>
+          {otpSent ? (
+            <p className="login-subtitle">
+              Enter the 6-digit code we sent to you. If you&apos;re new, your account will be created after you verify.
+            </p>
+          ) : (
+            <p className="login-subtitle" style={{ display: 'none' }}></p>
+          )}
         </div>
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="login-form">
-          {/* Email Input */}
-          <div className="form-group">
-            <label htmlFor="email" className="form-label">
-              Email Address
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email address"
-              className="form-input"
-              required
-              disabled={otpSent || isLoading}
-            />
-          </div>
+          {/* Helper text for email step */}
+          {!otpSent && (
+            <p className="form-help" style={{ textAlign: 'center', marginBottom: '1.5rem', fontSize: '0.875rem', color: 'var(--muted)' }}>
+              We&apos;ll email you a 6-digit code. If you&apos;re new, your account will automatically be created after you verify.
+            </p>
+          )}
+
+          {/* Email Input - only show when not in OTP step */}
+          {!otpSent && (
+            <div className="form-group">
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@email.com"
+                className="form-input"
+                style={{ fontSize: '1.125rem' }}
+                required
+                disabled={isLoading}
+              />
+            </div>
+          )}
 
           {/* OTP Input (shown after OTP is sent) */}
           {otpSent && (
             <div className="form-group">
-              <label htmlFor="otp" className="form-label">
-                Verification Code
-              </label>
-              <input
-                type="text"
-                id="otp"
-                value={otpCode}
-                onChange={handleOtpChange}
-                placeholder="Enter 6-digit code"
-                className="form-input otp-input"
-                maxLength={6}
-                required
-                disabled={isVerifying}
-                autoComplete="one-time-code"
-              />
-              <p className="form-help">
-                Enter the 6-digit code sent to your email
-              </p>
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginBottom: '1rem' }}>
+                {[0, 1, 2, 3, 4, 5].map((index) => (
+                  <input
+                    key={index}
+                    type="text"
+                    id={`otp-${index}`}
+                    value={otpCode[index] || ''}
+                    onChange={(e) => handleOtpChange(index, e.target.value)}
+                    onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                    onPaste={handleOtpPaste}
+                    className="form-input"
+                    style={{
+                      width: '3rem',
+                      height: '3rem',
+                      textAlign: 'center',
+                      fontSize: '1.25rem',
+                      fontWeight: '600',
+                      border: '2px solid var(--border)',
+                      borderRadius: '8px',
+                      padding: '0'
+                    }}
+                    maxLength={1}
+                    required
+                    disabled={isVerifying}
+                    autoComplete="one-time-code"
+                  />
+                ))}
+              </div>
             </div>
           )}
 
@@ -222,38 +284,39 @@ export default function LoginPage() {
           )}
 
           {/* Submit Button */}
-          <button
-            type="submit"
-            className="btn btn-primary login-submit"
-            disabled={isLoading || isVerifying || isNavigating}
-          >
-            {isLoading ? 'Sending...' : 
-             otpSent ? (isVerifying ? 'Verifying...' : 'Verify Code') : 
-             'Send Verification Code'}
-          </button>
-
-          {/* Resend OTP Button */}
-          {otpSent && (
-            <button
-              type="button"
-              onClick={handleResendOtp}
-              className="btn btn-secondary login-resend"
-              disabled={resendCooldown > 0 || isLoading || isVerifying}
-            >
-              {resendCooldown > 0 
-                ? `Resend in ${resendCooldown}s` 
-                : 'Resend Code'
-              }
-            </button>
-          )}
+          <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+            {otpSent ? (
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  className="btn btn-secondary"
+                  disabled={resendCooldown > 0 || isLoading || isVerifying}
+                >
+                  {resendCooldown > 0 
+                    ? `Resend in ${resendCooldown}s` 
+                    : 'Resend'
+                  }
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary login-submit"
+                  disabled={isLoading || isVerifying || isNavigating}
+                >
+                  {isVerifying ? 'Verifying...' : 'Sign In'}
+                </button>
+              </div>
+            ) : (
+              <button
+                type="submit"
+                className="btn btn-primary login-submit"
+                disabled={isLoading || isVerifying || isNavigating}
+              >
+                {isLoading ? 'Sending...' : 'Continue'}
+              </button>
+            )}
+          </div>
         </form>
-
-        {/* Footer */}
-        <div className="login-footer">
-          <p className="text-muted">
-            By signing in, you agree to our terms of service and privacy policy.
-          </p>
-        </div>
       </div>
     </div>
   )
