@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
 import type { User } from '@supabase/supabase-js'
 import ImageModal from './ImageModal'
 import Toast from './Toast'
 import { toggleFavorite, getFavoriteStatusForPlaces } from '@/lib/favorites'
+import { createSupabaseBrowser } from '@/lib/supabase/client'
 
 // Interface for check-in data from the database
 interface CheckIn {
@@ -110,7 +110,12 @@ function renderStars(rating: number): React.ReactElement[] {
   return stars
 }
 
-export default function Feed() {
+// Interface for component props
+interface FeedProps {
+  userEmail: string | null // User email from server-side props
+}
+
+export default function Feed({ userEmail }: FeedProps) {
   // State for check-ins data
   const [checkIns, setCheckIns] = useState<CheckIn[]>([])
   const [loading, setLoading] = useState(true)
@@ -122,7 +127,7 @@ export default function Feed() {
   const [selectedMonth, setSelectedMonth] = useState<string>('all')
   const [showMyPosts, setShowMyPosts] = useState(false)
   
-  // State for current user
+  // State for current user (derived from userEmail prop)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   
   // State for available months (for filter dropdown)
@@ -159,24 +164,19 @@ export default function Feed() {
   // State for favorites functionality
   const [userFavorites, setUserFavorites] = useState<Set<string>>(new Set())
   const [favoritesLoading, setFavoritesLoading] = useState(false)
+  
+  // Create a Supabase browser client for database operations
+  const supabase = createSupabaseBrowser()
 
-  // Get current user on component mount
+  // Set current user from userEmail prop
   useEffect(() => {
-    const getCurrentUser = async () => {
-      try {
-        const { data: { user }, error } = await supabase.auth.getUser()
-        if (error) {
-          console.error('Error fetching user:', error)
-        } else {
-          setCurrentUser(user)
-        }
-      } catch (err) {
-        console.error('Unexpected error:', err)
-      }
+    if (userEmail) {
+      // Create a minimal user object with the email
+      setCurrentUser({ id: '', email: userEmail } as User)
+    } else {
+      setCurrentUser(null)
     }
-    
-    getCurrentUser()
-  }, [])
+  }, [userEmail])
 
   // Fetch initial check-ins
   useEffect(() => {

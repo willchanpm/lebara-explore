@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/supabaseServer'
+import { createSupabaseServer } from '@/lib/supabase/server'
 import BingoClient from './BingoClient'
 
 // Define TypeScript interfaces for our data structures
@@ -43,7 +43,7 @@ export default async function BingoPage() {
   let month = currentMonth()
   
   // Create a Supabase server client to fetch data
-  const supabase = createServerClient()
+  const supabase = await createSupabaseServer()
 
   // First, try to fetch bingo tiles for the current month
   // We need to manually join the places table using place_id

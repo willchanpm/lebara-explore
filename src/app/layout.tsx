@@ -4,6 +4,7 @@ import ConditionalNav from "@/components/ConditionalNav";
 import AuthWrapper from "@/components/AuthWrapper";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { AuthLoadingProvider } from "@/components/AuthLoadingContext";
+import { createSupabaseServer } from "@/lib/supabase/server";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -65,11 +66,18 @@ export const viewport = {
   themeColor: '#ff5aa7',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Fetch user data on the server using the correct server-side method
+  const supabase = await createSupabaseServer()
+  const { data: { session } } = await supabase.auth.getSession()
+  
+  // Pass minimal user data to client components
+  const userEmail = session?.user?.email || null
+
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-bg text-text`}>
@@ -82,7 +90,7 @@ export default function RootLayout({
         {/* Main content area with proper spacing for bottom navigation */}
         <main className="main-with-nav">
           <AuthLoadingProvider>
-            <AuthWrapper>
+            <AuthWrapper userEmail={userEmail}>
               {children}
             </AuthWrapper>
           </AuthLoadingProvider>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { supabase } from '@/lib/supabaseClient';
+import { createSupabaseServer } from '@/lib/supabase/server';
 
 // Define the structure for the request body
 interface AIRequest {
@@ -16,6 +16,9 @@ export async function POST(request: NextRequest) {
     // Parse the request body
     const body: AIRequest = await request.json();
     const { quickMood, notes, priceBand, vegFriendly, widerSearch } = body;
+
+    // Create a Supabase server client for database operations
+    const supabase = await createSupabaseServer();
 
     // Build a compact instruction string for redundancy
     const uiSummary = [

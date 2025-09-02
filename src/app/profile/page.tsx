@@ -1,34 +1,15 @@
-'use client'
+import { createSupabaseServer } from '@/lib/supabase/server'
+import ProfilePageClient from './ProfilePageClient'
+import AuthStatus from "@/components/AuthStatus"
 
-import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
-import type { User } from '@supabase/supabase-js'
-import AuthStatus from "@/components/AuthStatus";
-import ProfileEditor from "@/components/ProfileEditor";
-import Favorites from "@/components/Favorites";
-
-export default function ProfilePage() {
-  // State for current user
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
-
-  // Get current user on component mount
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      try {
-        const { data: { user }, error } = await supabase.auth.getUser()
-        if (error) {
-          console.error('Error fetching user:', error)
-        } else {
-          setCurrentUser(user)
-        }
-      } catch (err) {
-        console.error('Unexpected error:', err)
-      }
-    }
-    
-    getCurrentUser()
-  }, [])
-
+export default async function ProfilePage() {
+  // Fetch user data on the server
+  const supabase = await createSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  // Pass minimal user data to client component
+  const userEmail = user?.email || null
+  
   return (
     <div className="profile-page">
       <div className="profile-container">
@@ -43,15 +24,8 @@ export default function ProfilePage() {
           <AuthStatus />
         </div>
         
-        {/* Profile Editor */}
-        <div className="profile-editor-section">
-          <ProfileEditor />
-        </div>
-        
-        {/* Favorites Section */}
-        <div className="profile-favorites-section">
-          <Favorites currentUser={currentUser} />
-        </div>
+        {/* Profile Page Client Component */}
+        <ProfilePageClient userEmail={userEmail} />
       </div>
     </div>
   )

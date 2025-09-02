@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { createSupabaseBrowser } from '@/lib/supabase/client';
 
 // Define the structure of a place object from the database
 // This interface matches what we expect from the public.places table
@@ -39,6 +39,9 @@ export default function LunchRoulettePage() {
 
   // Create a reference to the result section for auto-scrolling
   const resultSectionRef = useRef<HTMLDivElement>(null);
+  
+  // Create a Supabase browser client for database operations
+  const supabase = createSupabaseBrowser()
 
   // Price range options
   const priceOptions = ['£', '££', '£££'];

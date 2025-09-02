@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { getUserFavorites, toggleFavorite } from '@/lib/favorites'
 import type { User } from '@supabase/supabase-js'
 import type { PlaceWithFavorite } from '@/lib/favorites'
@@ -18,6 +18,9 @@ export default function Favorites({ currentUser }: FavoritesProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [removingFavorite, setRemovingFavorite] = useState<string | null>(null)
+  
+  // Create a Supabase browser client for database operations
+  const supabase = createSupabaseBrowser()
   
   // State for toast notifications
   const [toast, setToast] = useState<{

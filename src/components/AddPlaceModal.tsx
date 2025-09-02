@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import { createSupabaseBrowser } from '@/lib/supabase/client'
 import Toast from './Toast'
 
 // Interface for the modal props
@@ -9,6 +9,7 @@ interface AddPlaceModalProps {
   isOpen: boolean
   onClose: () => void
   onPlaceAdded: () => void // Callback to refresh the places list
+  userEmail?: string | null // Optional user email for attribution
 }
 
 // Interface for the place form data
@@ -22,7 +23,7 @@ interface PlaceFormData {
   veg_friendly: boolean
 }
 
-export default function AddPlaceModal({ isOpen, onClose, onPlaceAdded }: AddPlaceModalProps) {
+export default function AddPlaceModal({ isOpen, onClose, onPlaceAdded, userEmail }: AddPlaceModalProps) {
   // State for form data
   const [formData, setFormData] = useState<PlaceFormData>({
     name: '',
@@ -39,6 +40,9 @@ export default function AddPlaceModal({ isOpen, onClose, onPlaceAdded }: AddPlac
   
   // State for loading and submission
   const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  // Create a Supabase browser client for database operations
+  const supabase = createSupabaseBrowser()
   
   // State for toast notifications
   const [toast, setToast] = useState<{
@@ -133,13 +137,6 @@ export default function AddPlaceModal({ isOpen, onClose, onPlaceAdded }: AddPlac
     setIsSubmitting(true)
     
     try {
-      // Get the current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
-      
-      if (userError || !user) {
-        throw new Error('You must be logged in to add a place')
-      }
-      
       // Insert the new place into the database
       const { error: insertError } = await supabase
         .from('places')
@@ -152,7 +149,7 @@ export default function AddPlaceModal({ isOpen, onClose, onPlaceAdded }: AddPlac
           notes: formData.notes.trim() || null,
           veg_friendly: formData.veg_friendly,
           user_submitted: true,
-          submitted_by: user.id
+          submitted_by: userEmail || 'anonymous'
         })
       
       if (insertError) {

@@ -1,25 +1,20 @@
-'use client'
+import { redirect } from 'next/navigation'
+import { createSupabaseServer } from '@/lib/supabase/server'
 
-import { useEffect } from 'react'
-
-export default function LoginLayout({
+export default async function LoginLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  useEffect(() => {
-    // Add class to body when login layout mounts
-    document.body.classList.add('login-page-active')
-    
-    // Remove class when component unmounts
-    return () => {
-      document.body.classList.remove('login-page-active')
-    }
-  }, [])
-
-  return (
-    <div className="login-layout">
-      {children}
-    </div>
-  )
+  // Check if user is already authenticated
+  const supabase = await createSupabaseServer()
+  const { data: { session } } = await supabase.auth.getSession()
+  
+  // If user is authenticated, redirect to home
+  if (session) {
+    redirect('/')
+  }
+  
+  // If not authenticated, show the login page
+  return <>{children}</>
 }

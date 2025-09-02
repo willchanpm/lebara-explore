@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { useAuthLoading } from '@/components/AuthLoadingContext'
+import { verifyOtpAction } from '../actions'
 
 export default function AccountPage() {
   const { isNavigating } = useAuthLoading()
@@ -14,6 +15,9 @@ export default function AccountPage() {
   const [message, setMessage] = useState('') // Stores status messages to display to the user
   const [otpSent, setOtpSent] = useState(false) // Tracks if an OTP has been sent
   const [resendCooldown, setResendCooldown] = useState(0) // Tracks resend cooldown timer
+  
+  // Create a Supabase browser client for sending OTP (only)
+  const supabase = createSupabaseBrowser()
 
   // Handle resend cooldown timer
   useEffect(() => {
@@ -84,7 +88,7 @@ export default function AccountPage() {
     }
   }
 
-  // Handle OTP verification
+  // Handle OTP verification using server action
   const handleVerifyOtp = async () => {
     if (otpCode.length !== 6) {
       setStatus('error')
@@ -96,30 +100,18 @@ export default function AccountPage() {
       setStatus('verifying') // Show verifying state
       setMessage('Verifying code...')
 
-      // Verify the OTP code with Supabase
-      const { data, error } = await supabase.auth.verifyOtp({
-        email: email.trim(),
-        token: otpCode,
-        type: 'email'
-      })
-
-      if (error) {
+      // Use server action to verify OTP
+      const result = await verifyOtpAction(email.trim(), otpCode)
+      
+      if (!result.success) {
         // If there's an error, show it to the user
         setStatus('error')
-        setMessage(error.message || 'Invalid verification code')
+        setMessage(result.error || 'Verification failed')
         setOtpCode('') // Clear the OTP input
-      } else if (data.user) {
-        // Success! User is now logged in
-        setStatus('success')
-        setMessage('Account access granted! You are now signed in.')
-        
-        // Clear the form
-        setEmail('')
-        setOtpCode('')
-        setOtpSent(false)
-      } else {
-        throw new Error('Authentication failed - no user data received')
       }
+      // If successful, the server action will redirect automatically
+      // No need to handle success case here
+      
     } catch (err) {
       // Catch any unexpected errors
       setStatus('error')
@@ -146,268 +138,118 @@ export default function AccountPage() {
 
       if (error) {
         setStatus('error')
-        setMessage(error.message || 'Failed to resend code')
+        setMessage(error.message || 'Failed to resend verification code')
       } else {
         setStatus('success')
-        setMessage('New verification code sent!')
+        setMessage('Verification code resent! Check your email.')
         setResendCooldown(60) // Reset cooldown timer
-        setOtpCode('') // Clear the OTP input
       }
     } catch (err) {
       setStatus('error')
-      setMessage('Failed to resend code. Please try again.')
-      console.error('Resend OTP error:', err)
+      setMessage('An unexpected error occurred. Please try again.')
+      console.error('OTP resend error:', err)
     }
   }
 
-  // Handle OTP input changes with formatting
+  // Handle OTP input change
   const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '') // Only allow digits
-    if (value.length <= 6) {
+    const value = e.target.value
+    // Only allow digits and limit to 6 characters
+    if (/^\d{0,6}$/.test(value)) {
       setOtpCode(value)
-    }
-  }
-
-  // Handle OTP paste events
-  const handleOtpPaste = (e: React.ClipboardEvent, index: number) => {
-    e.preventDefault()
-    const pastedText = e.clipboardData.getData('text')
-    const digits = pastedText.replace(/\D/g, '').slice(0, 6) // Get only digits, max 6
-    
-    if (digits.length > 0) {
-      const newOtpCode = otpCode.split('')
-      
-      // Fill in the boxes starting from the current index
-      for (let i = 0; i < digits.length && index + i < 6; i++) {
-        newOtpCode[index + i] = digits[i]
-      }
-      
-      setOtpCode(newOtpCode.join(''))
-      
-      // Focus the next empty box or the last box if all filled
-      const nextEmptyIndex = newOtpCode.findIndex(char => !char)
-      if (nextEmptyIndex !== -1 && nextEmptyIndex < 6) {
-        const nextBox = document.querySelector(`input[data-index="${nextEmptyIndex}"]`) as HTMLInputElement
-        if (nextBox) {
-          nextBox.focus()
-        }
-      } else {
-        // All boxes filled, focus the last one
-        const lastBox = document.querySelector(`input[data-index="5"]`) as HTMLInputElement
-        if (lastBox) {
-          lastBox.focus()
-        }
-      }
-    }
-  }
-
-  // Handle individual OTP box changes
-  const handleOtpBoxChange = (index: number, value: string) => {
-    const digit = value.replace(/\D/g, '') // Only allow digits
-    
-    // Check if this is a paste operation (multiple digits)
-    if (digit.length > 1) {
-      // Handle paste: distribute digits across boxes
-      const pastedCode = digit.slice(0, 6) // Take first 6 digits
-      const newOtpCode = otpCode.split('')
-      
-      // Fill in the boxes with pasted digits
-      for (let i = 0; i < pastedCode.length && index + i < 6; i++) {
-        newOtpCode[index + i] = pastedCode[i]
-      }
-      
-      const newCode = newOtpCode.join('')
-      setOtpCode(newCode)
-      
-      // Focus the next empty box or the last box if all filled
-      const nextEmptyIndex = newOtpCode.findIndex(char => !char)
-      if (nextEmptyIndex !== -1 && nextEmptyIndex < 6) {
-        const nextBox = document.querySelector(`input[data-index="${nextEmptyIndex}"]`) as HTMLInputElement
-        if (nextBox) {
-          nextBox.focus()
-        }
-      } else {
-        // All boxes filled, focus the last one
-        const lastBox = document.querySelector(`input[data-index="5"]`) as HTMLInputElement
-        if (lastBox) {
-          lastBox.focus()
-        }
-      }
-    } else if (digit.length === 1) {
-      // Single digit input (normal typing)
-      const newOtpCode = otpCode.split('')
-      newOtpCode[index] = digit
-      const newCode = newOtpCode.join('')
-      setOtpCode(newCode)
-      
-      // Auto-focus next box if digit entered
-      if (index < 5) {
-        const nextBox = document.querySelector(`input[data-index="${index + 1}"]`) as HTMLInputElement
-        if (nextBox) {
-          nextBox.focus()
-        }
-      }
-    }
-  }
-
-  // Function to reset the form
-  const handleReset = () => {
-    setOtpSent(false)
-    setStatus('idle')
-    setMessage('')
-    setEmail('')
-    setOtpCode('')
-    setResendCooldown(0)
-  }
-
-  // Function to get the appropriate CSS classes based on status
-  const getStatusClasses = () => {
-    switch (status) {
-      case 'sending':
-        return 'text-brand-accent' // Pink for sending state
-      case 'success':
-        return 'text-green-500' // Green for success
-      case 'error':
-        return 'text-red-500' // Red for errors
-      default:
-        return 'text-muted' // Default muted color
     }
   }
 
   return (
     <div className="account-page">
       <div className="account-container">
-        {/* Page header */}
+        {/* Header */}
         <div className="account-header">
-          <div className="account-icon">
-            <span className="account-icon-emoji">🔐</span>
-          </div>
-          
-          <h1 className="account-title">
-            Sign In
-          </h1>
-          <p className="account-subtitle">
-            {otpSent ? 'Enter the verification code' : 'Enter your email to receive a verification code'}
-          </p>
+          <h1 className="account-title">Account</h1>
+          <p className="account-subtitle">Manage your account settings</p>
         </div>
 
-        {/* OTP form */}
-        {!otpSent ? (
-          <form className="account-form" onSubmit={handleSubmit}>
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
+        {/* Account Form */}
+        <form onSubmit={handleSubmit} className="account-form">
+          {/* Email Input */}
+          <div className="form-group">
+            <label htmlFor="email" className="form-label">
+              Email Address
+            </label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email address"
+              className="form-input"
+              required
+              disabled={otpSent || status === 'sending'}
+            />
+          </div>
+
+          {/* OTP Input (shown after OTP is sent) */}
+          {otpSent && (
+            <div className="form-group">
+              <label htmlFor="otp" className="form-label">
+                Verification Code
               </label>
               <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
+                type="text"
+                id="otp"
+                value={otpCode}
+                onChange={handleOtpChange}
+                placeholder="Enter 6-digit code"
+                className="form-input otp-input"
+                maxLength={6}
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email address"
-                className="form-input"
-                disabled={status === 'sending'} // Disable input while sending
+                disabled={status === 'verifying'}
+                autoComplete="one-time-code"
               />
-            </div>
-
-            {/* Submit button */}
-            <div>
-              <button
-                type="submit"
-                disabled={status === 'sending' || isNavigating} // Disable button while sending or navigating
-                className="btn btn-primary w-full"
-              >
-                {status === 'sending' ? 'Sending Code...' : isNavigating ? 'Redirecting...' : 'Send Verification Code'}
-              </button>
-            </div>
-          </form>
-        ) : (
-          <form className="account-form" onSubmit={(e) => { e.preventDefault(); handleVerifyOtp(); }}>
-            <div>
-              <label htmlFor="otp" className="sr-only">
-                Verification code
-              </label>
-                          <div className="otp-input-container">
-              {Array.from({ length: 6 }, (_, i) => (
-                <input
-                  key={i}
-                  type="text"
-                  maxLength={1}
-                  value={otpCode[i] || ''}
-                  onChange={(e) => handleOtpBoxChange(i, e.target.value)}
-                  onPaste={(e) => handleOtpPaste(e, i)}
-                  className="otp-input-box"
-                  disabled={status === 'verifying'}
-                  autoFocus={i === 0}
-                  autoComplete="one-time-code"
-                  data-index={i}
-                />
-              ))}
-            </div>
-              <p className="text-sm text-muted mt-2 text-center">
-                Enter the 6-digit code sent to {email}
-              </p>
-              <p className="otp-paste-hint">
-                💡 Tip: You can copy and paste the entire code
+              <p className="form-help">
+                Enter the 6-digit code sent to your email
               </p>
             </div>
+          )}
 
-            {/* Verify button */}
-            <div>
-              <button
-                type="submit"
-                disabled={status === 'verifying' || otpCode.length !== 6 || isNavigating}
-                className="btn btn-primary w-full"
-              >
-                {status === 'verifying' ? 'Verifying...' : isNavigating ? 'Redirecting...' : 'Verify Code'}
-              </button>
+          {/* Status Message */}
+          {message && (
+            <div className={`status-message ${status === 'error' ? 'error' : 'success'}`}>
+              {message}
             </div>
+          )}
 
-            {/* Resend button */}
-            <div>
-              <button
-                type="button"
-                onClick={handleResendOtp}
-                disabled={resendCooldown > 0 || status === 'sending' || isNavigating}
-                className="btn btn-outline w-full"
-              >
-                {status === 'sending' ? 'Sending...' : 
-                 resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 
-                 isNavigating ? 'Redirecting...' :
-                 'Resend Code'}
-              </button>
-            </div>
+          {/* Submit Button */}
+          <button
+            type="submit"
+            className="btn btn-primary account-submit"
+            disabled={status === 'sending' || status === 'verifying' || isNavigating}
+          >
+            {status === 'sending' ? 'Sending...' : 
+             otpSent ? (status === 'verifying' ? 'Verifying...' : 'Verify Code') : 
+             'Send Verification Code'}
+          </button>
 
-            {/* Back to email button */}
-            <div>
-              <button
-                type="button"
-                onClick={handleReset}
-                disabled={isNavigating}
-                className="btn btn-secondary w-full"
-              >
-                Try Different Email
-              </button>
-            </div>
-          </form>
-        )}
+          {/* Resend OTP Button */}
+          {otpSent && (
+            <button
+              type="button"
+              onClick={handleResendOtp}
+              className="btn btn-secondary account-resend"
+              disabled={resendCooldown > 0 || status === 'sending' || status === 'verifying'}
+            >
+              {resendCooldown > 0 
+                ? `Resend in ${resendCooldown}s` 
+                : 'Resend Code'
+              }
+            </button>
+          )}
+        </form>
 
-        {/* Status message display */}
-        {message && (
-          <div className={`account-status ${getStatusClasses()}`}>
-            {message}
-          </div>
-        )}
-
-        {/* Additional information */}
-        <div className="account-info">
-          <p className="account-info-text">
-            {otpSent ? 
-              'Enter the 6-digit code from your email to sign in. No password required!' :
-              'Enter the verification code from your email to sign in. No password required!'
-            }
+        {/* Footer */}
+        <div className="account-footer">
+          <p className="text-muted">
+            By updating your account, you agree to our terms of service and privacy policy.
           </p>
         </div>
       </div>

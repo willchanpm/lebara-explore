@@ -1,11 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import { createSupabaseBrowser } from '@/lib/supabase/client'
 import Toast from './Toast'
-import type { User } from '@supabase/supabase-js'
-
-
 
 // Interface for toast state
 interface ToastState {
@@ -15,9 +12,12 @@ interface ToastState {
 }
 
 // ProfileEditor component for editing display name
-export default function ProfileEditor() {
+interface ProfileEditorProps {
+  userEmail: string | null
+}
+
+export default function ProfileEditor({ userEmail }: ProfileEditorProps) {
   // State variables
-  const [user, setUser] = useState<User | null>(null)
   const [displayName, setDisplayName] = useState('')
   const [originalDisplayName, setOriginalDisplayName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -28,32 +28,32 @@ export default function ProfileEditor() {
     type: 'success',
     isVisible: false
   })
+  
+  // Create a Supabase browser client for database operations
+  const supabase = createSupabaseBrowser()
 
-  // Load user and profile data on mount
+  // Load profile data on mount
   useEffect(() => {
-    loadUserAndProfile()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    if (userEmail) {
+      loadProfile()
+    }
+  }, [userEmail]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Function to load current user and their profile
-  const loadUserAndProfile = async () => {
+  // Function to load user's profile
+  const loadProfile = async () => {
+    if (!userEmail) return
+    
     try {
       setIsLoading(true)
       
-      // Get current user
+      // Get user ID from email (we need this for the database query)
       const { data: { user }, error: userError } = await supabase.auth.getUser()
       
-      if (userError) {
+      if (userError || !user) {
         console.error('Error fetching user:', userError)
         showToast('Failed to load user data', 'error')
         return
       }
-      
-      if (!user) {
-        setUser(null)
-        return
-      }
-      
-      setUser(user)
       
       // Fetch user's profile
       const { data: profileData, error: profileError } = await supabase
@@ -104,13 +104,22 @@ export default function ProfileEditor() {
       return
     }
     
-    if (!user) {
+    if (!userEmail) {
       showToast('User not authenticated', 'error')
       return
     }
     
     try {
       setIsSaving(true)
+      
+      // Get user ID from email for the database operation
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      
+      if (userError || !user) {
+        console.error('Error fetching user:', userError)
+        showToast('Failed to get user data', 'error')
+        return
+      }
       
       // Upsert profile with display name
       const { error } = await supabase
@@ -140,7 +149,7 @@ export default function ProfileEditor() {
       showToast('Display name saved successfully!', 'success')
       
       // Refetch profile to confirm
-      await loadUserAndProfile()
+      await loadProfile()
       
     } catch (error) {
       console.error('Unexpected error saving profile:', error)
@@ -161,14 +170,6 @@ export default function ProfileEditor() {
     setIsEditing(false)
   }
 
-  // Function to use email name (extract prefix before @)
-  const useEmailName = () => {
-    if (user?.email) {
-      const emailPrefix = user.email.split('@')[0]
-      setDisplayName(emailPrefix)
-    }
-  }
-
   // Function to close toast
   const closeToast = () => {
     setToast(prev => ({ ...prev, isVisible: false }))
@@ -187,7 +188,7 @@ export default function ProfileEditor() {
   }
 
   // Show sign-in CTA if not authenticated
-  if (!user) {
+  if (!userEmail) {
     return null // This will be handled by AuthStatus component
   }
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import { createSupabaseBrowser } from '@/lib/supabase/client'
 import AddPlaceModal from '@/components/AddPlaceModal'
 import { toggleFavorite, getFavoriteStatusForPlaces } from '@/lib/favorites'
 import type { User } from '@supabase/supabase-js'
@@ -50,7 +50,7 @@ export default function DiscoverPage() {
       setError(null)
       
       // Query Supabase for all places, ordered by name
-      const { data, error: supabaseError } = await supabase
+      const { data, error: supabaseError } = await createSupabaseBrowser()
         .from('places')
         .select('*')
         .order('name')
@@ -90,7 +90,7 @@ export default function DiscoverPage() {
       if (placeIds.length === 0) return
       
       const { data: favoritedIds, error } = await getFavoriteStatusForPlaces(
-        supabase,
+        createSupabaseBrowser(),
         currentUser.id,
         placeIds
       )
@@ -118,7 +118,7 @@ export default function DiscoverPage() {
     
     try {
       const { success, error } = await toggleFavorite(
-        supabase,
+        createSupabaseBrowser(),
         currentUser.id,
         placeId
       )
@@ -361,7 +361,7 @@ export default function DiscoverPage() {
   useEffect(() => {
     const getCurrentUser = async () => {
       try {
-        const { data: { user }, error } = await supabase.auth.getUser()
+        const { data: { user }, error } = await createSupabaseBrowser().auth.getUser()
         if (error) {
           console.error('Error fetching user:', error)
         } else {
@@ -606,6 +606,7 @@ export default function DiscoverPage() {
           // Refresh the places list when a new place is added
           fetchPlaces()
         }}
+        userEmail={currentUser?.email || null}
       />
       
       {/* Floating Action Button */}

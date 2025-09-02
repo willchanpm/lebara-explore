@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { saveCheckIn, getCurrentUserId } from '@/lib/saveCheckIn'
 import Toast from './Toast'
 
@@ -65,6 +65,9 @@ export default function BingoModal({
   const [rating, setRating] = useState(0)
   const [comment, setComment] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  
+  // Create a Supabase browser client for database operations
+  const supabase = createSupabaseBrowser()
   
   // File state for upload
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
