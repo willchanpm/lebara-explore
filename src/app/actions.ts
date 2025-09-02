@@ -86,3 +86,106 @@ export async function getCurrentUserAction() {
     return null
   }
 }
+
+/**
+ * Server action to load user profile by email
+ * Returns profile data or null
+ */
+export async function loadProfileAction(email: string) {
+  try {
+    const supabase = await createSupabaseServer()
+    
+    // Get user ID from session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    
+    if (sessionError || !session?.user) {
+      console.error('Error getting session:', sessionError)
+      return { success: false, error: 'User not authenticated' }
+    }
+    
+    // Verify the email matches the session user
+    if (session.user.email !== email) {
+      return { success: false, error: 'Email mismatch' }
+    }
+    
+    // Fetch user's profile
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('user_id, display_name')
+      .eq('user_id', session.user.id)
+      .single()
+    
+    if (profileError && profileError.code !== 'PGRST116') { // PGRST116 = no rows returned
+      console.error('Error fetching profile:', profileError)
+      return { success: false, error: 'Failed to load profile data' }
+    }
+    
+    return { 
+      success: true, 
+      data: {
+        displayName: profileData?.display_name || ''
+      }
+    }
+    
+  } catch (error) {
+    console.error('Load profile error:', error)
+    return { success: false, error: 'An unexpected error occurred' }
+  }
+}
+
+/**
+ * Server action to save user profile display name
+ * Returns success status
+ */
+export async function saveProfileAction(email: string, displayName: string) {
+  try {
+    const supabase = await createSupabaseServer()
+    
+    // Get user ID from session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    
+    if (sessionError || !session?.user) {
+      console.error('Error getting session:', sessionError)
+      return { success: false, error: 'User not authenticated' }
+    }
+    
+    // Verify the email matches the session user
+    if (session.user.email !== email) {
+      return { success: false, error: 'Email mismatch' }
+    }
+    
+    // Validate display name
+    const trimmedName = displayName.trim()
+    if (!trimmedName) {
+      return { success: false, error: 'Display name cannot be empty' }
+    }
+    
+    if (trimmedName.length > 50) {
+      return { success: false, error: 'Display name must be 50 characters or less' }
+    }
+    
+    // Upsert profile with display name
+    const { error } = await supabase
+      .from('profiles')
+      .upsert(
+        { 
+          user_id: session.user.id, 
+          display_name: trimmedName 
+        },
+        { 
+          onConflict: 'user_id' 
+        }
+      )
+    
+    if (error) {
+      console.error('Error saving profile:', error)
+      return { success: false, error: 'Failed to save display name' }
+    }
+    
+    return { success: true }
+    
+  } catch (error) {
+    console.error('Save profile error:', error)
+    return { success: false, error: 'An unexpected error occurred' }
+  }
+}

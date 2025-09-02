@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createSupabaseBrowser } from '@/lib/supabase/client'
+import { loadProfileAction, saveProfileAction } from '@/app/actions'
 import Toast from './Toast'
 
 // Interface for toast state
@@ -29,9 +29,6 @@ export default function ProfileEditor({ userEmail }: ProfileEditorProps) {
     isVisible: false
   })
   
-  // Create a Supabase browser client for database operations
-  const supabase = createSupabaseBrowser()
-
   // Load profile data on mount
   useEffect(() => {
     if (userEmail) {
@@ -39,43 +36,26 @@ export default function ProfileEditor({ userEmail }: ProfileEditorProps) {
     }
   }, [userEmail]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Function to load user's profile
+  // Function to load user's profile using server action
   const loadProfile = async () => {
     if (!userEmail) return
     
     try {
       setIsLoading(true)
       
-      // Get user ID from email (we need this for the database query)
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      // Use server action to load profile data
+      const result = await loadProfileAction(userEmail)
       
-      if (userError || !user) {
-        console.error('Error fetching user:', userError)
-        showToast('Failed to load user data', 'error')
+      if (!result.success) {
+        console.error('Error loading profile:', result.error)
+        showToast(result.error || 'Failed to load profile data', 'error')
         return
       }
       
-      // Fetch user's profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('user_id, display_name')
-        .eq('user_id', user.id)
-        .single()
-      
-      if (profileError && profileError.code !== 'PGRST116') { // PGRST116 = no rows returned
-        console.error('Error fetching profile:', profileError)
-        showToast('Failed to load profile data', 'error')
-        return
-      }
-      
-      // Set display name in input (from profile or empty)
-      if (profileData?.display_name) {
-        setDisplayName(profileData.display_name)
-        setOriginalDisplayName(profileData.display_name)
-      } else {
-        setDisplayName('')
-        setOriginalDisplayName('')
-      }
+      // Set display name in input (from profile data or empty)
+      const displayNameValue = result.data?.displayName || ''
+      setDisplayName(displayNameValue)
+      setOriginalDisplayName(displayNameValue)
       
     } catch (error) {
       console.error('Unexpected error loading profile:', error)
@@ -90,7 +70,7 @@ export default function ProfileEditor({ userEmail }: ProfileEditorProps) {
     setToast({ message, type, isVisible: true })
   }
 
-  // Function to handle saving the display name
+  // Function to handle saving the display name using server action
   const handleSave = async () => {
     // Validate input
     const trimmedName = displayName.trim()
@@ -112,31 +92,12 @@ export default function ProfileEditor({ userEmail }: ProfileEditorProps) {
     try {
       setIsSaving(true)
       
-      // Get user ID from email for the database operation
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      // Use server action to save profile data
+      const result = await saveProfileAction(userEmail, trimmedName)
       
-      if (userError || !user) {
-        console.error('Error fetching user:', userError)
-        showToast('Failed to get user data', 'error')
-        return
-      }
-      
-      // Upsert profile with display name
-      const { error } = await supabase
-        .from('profiles')
-        .upsert(
-          { 
-            user_id: user.id, 
-            display_name: trimmedName 
-          },
-          { 
-            onConflict: 'user_id' 
-          }
-        )
-      
-      if (error) {
-        console.error('Error saving profile:', error)
-        showToast('Failed to save display name', 'error')
+      if (!result.success) {
+        console.error('Error saving profile:', result.error)
+        showToast(result.error || 'Failed to save display name', 'error')
         return
       }
       

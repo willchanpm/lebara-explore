@@ -2,12 +2,12 @@ import { createSupabaseServer } from '@/lib/supabase/server'
 import { signOutAction } from '@/app/actions'
 
 export default async function AuthStatus() {
-  // Fetch user data on the server
+  // Fetch user data on the server using the correct server-side method
   const supabase = await createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
   
   // Get user email for display
-  const userEmail = user?.email || null
+  const userEmail = session?.user?.email || null
   
   // Show signed in state with user email and sign out form
   if (userEmail) {

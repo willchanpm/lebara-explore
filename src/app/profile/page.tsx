@@ -3,12 +3,12 @@ import ProfilePageClient from './ProfilePageClient'
 import AuthStatus from "@/components/AuthStatus"
 
 export default async function ProfilePage() {
-  // Fetch user data on the server
+  // Fetch user data on the server using the correct server-side method
   const supabase = await createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
   
   // Pass minimal user data to client component
-  const userEmail = user?.email || null
+  const userEmail = session?.user?.email || null
   
   return (
     <div className="profile-page">
