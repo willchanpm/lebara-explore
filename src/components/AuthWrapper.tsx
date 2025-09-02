@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useAuthLoading } from './AuthLoadingContext'
 
 interface AuthWrapperProps {
@@ -11,6 +11,7 @@ interface AuthWrapperProps {
 
 export default function AuthWrapper({ children, userEmail }: AuthWrapperProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const { setIsAuthLoading } = useAuthLoading()
 
   // Check if we should skip authentication for login and auth callback pages
@@ -20,6 +21,13 @@ export default function AuthWrapper({ children, userEmail }: AuthWrapperProps) {
   useEffect(() => {
     setIsAuthLoading(false)
   }, [setIsAuthLoading])
+
+  // Redirect unauthenticated users to login page
+  useEffect(() => {
+    if (!shouldSkipAuth && !userEmail) {
+      router.push('/login')
+    }
+  }, [shouldSkipAuth, userEmail, router])
 
   // Skip authentication check for login and auth callback pages
   if (shouldSkipAuth) {
@@ -31,7 +39,10 @@ export default function AuthWrapper({ children, userEmail }: AuthWrapperProps) {
     return <>{children}</>
   }
 
-  // No user - show nothing while redirecting
-  // The server-side redirect will handle this automatically
-  return null
+  // No user - show loading state while redirecting
+  return (
+    <div className="loading-container">
+      <div className="loading-spinner">Loading...</div>
+    </div>
+  )
 }
