@@ -189,3 +189,87 @@ export async function saveProfileAction(email: string, displayName: string) {
     return { success: false, error: 'An unexpected error occurred' }
   }
 }
+
+/**
+ * Server action to save a bingo check-in
+ * Returns success status and data
+ */
+export async function saveBingoCheckInAction(
+  userEmail: string,
+  tileId: string,
+  boardMonth: string,
+  comment: string,
+  rating: number,
+  photoUrl: string | null
+) {
+  try {
+    const supabase = await createSupabaseServer()
+    
+    // Get user ID from session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    
+    if (sessionError || !session?.user) {
+      console.error('Error getting session:', sessionError)
+      return { success: false, error: 'User not authenticated' }
+    }
+    
+    // Verify the email matches the session user
+    if (session.user.email !== userEmail) {
+      return { success: false, error: 'Email mismatch' }
+    }
+    
+    // Get author name for the check-in
+    let authorName = 'Member' // Default fallback
+    
+    try {
+      // Use the provided userEmail to get email prefix
+      const emailPrefix = userEmail.split('@')[0]
+      
+      // Look up profile for display name
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('user_id', session.user.id)
+        .single()
+      
+      // Compute author name: use display_name if available, otherwise email prefix
+      authorName = (profileData?.display_name?.trim()?.length) 
+        ? profileData.display_name.trim() 
+        : emailPrefix
+    } catch (error) {
+      console.warn('Could not determine author name, using default:', error)
+      // Keep default 'Member' if there's an error
+    }
+    
+    // Insert check-in record
+    const { data: checkInData, error: insertError } = await supabase
+      .from('check_ins')
+      .insert({
+        user_id: session.user.id,
+        tile_id: tileId,
+        board_month: boardMonth,
+        comment: comment.trim(),
+        rating: Math.max(0, Math.min(5, rating)), // Clamp rating to 0-5 range
+        photo_url: photoUrl,
+        author_name: authorName
+      })
+      .select()
+      .single()
+    
+    if (insertError) {
+      // Check if it's a duplicate error
+      if (insertError.code === '23505') { // Unique constraint violation
+        return { success: false, error: 'Already completed this tile for this month' }
+      }
+      
+      console.error('Database insert error:', insertError)
+      return { success: false, error: 'Failed to save check-in' }
+    }
+    
+    return { success: true, data: checkInData }
+    
+  } catch (error) {
+    console.error('Save bingo check-in error:', error)
+    return { success: false, error: 'An unexpected error occurred' }
+  }
+}

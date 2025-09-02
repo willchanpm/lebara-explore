@@ -44,6 +44,12 @@ export default async function BingoPage() {
   
   // Create a Supabase server client to fetch data
   const supabase = await createSupabaseServer()
+  
+  // Fetch user data on the server using the correct server-side method
+  const { data: { session } } = await supabase.auth.getSession()
+  
+  // Pass minimal user data to client component
+  const userEmail = session?.user?.email || null
 
   // First, try to fetch bingo tiles for the current month
   // We need to manually join the places table using place_id
@@ -149,6 +155,7 @@ export default async function BingoPage() {
     <BingoClient 
       tiles={typedTiles} 
       month={month}
+      userEmail={userEmail}
     />
   )
 }

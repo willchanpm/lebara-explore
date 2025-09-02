@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
-import { saveCheckIn, getCurrentUserId } from '@/lib/saveCheckIn'
+import { saveBingoCheckInAction } from '@/app/actions'
 import Toast from './Toast'
 
 // Interface for the modal props
@@ -13,6 +13,7 @@ interface BingoModalProps {
   tileLabel: string
   tileId: string
   boardMonth: string
+  userEmail: string | null
 }
 
 // Interface for the completion data
@@ -58,7 +59,8 @@ export default function BingoModal({
   onSave, 
   tileLabel, 
   tileId, 
-  boardMonth 
+  boardMonth,
+  userEmail
 }: BingoModalProps) {
   // State variables to store the form data
   const [image, setImage] = useState<string | null>(null)
@@ -213,25 +215,61 @@ export default function BingoModal({
     setIsLoading(true)
     
     try {
-      // Get current user ID
-      const userId = await getCurrentUserId(supabase)
+      // Check if user is authenticated
+      if (!userEmail) {
+        showToast('User not authenticated', 'error')
+        return
+      }
       
       // Start timing for telemetry
       const startTime = Date.now()
       
-      // Save check-in to Supabase
-      const { data, error } = await saveCheckIn({
-        supabase,
-        userId,
+      // Upload file if provided
+      let photoUrl: string | null = null
+      if (selectedFile) {
+        // Generate unique filename
+        const fileExtension = selectedFile.name.split('.').pop()?.toLowerCase() || 'jpg'
+        const sanitizedOriginalName = selectedFile.name.replace(`.${fileExtension}`, '').toLowerCase().replace(/[^a-z0-9.-]/g, '-')
+        const uniqueId = Date.now().toString()
+        const filename = `${uniqueId}-${sanitizedOriginalName}.${fileExtension}`
+        
+        // Build storage path
+        const storagePath = `checkins/${userEmail.split('@')[0]}/${boardMonth}/${filename}`
+        
+        // Upload file to Storage
+        const { error: uploadError } = await supabase.storage
+          .from('checkins')
+          .upload(storagePath, selectedFile, {
+            upsert: false,
+            cacheControl: '3600' // 1 hour cache
+          })
+        
+        if (uploadError) {
+          console.error('File upload error:', uploadError)
+          showToast('Failed to upload photo', 'error')
+          return
+        }
+        
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('checkins')
+          .getPublicUrl(storagePath)
+        
+        photoUrl = urlData.publicUrl
+      }
+      
+      // Save check-in using server action
+      const result = await saveBingoCheckInAction(
+        userEmail,
         tileId,
         boardMonth,
         comment,
         rating,
-        file: selectedFile
-      })
+        photoUrl
+      )
       
-      if (error) {
-        showToast(error, 'error')
+      if (!result.success) {
+        showToast(result.error || 'Failed to save check-in', 'error')
         return
       }
       
@@ -255,7 +293,7 @@ export default function BingoModal({
         image,
         rating,
         comment,
-        photoUrl: data?.photo_url || null
+        photoUrl: result.data?.photo_url || photoUrl
       })
       
       // Reset form and close modal

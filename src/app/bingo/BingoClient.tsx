@@ -36,6 +36,7 @@ interface StoredCompletionData extends BingoCompletionData {
 interface BingoClientProps {
   tiles: BingoTile[]
   month: string
+  userEmail: string | null
 }
 
 
@@ -122,7 +123,7 @@ function getActivityIcon(category: string | null): string {
 }
 
 // This is the client component that handles all the interactive functionality
-export default function BingoClient({ tiles, month }: BingoClientProps) {
+export default function BingoClient({ tiles, month, userEmail }: BingoClientProps) {
   // State variables for managing the component
   const [completedSquares, setCompletedSquares] = useState<Set<string>>(new Set())
   const [completionData, setCompletionData] = useState<Record<string, StoredCompletionData>>({})
@@ -337,6 +338,7 @@ export default function BingoClient({ tiles, month }: BingoClientProps) {
         tileLabel={selectedTile?.label || ''}
         tileId={selectedTile?.id || ''}
         boardMonth={month}
+        userEmail={userEmail}
       />
     </div>
   )

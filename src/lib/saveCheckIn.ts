@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 interface CheckInData {
   supabase: SupabaseClient
   userId: string
+  userEmail: string | null
   tileId: string
   boardMonth: string
   comment: string
@@ -25,15 +26,15 @@ interface CheckInRecord {
   created_at: string
 }
 
-// Helper to get current user ID
-export async function getCurrentUserId(supabase: SupabaseClient): Promise<string> {
-  const { data: { user }, error } = await supabase.auth.getUser()
-  
-  if (error || !user) {
+// Helper to get current user ID - now requires userEmail parameter
+export async function getCurrentUserId(supabase: SupabaseClient, userEmail: string | null): Promise<string> {
+  if (!userEmail) {
     throw new Error('User not authenticated')
   }
   
-  return user.id
+  // We need to get the user ID from the email, but since we can't call getUser() in client components,
+  // this function should be called from server components or server actions that have access to the user ID
+  throw new Error('getCurrentUserId should be called from server components with user ID')
 }
 
 // Helper to sanitize filename
@@ -50,6 +51,7 @@ function sanitizeFilename(filename: string): string {
 export async function saveCheckIn({
   supabase,
   userId,
+  userEmail,
   tileId,
   boardMonth,
   comment,
@@ -57,6 +59,11 @@ export async function saveCheckIn({
   file
 }: CheckInData): Promise<{ data: CheckInRecord | null; error: string | null }> {
   try {
+    // Check if user is authenticated
+    if (!userEmail) {
+      return { data: null, error: 'User not authenticated' }
+    }
+    
     // Clamp rating to 0-5 range
     const clampedRating = Math.max(0, Math.min(5, rating))
     
@@ -98,23 +105,20 @@ export async function saveCheckIn({
     let authorName = 'Member' // Default fallback
     
     try {
-      // Get current user to access email
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user?.email) {
-        const emailPrefix = user.email.split('@')[0]
-        
-        // Look up profile for display name
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('display_name')
-          .eq('user_id', userId)
-          .single()
-        
-        // Compute author name: use display_name if available, otherwise email prefix
-        authorName = (profileData?.display_name?.trim()?.length) 
-          ? profileData.display_name.trim() 
-          : emailPrefix
-      }
+      // Use the provided userEmail to get email prefix
+      const emailPrefix = userEmail.split('@')[0]
+      
+      // Look up profile for display name
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('user_id', userId)
+        .single()
+      
+      // Compute author name: use display_name if available, otherwise email prefix
+      authorName = (profileData?.display_name?.trim()?.length) 
+        ? profileData.display_name.trim() 
+        : emailPrefix
     } catch (error) {
       console.warn('Could not determine author name, using default:', error)
       // Keep default 'Member' if there's an error
