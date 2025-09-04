@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import Toast from './Toast'
 
@@ -23,6 +23,9 @@ interface PlaceFormData {
 }
 
 export default function AddPlaceModal({ isOpen, onClose, onPlaceAdded }: AddPlaceModalProps) {
+  // Ref for auto-focusing the first input
+  const nameInputRef = useRef<HTMLInputElement>(null)
+  
   // State for form data
   const [formData, setFormData] = useState<PlaceFormData>({
     name: '',
@@ -67,6 +70,27 @@ export default function AddPlaceModal({ isOpen, onClose, onPlaceAdded }: AddPlac
 
   // Available price bands
   const priceBands = ['£', '££', '£££']
+
+  // Auto-focus first input and prevent scroll when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      // Auto-focus the name input
+      setTimeout(() => {
+        nameInputRef.current?.focus()
+      }, 100)
+      
+      // Prevent body scroll
+      document.body.style.overflow = 'hidden'
+    } else {
+      // Restore body scroll
+      document.body.style.overflow = 'unset'
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [isOpen])
 
   // Function to validate the form
   const validateForm = (): boolean => {
@@ -210,195 +234,178 @@ export default function AddPlaceModal({ isOpen, onClose, onPlaceAdded }: AddPlac
     setToast(prev => ({ ...prev, isVisible: false }))
   }
 
-  // Don't render anything if modal is not open
-  if (!isOpen) return null
-
-  return (
+  return isOpen ? (
     <>
-      {/* Modal Overlay */}
-      <div className="modal-overlay">
-        <div className="modal-content">
-          {/* Modal Header */}
-          <div className="modal-header">
-            <h2 className="modal-title">Add a New Place</h2>
-            <button 
-              type="button" 
-              className="modal-close"
-              onClick={handleClose}
-              aria-label="Close modal"
-            >
-              ×
-            </button>
-          </div>
-
-          {/* Modal Body */}
-          <div className="modal-body">
-            <form onSubmit={handleSubmit} className="add-place-form">
-              {/* Place Name */}
-              <div className="form-group">
-                <label htmlFor="place-name" className="form-label">
-                  Place Name *
-                </label>
-                <input
-                  id="place-name"
-                  type="text"
-                  className={`form-input ${errors.name ? 'form-input-error' : ''}`}
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  placeholder="Enter the name of the place"
-                  maxLength={100}
-                  disabled={isSubmitting}
-                />
-                {errors.name && (
-                  <div className="form-error">{errors.name}</div>
-                )}
-              </div>
-
-              {/* Category and Price Band Row */}
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="category" className="form-label">
-                    Category *
+      <div className="modal fade show" style={{ display: "block", zIndex: 1200 }} role="dialog" aria-modal="true" aria-labelledby="addPlaceTitle">
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content rounded-4 shadow-lg">
+            <div className="modal-header">
+              <h5 id="addPlaceTitle" className="modal-title fw-bold">Add a New Place</h5>
+              <button type="button" className="btn-close" aria-label="Close" onClick={handleClose} />
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleSubmit}>
+                {/* Place Name */}
+                <div className="mb-3">
+                  <label htmlFor="place-name" className="form-label">
+                    Place Name *
                   </label>
-                  <select
-                    id="category"
-                    className={`form-select ${errors.category ? 'form-select-error' : ''}`}
-                    value={formData.category}
-                    onChange={(e) => handleInputChange('category', e.target.value)}
-                    disabled={isSubmitting}
-                  >
-                    <option value="">Select a category</option>
-                    {categories.map(category => (
-                      <option key={category} value={category}>
-                        {category === 'other' ? '🔍 Other' :
-                         category.replace('_', ' ').split(' ').map(word => 
-                           word.charAt(0).toUpperCase() + word.slice(1)
-                         ).join(' ')}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.category && (
-                    <div className="form-error">{errors.category}</div>
-                  )}
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="price-band" className="form-label">
-                    Price Band *
-                  </label>
-                  <select
-                    id="price-band"
-                    className={`form-select ${errors.price_band ? 'form-select-error' : ''}`}
-                    value={formData.price_band}
-                    onChange={(e) => handleInputChange('price_band', e.target.value)}
-                    disabled={isSubmitting}
-                  >
-                    <option value="">Select price</option>
-                    {priceBands.map(band => (
-                      <option key={band} value={band}>{band}</option>
-                    ))}
-                  </select>
-                  {errors.price_band && (
-                    <div className="form-error">{errors.price_band}</div>
-                  )}
-                </div>
-              </div>
-
-              {/* Website URL */}
-              <div className="form-group">
-                <label htmlFor="url" className="form-label">
-                  Website URL
-                </label>
-                <input
-                  id="url"
-                  type="url"
-                  className={`form-input ${errors.url ? 'form-input-error' : ''}`}
-                  value={formData.url}
-                  onChange={(e) => handleInputChange('url', e.target.value)}
-                  placeholder="https://example.com"
-                  disabled={isSubmitting}
-                />
-                {errors.url && (
-                  <div className="form-error">{errors.url}</div>
-                )}
-                <div className="form-help">Optional - the place&apos;s website</div>
-              </div>
-
-              {/* Google Maps URL */}
-              <div className="form-group">
-                <label htmlFor="maps-url" className="form-label">
-                  Google Maps URL
-                </label>
-                <input
-                  id="maps-url"
-                  type="url"
-                  className={`form-input ${errors.maps_url ? 'form-input-error' : ''}`}
-                  value={formData.maps_url}
-                  onChange={(e) => handleInputChange('maps_url', e.target.value)}
-                  placeholder="https://maps.google.com/..."
-                  disabled={isSubmitting}
-                />
-                {errors.maps_url && (
-                  <div className="form-error">{errors.maps_url}</div>
-                )}
-                <div className="form-help">Optional - link to Google Maps location</div>
-              </div>
-
-              {/* Notes/Description */}
-              <div className="form-group">
-                <label htmlFor="notes" className="form-label">
-                  Notes
-                </label>
-                <textarea
-                  id="notes"
-                  className="form-textarea"
-                  value={formData.notes}
-                  onChange={(e) => handleInputChange('notes', e.target.value)}
-                  placeholder="Tell us about this place... (food, atmosphere, special features)"
-                  rows={3}
-                  maxLength={500}
-                  disabled={isSubmitting}
-                />
-                <div className="form-help">Optional - describe what makes this place special</div>
-              </div>
-
-              {/* Vegetarian Friendly Toggle */}
-              <div className="form-group">
-                <label className="form-checkbox-label">
                   <input
+                    ref={nameInputRef}
+                    id="place-name"
+                    type="text"
+                    className={`form-control ${errors.name ? 'is-invalid' : ''}`}
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    placeholder="Enter the name of the place"
+                    maxLength={100}
+                    disabled={isSubmitting}
+                    aria-invalid={!!errors.name}
+                  />
+                  {errors.name && (
+                    <div className="invalid-feedback">{errors.name}</div>
+                  )}
+                </div>
+
+                {/* Category and Price Band Row */}
+                <div className="row g-3 mb-3">
+                  <div className="col-12 col-md-6">
+                    <label htmlFor="category" className="form-label">
+                      Category *
+                    </label>
+                    <select
+                      id="category"
+                      className={`form-select ${errors.category ? 'is-invalid' : ''}`}
+                      value={formData.category}
+                      onChange={(e) => handleInputChange('category', e.target.value)}
+                      disabled={isSubmitting}
+                      aria-invalid={!!errors.category}
+                    >
+                      <option value="">Select a category</option>
+                      {categories.map(category => (
+                        <option key={category} value={category}>
+                          {category === 'other' ? '🔍 Other' :
+                           category.replace('_', ' ').split(' ').map(word => 
+                             word.charAt(0).toUpperCase() + word.slice(1)
+                           ).join(' ')}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.category && (
+                      <div className="invalid-feedback">{errors.category}</div>
+                    )}
+                  </div>
+
+                  <div className="col-12 col-md-6">
+                    <label htmlFor="price-band" className="form-label">
+                      Price Band *
+                    </label>
+                    <select
+                      id="price-band"
+                      className={`form-select ${errors.price_band ? 'is-invalid' : ''}`}
+                      value={formData.price_band}
+                      onChange={(e) => handleInputChange('price_band', e.target.value)}
+                      disabled={isSubmitting}
+                      aria-invalid={!!errors.price_band}
+                    >
+                      <option value="">Select price</option>
+                      {priceBands.map(band => (
+                        <option key={band} value={band}>{band}</option>
+                      ))}
+                    </select>
+                    {errors.price_band && (
+                      <div className="invalid-feedback">{errors.price_band}</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Website URL */}
+                <div className="mb-3">
+                  <label htmlFor="url" className="form-label">
+                    Website URL
+                  </label>
+                  <input
+                    id="url"
+                    type="url"
+                    className={`form-control ${errors.url ? 'is-invalid' : ''}`}
+                    value={formData.url}
+                    onChange={(e) => handleInputChange('url', e.target.value)}
+                    placeholder="https://example.com"
+                    disabled={isSubmitting}
+                    aria-invalid={!!errors.url}
+                  />
+                  {errors.url && (
+                    <div className="invalid-feedback">{errors.url}</div>
+                  )}
+                  <div className="form-text">Optional - the place's website</div>
+                </div>
+
+                {/* Google Maps URL */}
+                <div className="mb-3">
+                  <label htmlFor="maps-url" className="form-label">
+                    Google Maps URL
+                  </label>
+                  <input
+                    id="maps-url"
+                    type="url"
+                    className={`form-control ${errors.maps_url ? 'is-invalid' : ''}`}
+                    value={formData.maps_url}
+                    onChange={(e) => handleInputChange('maps_url', e.target.value)}
+                    placeholder="https://maps.google.com/..."
+                    disabled={isSubmitting}
+                    aria-invalid={!!errors.maps_url}
+                  />
+                  {errors.maps_url && (
+                    <div className="invalid-feedback">{errors.maps_url}</div>
+                  )}
+                  <div className="form-text">Optional - link to Google Maps location</div>
+                </div>
+
+                {/* Notes/Description */}
+                <div className="mb-3">
+                  <label htmlFor="notes" className="form-label">
+                    Notes
+                  </label>
+                  <textarea
+                    id="notes"
+                    className="form-control"
+                    value={formData.notes}
+                    onChange={(e) => handleInputChange('notes', e.target.value)}
+                    placeholder="Tell us about this place... (food, atmosphere, special features)"
+                    rows={3}
+                    maxLength={500}
+                    disabled={isSubmitting}
+                  />
+                  <div className="form-text">Optional - describe what makes this place special</div>
+                </div>
+
+                {/* Vegetarian Friendly Toggle */}
+                <div className="form-check form-switch mb-3">
+                  <input
+                    className="form-check-input"
                     type="checkbox"
-                    className="form-checkbox"
+                    id="vegSwitch"
                     checked={formData.veg_friendly}
                     onChange={(e) => handleInputChange('veg_friendly', e.target.checked)}
                     disabled={isSubmitting}
                   />
-                  <span className="checkbox-text">🌱 Vegetarian-friendly options available</span>
-                </label>
-              </div>
-            </form>
-          </div>
-
-          {/* Modal Footer */}
-          <div className="modal-footer">
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={handleClose}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit Place'}
-            </button>
+                  <label className="form-check-label" htmlFor="vegSwitch">
+                    🌱 Vegetarian-friendly options available
+                  </label>
+                </div>
+              </form>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-outline-secondary" onClick={handleClose} disabled={isSubmitting}>Cancel</button>
+              <button type="submit" className="btn text-white" style={{ backgroundColor: 'rgba(255, 49, 130, 0.85)' }} onClick={handleSubmit} disabled={isSubmitting}>
+                {isSubmitting ? 'Submitting...' : 'Submit Place'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
+      {/* backdrop */}
+      <div className="modal-backdrop fade show" style={{ zIndex: 1190 }}></div>
 
       {/* Toast Notifications */}
       <Toast
@@ -408,5 +415,5 @@ export default function AddPlaceModal({ isOpen, onClose, onPlaceAdded }: AddPlac
         onClose={closeToast}
       />
     </>
-  )
+  ) : null
 }

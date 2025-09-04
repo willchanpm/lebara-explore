@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
 import AddPlaceModal from '@/components/AddPlaceModal'
 import { toggleFavorite, getFavoriteStatusForPlaces } from '@/lib/favorites'
@@ -33,7 +34,7 @@ export default function DiscoverPage() {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>('') // Debounced search query for performance
   
   // State for the add place modal
-  const [isAddPlaceModalOpen, setIsAddPlaceModalOpen] = useState(false)
+  const [showAddPlace, setShowAddPlace] = useState(false)
   
   // State for favorites functionality
   const [currentUser, setCurrentUser] = useState<User | null>(null)
@@ -184,64 +185,50 @@ export default function DiscoverPage() {
           return nameMatch || notesMatch
         })
     
+    // Compute if there are active filters
+    const hasActiveFilters = debouncedSearchQuery.trim() !== '' || 
+      (activeFilters.size > 0 && !activeFilters.has('All')) ||
+      activeFilters.has('Favourites')
+    
+    // Clear all filters function
+    const clearAllFilters = () => {
+      setActiveFilters(new Set(['All']))
+      setSearchQuery('')
+    }
+    
     if (filteredPlaces.length === 0) {
-      if (places.length === 0) {
-        // No places at all
-        return (
-                  <div className="no-places-container">
-          <div className="no-places-icon">
-            <span className="no-places-emoji">🏪</span>
+      // Show Bootstrap empty state
+      return (
+        <div className="d-flex flex-column align-items-center justify-content-center text-center py-5 my-4 pb-5">
+          <div className="bg-white rounded-4 shadow-sm d-flex align-items-center justify-content-center mb-3" style={{ width: 64, height: 64 }}>
+            <span style={{ fontSize: '1.5rem' }}>⭐</span>
           </div>
-          <h3 className="no-places-title">No places yet</h3>
-          <p className="no-places-subtitle">Ask the team to add some</p>
+          <h4 className="fw-bold mb-1">No places found</h4>
+          <p className="text-muted mb-4">
+            {hasActiveFilters ? "Try adjusting or clearing your filters." : "You haven't added any favourites yet."}
+          </p>
+          <div className="d-flex gap-2">
+            {hasActiveFilters && (
+              <button type="button" className="btn btn-outline-secondary rounded-pill px-3" onClick={clearAllFilters}>
+                Clear filters
+              </button>
+            )}
+            <a href="/add-place" className="btn text-white rounded-pill px-3" style={{ backgroundColor: "rgba(255, 49, 130, 0.85)" }}>
+              Add Place
+            </a>
+          </div>
         </div>
-        )
-      } else if (categoryFiltered.length === 0) {
-        // No places match the current category filter
-        let message = 'Try selecting a different category'
-        let icon = '🔍'
-        
-        if (activeFilters.has('Favourites')) {
-          if (!currentUser) {
-            message = 'Please sign in to view your favorites'
-            icon = '🔐'
-          } else {
-            message = 'You haven&apos;t favorited any places yet'
-            icon = '⭐'
-          }
-        }
-        
-        return (
-          <div className="no-places-container">
-            <div className="no-places-icon">
-              <span className="no-places-emoji">{icon}</span>
-            </div>
-            <h3 className="no-places-title">No places found</h3>
-            <p className="no-places-subtitle">{message}</p>
-          </div>
-        )
-      } else {
-        // No places match the search query
-        return (
-                  <div className="no-places-container">
-          <div className="no-places-icon">
-            <span className="no-places-emoji">🔍</span>
-          </div>
-          <h3 className="no-places-title">No search results</h3>
-          <p className="no-places-subtitle">Try different search terms or categories</p>
-        </div>
-        )
-      }
+      )
     }
     
     // Show filtered places
     return (
       <>
-        <div className="places-grid">
+        <div className="places-grid pb-5">
           {filteredPlaces.map((place) => (
             <div
               key={place.id}
-              className="place-card clickable"
+              className="card bg-white shadow-sm rounded-xl mb-3"
               onClick={() => {
                 // Handle card click - could open details modal or navigate
                 console.log('Clicked place:', place.name)
@@ -255,73 +242,83 @@ export default function DiscoverPage() {
                 }
               }}
             >
-              {/* Header: name, price, and favorite button */}
-              <div className="place-header">
-                <h3 className="place-name">
-                  {place.name} ({place.price_band})
-                </h3>
-                {/* Favorite button - show for all users */}
-                {currentUser && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation() // Prevent card click when clicking favorite button
-                      handleFavoriteToggle(place.id)
-                    }}
-                    className={`place-favorite-btn ${userFavorites.has(place.id.toString()) ? 'favorited' : ''}`}
-                    aria-label={userFavorites.has(place.id.toString()) ? 'Remove from favorites' : 'Add to favorites'}
-                    title={userFavorites.has(place.id.toString()) ? 'Remove from favorites' : 'Add to favorites'}
-                    disabled={favoritesLoading}
-                  >
-                    {userFavorites.has(place.id.toString()) ? '⭐' : '☆'}
-                  </button>
-                )}
-              </div>
-              
-              {/* User submitted badge - now below the header */}
-              {place.user_submitted && (
-                <div className="user-submitted-badge">
-                  👥 User Submitted
+              <div className="card-body">
+                {/* Header row */}
+                <div className="d-flex justify-content-between align-items-start mb-2">
+                  <h5 className="card-title fw-bold mb-0">
+                    {place.name} {place.price_band && <small className="text-muted">({place.price_band})</small>}
+                  </h5>
+                  {/* Favorite button - show for all users */}
+                  {currentUser && (
+                    <button
+                      type="button"
+                      className="btn btn-link p-0 text-decoration-none"
+                      aria-label={userFavorites.has(place.id.toString()) ? 'Remove from favourites' : 'Add to favourites'}
+                      aria-pressed={userFavorites.has(place.id.toString())}
+                      onClick={(e) => {
+                        e.stopPropagation() // Prevent card click when clicking favorite button
+                        handleFavoriteToggle(place.id)
+                      }}
+                      title={userFavorites.has(place.id.toString()) ? 'Remove from favorites' : 'Add to favorites'}
+                      disabled={favoritesLoading}
+                      data-testid={`fav-${place.id}`}
+                    >
+                      <i className={`bi ${userFavorites.has(place.id.toString()) ? 'bi-star-fill text-warning' : 'bi-star text-muted'}`} style={{ fontSize: '1.5rem' }} />
+                    </button>
+                  )}
                 </div>
-              )}
-              
-              {/* Category label - now under the title */}
-              <div className="place-category-section">
-                <span className="place-category">
-                  {place.category.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                </span>
-              </div>
-              
-              {/* Body: notes/description */}
-              {place.notes && (
-                <p className="place-notes">
-                  {place.notes}
-                </p>
-              )}
-              
-              {/* Footer: action buttons */}
-              <div className="place-actions">
-                {/* Maps button - only show if maps_url exists */}
-                {place.maps_url && (
-                  <a 
-                    href={place.maps_url}
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="btn btn-secondary"
-                    onClick={(e) => e.stopPropagation()} // Prevent card click when clicking link
-                  >
-                    🗺️ Maps
-                  </a>
+                
+                {/* Meta row (tags) */}
+                <div className="mb-2">
+                  {/* Category badge */}
+                  <span className="badge rounded-pill bg-white border shadow-sm text-muted me-2">
+                    {place.category.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                  </span>
+                  {/* User submitted badge */}
+                  {place.user_submitted && (
+                    <span className="badge rounded-pill text-bg-info me-2">
+                      👥 User Submitted
+                    </span>
+                  )}
+                </div>
+                
+                {/* Description */}
+                {place.notes && (
+                  <p className="card-text text-muted mb-2">{place.notes}</p>
                 )}
-                {/* Website link */}
-                <a 
-                  href={place.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="btn btn-primary"
-                  onClick={(e) => e.stopPropagation()} // Prevent card click when clicking link
-                >
-                  🌐 Website
-                </a>
+                
+                {/* Actions row (equal width) */}
+                <div className="row g-2">
+                  {/* Maps button - only show if maps_url exists */}
+                  {place.maps_url && (
+                    <div className="col-6">
+                      <a 
+                        href={place.maps_url}
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="maps-btn btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2"
+                        onClick={(e) => e.stopPropagation()} // Prevent card click when clicking link
+                        data-testid={`maps-${place.id}`}
+                      >
+                        🗺️ Maps
+                      </a>
+                    </div>
+                  )}
+                  {/* Website link */}
+                  <div className={place.maps_url ? "col-6" : "col-12"}>
+                    <a 
+                      href={place.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="btn w-100 text-white d-flex align-items-center justify-content-center gap-2"
+                      style={{ backgroundColor: 'rgba(255, 49, 130, 0.85)' }}
+                      onClick={(e) => e.stopPropagation()} // Prevent card click when clicking link
+                      data-testid={`website-${place.id}`}
+                    >
+                      🌍 Website
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           ))}
@@ -401,13 +398,12 @@ export default function DiscoverPage() {
   // Show loading state while fetching data
   if (loading) {
     return (
-      <div className="discover-page">
-        <div className="discover-container">
-          {/* Header */}
-          <div className="discover-header">
-            <h1 className="discover-title">Discover</h1>
-            <p className="discover-subtitle">Browse places around Liverpool Street</p>
-          </div>
+      <div className="container py-4">
+        {/* Header */}
+        <div className="discover-header">
+          <h1 className="display-5 fw-bold text-center mb-2">Discover</h1>
+          <p className="lead text-center text-muted mb-4">Browse places around Liverpool Street</p>
+        </div>
           
           {/* Skeleton loading cards */}
           <div className="skeleton-container">
@@ -425,7 +421,6 @@ export default function DiscoverPage() {
               </div>
             ))}
           </div>
-        </div>
       </div>
     )
   }
@@ -433,12 +428,11 @@ export default function DiscoverPage() {
   // Show error state if something went wrong
   if (error) {
     return (
-      <div className="discover-page">
-        <div className="discover-container">
-          {/* Header */}
-          <div className="discover-header">
-            <h1 className="discover-title">Discover</h1>
-            <p className="discover-subtitle">Browse places around Liverpool Street</p>
+      <div className="container py-4">
+        {/* Header */}
+        <div className="discover-header">
+          <h1 className="display-5 fw-bold text-center mb-2">Discover</h1>
+          <p className="lead text-center text-muted mb-4">Browse places around Liverpool Street</p>
         </div>
           
           {/* Error alert */}
@@ -452,67 +446,53 @@ export default function DiscoverPage() {
               Try Again
             </button>
           </div>
-        </div>
       </div>
     )
   }
 
   // Show the main content with the places list
   return (
-    <div className="discover-page">
-      <div className="discover-container">
-        {/* Header */}
-        <div className="discover-header">
-          <h1 className="discover-title">Discover</h1>
-          <p className="discover-subtitle">Browse places around Liverpool Street</p>
-        </div>
+    <>
+      <div className="container py-4">
+      {/* Header */}
+      <div className="discover-header">
+        <h1 className="display-5 fw-bold text-center mb-2">Discover</h1>
+        <p className="lead text-center text-muted mb-4">Browse places around Liverpool Street</p>
+      </div>
 
         {/* Search input */}
-        <div className="search-container">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search places by name or notes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="search-input"
-            />
-            {/* Search icon */}
-            <div className="search-icon">
-              🔍
-            </div>
-            {/* Clear button - only show when there's text */}
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="btn btn-primary"
-                aria-label="Clear search"
-              >
-                ✕
-              </button>
-            )}
-          </div>
+        <div className="input-group mb-3">
+          <span className="input-group-text" aria-hidden="true">🔎</span>
+          <input 
+            className="form-control" 
+            type="search" 
+            placeholder="Search places by name or notes..." 
+            value={searchQuery} 
+            onChange={(e) => setSearchQuery(e.target.value)} 
+          />
         </div>
 
-        {/* Add Place Section */}
-        <div className="add-place-section">
-          <span className="add-place-text">Can&apos;t find your favourite? </span>
-          <button
-            onClick={() => setIsAddPlaceModalOpen(true)}
-            className="add-place-link-button"
-            aria-label="Add a new place"
-          >
+        {/* Add Place helper */}
+        <div className="d-flex align-items-center justify-content-center rounded-4 border border-light-subtle bg-white px-3 py-2 mb-3">
+          <span className="text-muted small mb-0 me-2">Can&apos;t find your favourite?</span>
+          <button type="button" className="btn btn-link p-0 fw-semibold small text-decoration-none text-nowrap" style={{ color: "rgba(255, 49, 130, 0.85)" }} onClick={() => setShowAddPlace(true)} data-testid="add-place-link">
             Add Place
           </button>
         </div>
 
-        {/* Filter chips */}
-        <div className="filter-container">
-          <div className="filter-chips">
-            {/* Always show 'All' and 'Favourites' filters */}
-            {['All', 'Favourites'].map((category) => (
+        {/* Filter buttons */}
+        <div className="d-flex flex-wrap gap-2 mb-3">
+          {/* Always show 'All' and 'Favourites' filters */}
+          {['All', 'Favourites'].map((category) => {
+            const isActive = activeFilters.has(category)
+            const label = category === 'All' ? 'All Places' : '⭐ Favourites'
+            
+            return (
               <button
                 key={category}
+                type="button"
+                className={`btn btn-sm rounded-pill shadow-sm border ${isActive ? 'text-white border-0' : 'text-dark'}`}
+                style={isActive ? { backgroundColor: 'rgba(255, 49, 130, 0.85)' } : { backgroundColor: 'white' }}
                 onClick={() => {
                   const newFilters = new Set(activeFilters)
                   if (category === 'All') {
@@ -536,18 +516,26 @@ export default function DiscoverPage() {
                   }
                   setActiveFilters(newFilters)
                 }}
-                className={`filter-chip ${activeFilters.has(category) ? 'active' : 'inactive'}`}
-                data-filter={category}
-                data-active={activeFilters.has(category)}
+                data-testid={`filter-${category}`}
+                aria-pressed={isActive}
               >
-                {category === 'All' ? 'All Places' : '⭐ Favourites'}
+                {label}
               </button>
-            ))}
+            )
+          })}
+          
+          {/* Dynamically show categories from the places data */}
+          {availableCategories.map((category) => {
+            const isActive = activeFilters.has(category)
+            const label = category === 'other' ? 'Other' :
+              category.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
             
-            {/* Dynamically show categories from the places data */}
-            {availableCategories.map((category) => (
+            return (
               <button
                 key={category}
+                type="button"
+                className={`btn btn-sm rounded-pill shadow-sm border ${isActive ? 'text-white border-0' : 'text-dark'}`}
+                style={isActive ? { backgroundColor: 'rgba(255, 49, 130, 0.85)' } : { backgroundColor: 'white' }}
                 onClick={() => {
                   const newFilters = new Set(activeFilters)
                   if (activeFilters.has('All') && activeFilters.size === 1) {
@@ -567,30 +555,27 @@ export default function DiscoverPage() {
                   }
                   setActiveFilters(newFilters)
                 }}
-                className={`filter-chip ${activeFilters.has(category) ? 'active' : 'inactive'}`}
-                data-filter={category}
-                data-active={activeFilters.has(category)}
+                data-testid={`filter-${category}`}
+                aria-pressed={isActive}
               >
-                {category === 'other' ? 'Other' :
-                 category.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                {label}
               </button>
-            ))}
-          </div>
+            )
+          })}
           
           {/* Clear All Filters button - only show when multiple filters are active */}
           {activeFilters.size > 1 || (activeFilters.size === 1 && !activeFilters.has('All')) ? (
-            <div className="clear-filters-container">
-              <button
-                onClick={() => {
-                  setActiveFilters(new Set(['All']))
-                }}
-                className="clear-filters-btn"
-                aria-label="Clear all filters"
-                title="Clear all filters and show all places"
-              >
-                🗑️ Clear All
-              </button>
-            </div>
+            <button 
+              type="button" 
+              className="btn btn-sm btn-outline-danger rounded-pill px-3"
+              onClick={() => {
+                setActiveFilters(new Set(['All']))
+              }}
+              aria-label="Clear all filters"
+              title="Clear all filters and show all places"
+            >
+              Clear All
+            </button>
           ) : null}
         </div>
 
@@ -600,8 +585,8 @@ export default function DiscoverPage() {
       
       {/* Add Place Modal */}
       <AddPlaceModal
-        isOpen={isAddPlaceModalOpen}
-        onClose={() => setIsAddPlaceModalOpen(false)}
+        isOpen={showAddPlace}
+        onClose={() => setShowAddPlace(false)}
         onPlaceAdded={() => {
           // Refresh the places list when a new place is added
           fetchPlaces()
@@ -609,14 +594,22 @@ export default function DiscoverPage() {
       />
       
       {/* Floating Action Button */}
-      <button
-        onClick={() => setIsAddPlaceModalOpen(true)}
-        className="fab-add-place"
-        aria-label="Add a new place"
-      >
-        <span className="fab-icon">+</span>
-      </button>
-    </div>
+      <div className="position-fixed end-0"
+           style={{
+             zIndex: 1100,
+             right: "1rem",
+             bottom: "calc(var(--bottom-nav-h, 64px) + 1rem + env(safe-area-inset-bottom, 0px))"
+           }}>
+        <button type="button"
+                onClick={() => setShowAddPlace(true)}
+                className="btn rounded-circle d-flex align-items-center justify-content-center shadow-lg"
+                style={{ width: 56, height: 56, backgroundColor: "rgb(26, 58, 90)", border: "none" }}
+                aria-label="Add Place"
+                data-testid="fab-add-place">
+          <i className="bi bi-plus-lg text-white" style={{ fontSize: "1.5rem" }}></i>
+        </button>
+      </div>
+    </>
   )
 }
 

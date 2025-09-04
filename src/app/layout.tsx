@@ -5,6 +5,7 @@ import AuthWrapper from "@/components/AuthWrapper";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { AuthLoadingProvider } from "@/components/AuthLoadingContext";
 import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap-icons/font/bootstrap-icons.css";
 import "./globals.css";
 
 const geistSans = Geist({

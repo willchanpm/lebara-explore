@@ -18,7 +18,7 @@ export default function BottomNav() {
 
   return (
     // Fixed bottom navigation bar with Bootstrap 5 styling
-    <nav className="navbar fixed-bottom bg-white border-top shadow-sm p-0 w-100" role="navigation" aria-label="Bottom navigation" style={{ minHeight: '64px' }}>
+    <nav className="navbar fixed-bottom bg-white border-top shadow-sm p-0 w-100" role="navigation" aria-label="Bottom navigation" style={{ zIndex: 1030, height: "64px", ["--bottom-nav-h" as any]: "64px" }}>
       <div className="container-fluid p-0">
         <ul className="nav nav-justified w-100 mb-0">
           {navItems.map((item) => {
