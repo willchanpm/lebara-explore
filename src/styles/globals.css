@@ -1,0 +1,46 @@
+/* Lebara-inspired theme CSS variables - Light mode only */
+:root {
+  /* Primary brand colors - Light blue and dark blue */
+  --brand-primary: #E0F2F7;      /* Light blue background from Lebara */
+  --brand-primary-700: #B8E6F0;   /* Slightly darker light blue */
+  --brand-primary-900: #8FD4E8;   /* Medium light blue */
+  
+  /* Navy colors for text and accents */
+  --brand-navy: #0A2A4A;         /* Dark blue from Lebara */
+  --brand-navy-800: #071D36;     /* Even darker blue */
+  --brand-navy-600: #1A3A5A;     /* Medium dark blue */
+  
+  /* Pink accent color from Lebara */
+  --brand-accent: #FF3182;       /* Pink accent */
+  --brand-accent-700: #E64A4F;   /* Darker pink for hover states */
+  
+  /* Light mode colors */
+  --bg: #E0F2F7;                 /* Light blue background */
+  --card: #FFFFFF;                /* White cards */
+  --text: #0A2A4A;                /* Dark blue text */
+  --muted: #1A3A5A;              /* Medium dark blue for secondary text */
+  --border: #B8E6F0;              /* Light blue borders */
+}
+
+/* Base styles */
+html, body { 
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* Prevent horizontal scroll on mobile */
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg); 
+  color: var(--text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Colors */
+.bg-bg { background-color: var(--bg); }
+.bg-card { background-color: var(--card); }
+.text-text { color: var(--text); }
+.text-muted { color: var(--muted); }
+

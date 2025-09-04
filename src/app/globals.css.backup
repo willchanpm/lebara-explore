@@ -24,7 +24,6 @@
 
 /* Base styles */
 html, body { 
-  height: 100%; 
   margin: 0;
   padding: 0;
   overflow-x: hidden; /* Prevent horizontal scroll on mobile */
@@ -35,13 +34,11 @@ body {
   background: var(--bg); 
   color: var(--text);
   transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Layout utilities */
-.min-h-screen {
-  min-height: 100vh;
-  min-height: 100dvh; /* Use dynamic viewport height for mobile */
-}
 
 .flex {
   display: flex;
@@ -285,9 +282,11 @@ body {
 
 /* Main content area styles */
 .main-with-nav {
+  padding-bottom: 6rem;
+  overflow-x: hidden;
+  /* Remove height constraints and overflow-y to prevent nested scrolling */
   min-height: 100vh;
   min-height: 100dvh;
-  padding-bottom: 6rem;
 }
 
 /* Login layout styles */
@@ -728,13 +727,16 @@ body.login-page-active .main-with-nav {
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 50;
+  z-index: 10000;
   padding-bottom: env(safe-area-inset-bottom);
   padding-top: 0.75rem;
   box-shadow: 0 8px 30px rgba(10, 42, 74, 0.15);
   background-color: var(--card);
   border-top: 1px solid var(--border);
   backdrop-filter: blur(12px);
+  /* Ensure click events work properly */
+  pointer-events: auto;
+  touch-action: manipulation;
 }
 
 .bottom-nav-container {
@@ -757,6 +759,10 @@ body.login-page-active .main-with-nav {
   transition: all 0.3s ease-out;
   text-decoration: none;
   color: var(--muted);
+  /* Ensure nav items are clickable */
+  pointer-events: auto;
+  touch-action: manipulation;
+  z-index: 10001;
 }
 
 .nav-item:hover {
@@ -1249,8 +1255,6 @@ body.login-page-active .main-with-nav {
 
 /* Home page specific styles */
 .home-page {
-  min-height: 100vh;
-  min-height: 100dvh;
   background-color: var(--bg);
   color: var(--text);
   padding: 1.5rem;
@@ -1357,8 +1361,6 @@ body.login-page-active .main-with-nav {
 
 /* Discover page specific styles */
 .discover-page {
-  min-height: 100vh;
-  min-height: 100dvh;
   padding-bottom: 7rem;
   background-color: var(--bg);
 }
@@ -1690,8 +1692,6 @@ body.login-page-active .main-with-nav {
 
 /* Places page layout */
 .places-page {
-  min-height: 100vh;
-  min-height: 100dvh;
   padding-bottom: 7rem;
   background-color: var(--bg);
 }
@@ -1950,10 +1950,6 @@ body.login-page-active .main-with-nav {
   }
   
   /* Fix mobile viewport issues */
-  .min-h-screen {
-    min-height: 100vh;
-    min-height: 100dvh; /* Use dynamic viewport height for mobile */
-  }
   
   /* Ensure proper spacing on mobile - increased for better safety */
   .pb-24 {
@@ -2160,8 +2156,6 @@ body.login-page-active .main-with-nav {
 }
 /* AI Page Styles */
 .ai-page {
-  min-height: 100vh;
-  min-height: 100dvh;
   background-color: var(--bg);
   color: var(--text);
   padding: 1.5rem;
@@ -2620,8 +2614,6 @@ body.login-page-active .main-with-nav {
 
 /* Roulette Page Styles */
 .roulette-page {
-  min-height: 100vh;
-  min-height: 100dvh;
   background-color: var(--bg);
   color: var(--text);
   padding: 1.5rem;
@@ -2859,8 +2851,6 @@ body.login-page-active .main-with-nav {
 
 /* Hungry Page Styles */
 .hungry-page {
-  min-height: 100vh;
-  min-height: 100dvh;
   background-color: var(--bg);
   color: var(--text);
   padding: 1.5rem;
@@ -2893,8 +2883,6 @@ body.login-page-active .main-with-nav {
 
 /* Lunch Page Styles */
 .lunch-page {
-  min-height: 100vh;
-  min-height: 100dvh;
   background-color: var(--bg);
   color: var(--text);
   padding: 1.5rem;
@@ -2965,8 +2953,6 @@ body.login-page-active .main-with-nav {
 
 /* Social Page Styles */
 .social-page {
-  min-height: 100vh;
-  min-height: 100dvh;
   background-color: var(--bg);
   color: var(--text);
   padding: 1.5rem;
@@ -3008,8 +2994,6 @@ body.login-page-active .main-with-nav {
 
 /* Profile Page Styles */
 .profile-page {
-  min-height: 100vh;
-  min-height: 100dvh;
   padding-bottom: 6rem;
   background-color: var(--bg);
 }
@@ -3104,8 +3088,6 @@ body.login-page-active .main-with-nav {
 
 /* Account Page Styles */
 .account-page {
-  min-height: 100vh;
-  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3457,8 +3439,6 @@ body.login-page-active .main-with-nav {
 /* Feed and History Page Styles */
 .feed-page,
 .history-page {
-  min-height: 100vh;
-  min-height: 100dvh;
   padding-bottom: 6rem;
   background-color: var(--bg);
 }
@@ -3608,8 +3588,6 @@ body.login-page-active .main-with-nav {
 
 /* Auth Callback Page Styles */
 .auth-callback-page {
-  min-height: 100vh;
-  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;

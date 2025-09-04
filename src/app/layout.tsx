@@ -5,7 +5,25 @@ import AuthWrapper from "@/components/AuthWrapper";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { AuthLoadingProvider } from "@/components/AuthLoadingContext";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import "./globals.css";
+import "../styles/globals.css";
+import "../styles/utilities.css";
+import "../styles/layout.css";
+import "../styles/components/navigation.css";
+import "../styles/components/cards.css";
+import "../styles/components/buttons.css";
+import "../styles/components/modals.css";
+import "../styles/components/toast.css";
+import "../styles/components/forms.css";
+import "../styles/components/common.css";
+import "../styles/components/install-banners.css";
+import "../styles/pages/login.css";
+import "../styles/pages/home.css";
+import "../styles/pages/discover.css";
+import "../styles/pages/feed.css";
+import "../styles/pages/bingo.css";
+import "../styles/pages/hungry.css";
+import "../styles/pages/profile.css";
+import "../styles/pages/social.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

@@ -1,0 +1,92 @@
+/* Main content area styles */
+.main-with-nav {
+  padding-bottom: 6rem;
+  overflow-x: hidden;
+  /* Remove height constraints and overflow-y to prevent nested scrolling */
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Login layout styles */
+.login-layout {
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+/* Override main-with-nav styles for login pages */
+.main-with-nav:has(.login-layout),
+.main-with-nav .login-layout {
+  min-height: auto;
+  padding-bottom: 0;
+}
+
+/* Force override for login pages */
+.main-with-nav .login-layout {
+  min-height: auto !important;
+  padding-bottom: 0 !important;
+}
+
+/* Target the main element when it contains login content */
+.main-with-nav:has(.login-layout) {
+  min-height: auto !important;
+  padding-bottom: 0 !important;
+}
+
+/* Target main element when body has login-page-active class */
+body.login-page-active .main-with-nav {
+  min-height: auto !important;
+  padding-bottom: 0 !important;
+}
+
+/* Nuclear option: completely override main element for login pages */
+.main-with-nav:has(.login-page),
+.main-with-nav:has(.login-page-success),
+.main-with-nav:has(.login-loading) {
+  min-height: auto !important;
+  padding-bottom: 0 !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* Direct targeting for maximum compatibility */
+.main-with-nav .login-page,
+.main-with-nav .login-page-success,
+.main-with-nav .login-loading {
+  min-height: auto !important;
+  padding-bottom: 0 !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* Force the main element itself to not have height constraints when containing login content */
+.main-with-nav:has(.login-page),
+.main-with-nav:has(.login-page-success),
+.main-with-nav:has(.login-loading) {
+  min-height: auto !important;
+  padding-bottom: 0 !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* Last resort: target any element with login classes and force height reset */
+.login-page,
+.login-page-success,
+.login-loading {
+  height: 100vh !important;
+  min-height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+}
+
+/* Complete main element reset for login pages */
+.main-with-nav:has(.login-page),
+.main-with-nav:has(.login-page-success),
+.main-with-nav:has(.login-loading) {
+  all: unset !important;
+  display: block !important;
+  height: auto !important;
+  min-height: auto !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+

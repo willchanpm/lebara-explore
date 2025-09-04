@@ -1,0 +1,251 @@
+/* Bingo Page Styles */
+.bingo-page {
+  background-color: var(--bg);
+}
+
+.bingo-container {
+  max-width: 640px;
+  margin: 0 auto;
+  max-width: 48rem;
+  padding: 1rem;
+  padding-bottom: 5rem;
+}
+
+.bingo-header {
+  padding: 1.5rem 0;
+}
+
+.bingo-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--brand-navy);
+}
+
+.bingo-subtitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.bingo-month-note {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--muted);
+  font-style: italic;
+  margin-top: 0.25rem;
+}
+
+.bingo-progress {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: var(--card);
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(10, 42, 74, 0.1);
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.progress-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--brand-navy);
+}
+
+.progress-count {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 0.5rem;
+  background-color: var(--border);
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand-accent) 0%, var(--brand-primary) 100%);
+  transition: width 0.3s ease;
+}
+
+.bingo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 0;
+}
+
+.bingo-square {
+  position: relative;
+  border-radius: 1rem;
+  padding: 0.75rem;
+  text-align: center;
+  border: 1px solid;
+  transition: all 0.2s ease;
+  overflow: hidden;
+  cursor: pointer;
+  /* Ensure consistent height for proper title alignment */
+  min-height: 8rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.bingo-square-completed {
+  border: 2px solid var(--brand-accent);
+  background-color: rgba(255, 49, 130, 0.1);
+  cursor: default;
+}
+
+.bingo-square-incomplete {
+  background-color: var(--card);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.bingo-square-incomplete:hover {
+  background-color: rgba(224, 242, 247, 0.2);
+}
+
+.bingo-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 49, 130, 0.2);
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bingo-checkmark {
+  width: 3rem;
+  height: 3rem;
+  background-color: var(--brand-accent);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  box-shadow: 0 4px 20px rgba(255, 49, 130, 0.3);
+}
+
+.bingo-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 0.25rem;
+}
+
+.bingo-title-text {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: center;
+  /* Ensure title stays at the top */
+  flex-shrink: 0;
+}
+
+.bingo-icon {
+  font-size: 1.25rem;
+  text-align: center;
+  margin: 0.25rem 0;
+  /* Center the icon between title and description */
+  flex-shrink: 0;
+  /* Add a subtle background for better visibility */
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.25rem auto;
+}
+
+.bingo-emoji {
+  font-size: 1.875rem;
+}
+
+.bingo-description {
+  font-size: 0.625rem;
+  color: var(--muted);
+  line-height: 1.2;
+  text-align: center;
+  /* Allow description to fill remaining space */
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bingo-placeholder {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--muted);
+}
+
+.bingo-placeholder p {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.bingo-completion {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: rgba(255, 49, 130, 0.1);
+  border: 1px solid var(--brand-accent);
+  border-radius: 1rem;
+  text-align: center;
+}
+
+.completion-emoji {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.completion-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--brand-navy);
+  margin-bottom: 0.25rem;
+}
+
+.completion-text {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+/* Bingo Rating Display */
+.bingo-rating {
+  font-size: 0.75rem;
+  color: #FFD700;
+  text-align: center;
+  margin-top: 0.25rem;
+  text-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
+}
+
+/* Responsive grid for bingo page */
+@media (min-width: 768px) {
+  .bingo-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+  
+  .bingo-square {
+    min-height: 9rem;
+  }
+}
+

@@ -1,0 +1,263 @@
+/* Hungry Page Styles */
+.hungry-page {
+  background-color: var(--bg);
+  color: var(--text);
+  padding: 1.5rem;
+  padding-bottom: 8rem;
+}
+
+.hungry-container {
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+.hungry-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.hungry-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--brand-navy);
+}
+
+.hungry-subtitle {
+  font-size: 1.25rem;
+  color: var(--muted);
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+/* AI Page Styles */
+.ai-page {
+  background-color: var(--bg);
+  color: var(--text);
+  padding: 1.5rem;
+  padding-bottom: 8rem;
+}
+
+.ai-container {
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+.ai-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.ai-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--brand-navy);
+}
+
+.ai-subtitle {
+  font-size: 1.25rem;
+  color: var(--muted);
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.ai-controls {
+  background-color: var(--card);
+  border-radius: 1rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.mood-section {
+  margin-bottom: 1.5rem;
+}
+
+.ai-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid var(--border);
+  border-radius: 0.75rem;
+  background-color: var(--card);
+  color: var(--text);
+  resize: none;
+  transition: all 0.2s ease;
+  min-height: 80px;
+  max-height: 120px;
+  font-family: inherit;
+}
+
+.ai-textarea:focus {
+  outline: none;
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 2px rgba(255, 49, 130, 0.2);
+}
+
+.constraints-section {
+  margin-bottom: 1.5rem;
+}
+
+.constraints-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--brand-navy);
+  margin-bottom: 0.5rem;
+}
+
+/* AI Suggestions */
+.ai-suggestions {
+  margin-top: 1.5rem;
+}
+
+.suggestions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.ai-explanation {
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.explanation-text {
+  font-size: 0.875rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* Roulette Page Styles */
+.roulette-page {
+  background-color: var(--bg);
+  color: var(--text);
+  padding: 1.5rem;
+  padding-bottom: 8rem;
+}
+
+.roulette-container {
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+.roulette-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.roulette-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--brand-navy);
+}
+
+.roulette-subtitle {
+  font-size: 1.25rem;
+  color: var(--muted);
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.roulette-controls {
+  background-color: var(--card);
+  border-radius: 1rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.distance-section {
+  margin-bottom: 1.5rem;
+}
+
+/* Roulette Result Styles */
+.roulette-result {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.success-spinner {
+  width: 4rem;
+  height: 4rem;
+  margin: 0 auto;
+  border-radius: 50%;
+  background-color: var(--brand-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 700;
+  box-shadow: 0 4px 20px rgba(255, 49, 130, 0.3);
+}
+
+/* Lunch Page Styles */
+.lunch-page {
+  background-color: var(--bg);
+  color: var(--text);
+  padding: 1.5rem;
+  padding-bottom: 8rem;
+}
+
+.lunch-container {
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+.lunch-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.lunch-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--brand-navy);
+}
+
+.lunch-subtitle {
+  font-size: 1.25rem;
+  color: var(--muted);
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+/* AI Response Styling */
+.ai-response {
+  margin-top: 1rem;
+}
+
+.response-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.response-line {
+  font-size: 0.875rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* Collapsible Search Controls */
+.ai-controls-collapsed {
+  padding: 1rem 1.5rem;
+}
+
+.controls-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--border);
+}
+

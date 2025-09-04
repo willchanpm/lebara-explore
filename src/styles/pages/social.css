@@ -1,0 +1,41 @@
+/* Social Page Styles */
+.social-page {
+  background-color: var(--bg);
+  color: var(--text);
+  padding: 1.5rem;
+  padding-bottom: 8rem;
+}
+
+.social-container {
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+.social-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.social-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--brand-navy);
+}
+
+.social-subtitle {
+  font-size: 1.25rem;
+  color: var(--muted);
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.social-placeholder {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.social-placeholder-text {
+  color: var(--muted);
+}
+

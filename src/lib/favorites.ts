@@ -31,6 +31,12 @@ export async function toggleFavorite(
   placeId: string | number
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Check if userId is valid before making any queries
+    if (!userId || userId.trim() === '') {
+      console.warn('toggleFavorite called with empty userId')
+      return { success: false, error: 'User not authenticated' }
+    }
+
     // First check if this place is already favorited
     const { data: existingFavorite, error: checkError } = await supabase
       .from('favorites')
@@ -90,6 +96,12 @@ export async function getUserFavorites(
   userId: string
 ): Promise<{ data: PlaceWithFavorite[] | null; error?: string }> {
   try {
+    // Check if userId is valid before making the query
+    if (!userId || userId.trim() === '') {
+      console.warn('getUserFavorites called with empty userId')
+      return { data: [] }
+    }
+
     // Join favorites with places table to get place details
     const { data, error } = await supabase
       .from('favorites')
@@ -149,6 +161,12 @@ export async function isPlaceFavorited(
   placeId: string | number
 ): Promise<{ isFavorited: boolean; error?: string }> {
   try {
+    // Check if userId is valid before making any queries
+    if (!userId || userId.trim() === '') {
+      console.warn('isPlaceFavorited called with empty userId')
+      return { isFavorited: false, error: 'User not authenticated' }
+    }
+
     const { data, error } = await supabase
       .from('favorites')
       .select('id')
@@ -181,6 +199,12 @@ export async function getFavoriteStatusForPlaces(
   placeIds: (string | number)[]
 ): Promise<{ data: Set<string> | null; error?: string }> {
   try {
+    // Check if userId is valid before making any queries
+    if (!userId || userId.trim() === '') {
+      console.warn('getFavoriteStatusForPlaces called with empty userId')
+      return { data: new Set() }
+    }
+
     if (placeIds.length === 0) {
       return { data: new Set() }
     }
