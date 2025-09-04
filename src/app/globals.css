@@ -29,3 +29,6 @@ img,svg,video{max-width:100%;height:auto;display:block;}
 /* helpers (safe with BS) */
 .rounded-xl{border-radius:var(--radius)!important;}
 .shadow-soft{box-shadow:0 6px 20px rgba(0,0,0,.06);}
+
+/* account icon hover effect */
+.btn-light.rounded-circle:hover { filter: brightness(0.97); }

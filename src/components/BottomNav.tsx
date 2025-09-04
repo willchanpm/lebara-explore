@@ -29,13 +29,13 @@ export default function BottomNav() {
               <li key={item.path} className="nav-item flex-fill">
                 <Link
                   href={item.path}
-                  className={`nav-link d-flex flex-column align-items-center justify-content-center text-decoration-none small h-100 gap-1 ${isActive ? 'fw-bold text-white' : 'text-muted'}`}
+                  className={`nav-link d-flex flex-column align-items-center justify-content-center text-decoration-none small h-100 gap-1 text-nowrap py-1 px-0 ${isActive ? 'fw-bold text-white' : 'text-muted'}`}
                   style={isActive ? { backgroundColor: "rgba(255, 49, 130, 0.85)" } : {}}
                   aria-label={item.label}
                   title={item.label}
                 >
                   {/* Emoji icon - larger size for better visibility */}
-                  <span className="nav-icon" role="img" aria-hidden="true">
+                  <span className={`nav-icon ${isActive ? 'text-white' : ''}`} role="img" aria-hidden="true">
                     {item.icon}
                   </span>
                   

@@ -81,7 +81,7 @@ export default function RootLayout({
         <ConditionalNav />
         
         {/* Main content area with proper spacing for bottom navigation */}
-        <main className="main-with-nav">
+        <main className="pt-4 pt-sm-5" style={{ paddingTop: "calc(56px + env(safe-area-inset-top, 0px))" }}>
           <AuthLoadingProvider>
             <AuthWrapper>
               {children}
