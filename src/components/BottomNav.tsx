@@ -17,11 +17,10 @@ export default function BottomNav() {
   const pathname = usePathname()
 
   return (
-    // Fixed bottom navigation bar with safe area padding for mobile devices
-    // Using the new Lebara-inspired design with light blue background and dark blue accents
-    <nav className="bottom-nav">
-      {/* Navigation items container */}
-      <div className="bottom-nav-container">
+    // Fixed bottom navigation bar with Bootstrap 5 styling
+    <nav className="navbar fixed-bottom bg-light border-top" role="navigation" aria-label="Bottom navigation">
+      {/* Navigation items container with Bootstrap flex utilities */}
+      <div className="container-fluid d-flex justify-content-around">
         {navItems.map((item) => {
           // Check if this tab is currently active
           const isActive = pathname === item.path
@@ -30,19 +29,36 @@ export default function BottomNav() {
             <Link
               key={item.path}
               href={item.path}
-              className={`nav-item ${isActive ? 'active' : ''}`}
+              className={`nav-link d-flex flex-column align-items-center small py-2 ${isActive ? 'active fw-bold text-primary' : 'text-muted'}`}
               aria-label={item.label}
               title={item.label}
             >
-              {/* Emoji icon - larger size for better visibility */}
-              <span className="nav-icon" role="img" aria-hidden="true">
-                {item.icon}
-              </span>
-              
-              {/* Tab label - smaller text to fit in the compact design */}
-              <span className="nav-label">
-                {item.label}
-              </span>
+              {/* Active state wrapper with square highlight */}
+              {isActive ? (
+                <div className="bg-primary-subtle px-2 py-1 d-flex flex-column align-items-center">
+                  {/* Emoji icon - larger size for better visibility */}
+                  <span className="nav-icon" role="img" aria-hidden="true">
+                    {item.icon}
+                  </span>
+                  
+                  {/* Tab label - smaller text to fit in the compact design */}
+                  <span className="nav-label">
+                    {item.label}
+                  </span>
+                </div>
+              ) : (
+                <>
+                  {/* Emoji icon - larger size for better visibility */}
+                  <span className="nav-icon" role="img" aria-hidden="true">
+                    {item.icon}
+                  </span>
+                  
+                  {/* Tab label - smaller text to fit in the compact design */}
+                  <span className="nav-label">
+                    {item.label}
+                  </span>
+                </>
+              )}
             </Link>
           )
         })}

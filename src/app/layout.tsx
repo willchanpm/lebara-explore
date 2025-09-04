@@ -4,6 +4,7 @@ import ConditionalNav from "@/components/ConditionalNav";
 import AuthWrapper from "@/components/AuthWrapper";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { AuthLoadingProvider } from "@/components/AuthLoadingContext";
+import "bootstrap/dist/css/bootstrap.min.css";
 import "./globals.css";
 
 const geistSans = Geist({

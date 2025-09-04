@@ -9,8 +9,11 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@popperjs/core": "^2.11.8",
     "@supabase/supabase-js": "^2.56.0",
     "@types/uuid": "^10.0.0",
+    "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.13.1",
     "next": "15.5.2",
     "openai": "^4.28.0",
     "react": "19.1.0",

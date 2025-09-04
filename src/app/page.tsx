@@ -6,70 +6,88 @@ export default function Home() {
   return (
     <div className="home-page">
       {/* Main hero section */}
-      <main className="home-container">
+      <main className="container py-3">
         {/* Install Banners - only show on respective platforms */}
-        <AndroidInstallBanner />
-        <IOSInstallBanner />
+        <div className="row">
+          <div className="col-12">
+            <AndroidInstallBanner />
+            <IOSInstallBanner />
+          </div>
+        </div>
         
         {/* App title and description */}
-        <div className="home-hero">
-          <h1 className="home-title">
-            Welcome to Liverpool St Explorer! 🎉
-          </h1>
-          <p className="home-subtitle">
-          Explore. Play. Discover. Your Liverpool Street adventure starts here.
-          </p>
+        <div className="row mb-4">
+          <div className="col-12 text-center">
+            <h1 className="display-4 mb-3">
+              Welcome to Liverpool St Explorer! 🎉
+            </h1>
+            <p className="lead">
+              Explore. Play. Discover. Your Liverpool Street adventure starts here.
+            </p>
+          </div>
         </div>
 
-        {/* Feature cards grid - inspired by Lebara design */}
-        <div className="home-cards-grid">
+        {/* Feature cards grid - Horizontal rectangles */}
+        <div className="row g-3">
           {/* Discover Card */}
-          <Link href="/discover" className="card-compact home-card-link">
-            <div className="home-card-header">
-              <div className="home-card-title-section">
-                <div className="home-card-emoji">🗺️</div>
-                <h3 className="home-card-title">Discover</h3>
+          <div className="col-12 col-md-6 col-lg-3">
+            <Link href="/discover" className="text-decoration-none">
+              <div className="card shadow-sm horizontal-card">
+                <div className="card-body d-flex align-items-center">
+                  <div className="feature-icon me-3">🗺️</div>
+                  <div className="flex-grow-1">
+                    <h5 className="card-title fw-bold mb-1">Discover</h5>
+                    <p className="card-text mb-0">Browse places around Liverpool Street</p>
+                  </div>
+                </div>
               </div>
-              <div className="home-card-chevron">›</div>
-            </div>
-            <p className="home-card-subtitle">Browse places around Liverpool Street</p>
-          </Link>
+            </Link>
+          </div>
 
           {/* What's for lunch? Card */}
-          <Link href="/hungry" className="card-compact home-card-link">
-            <div className="home-card-header">
-              <div className="home-card-title-section">
-                <div className="home-card-emoji">🍽️</div>
-                <h3 className="home-card-title">What&apos;s for lunch?</h3>
+          <div className="col-12 col-md-6 col-lg-3">
+            <Link href="/hungry" className="text-decoration-none">
+              <div className="card shadow-sm horizontal-card">
+                <div className="card-body d-flex align-items-center">
+                  <div className="feature-icon me-3">🍽️</div>
+                  <div className="flex-grow-1">
+                    <h5 className="card-title fw-bold mb-1">What&apos;s for lunch?</h5>
+                    <p className="card-text mb-0">Spin the wheel or ask the AI</p>
+                  </div>
+                </div>
               </div>
-              <div className="home-card-chevron">›</div>
-            </div>
-            <p className="home-card-subtitle">Spin the wheel or ask the AI</p>
-          </Link>
+            </Link>
+          </div>
 
           {/* Bingo Card */}
-          <Link href="/bingo" className="card-compact home-card-link">
-            <div className="home-card-header">
-              <div className="home-card-title-section">
-                <div className="home-card-emoji">🎯</div>
-                <h3 className="home-card-title">Bingo</h3>
+          <div className="col-12 col-md-6 col-lg-3">
+            <Link href="/bingo" className="text-decoration-none">
+              <div className="card shadow-sm horizontal-card">
+                <div className="card-body d-flex align-items-center">
+                  <div className="feature-icon me-3">🎯</div>
+                  <div className="flex-grow-1">
+                    <h5 className="card-title fw-bold mb-1">Bingo</h5>
+                    <p className="card-text mb-0">Play the monthly challenge</p>
+                  </div>
+                </div>
               </div>
-              <div className="home-card-chevron">›</div>
-            </div>
-            <p className="home-card-subtitle">Play the monthly challenge</p>
-          </Link>
+            </Link>
+          </div>
 
           {/* Social / Feed Card */}
-          <Link href="/social" className="card-compact home-card-link">
-            <div className="home-card-header">
-              <div className="home-card-title-section">
-                <div className="home-card-emoji">👥</div>
-                <h3 className="home-card-title">Social / Feed</h3>
+          <div className="col-12 col-md-6 col-lg-3">
+            <Link href="/social" className="text-decoration-none">
+              <div className="card shadow-sm horizontal-card">
+                <div className="card-body d-flex align-items-center">
+                  <div className="feature-icon me-3">👥</div>
+                  <div className="flex-grow-1">
+                    <h5 className="card-title fw-bold mb-1">Social / Feed</h5>
+                    <p className="card-text mb-0">See what others are up to</p>
+                  </div>
+                </div>
               </div>
-              <div className="home-card-chevron">›</div>
-            </div>
-            <p className="home-card-subtitle">See what others are up to</p>
-          </Link>
+            </Link>
+          </div>
         </div>
       </main>
     </div>
