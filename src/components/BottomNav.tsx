@@ -18,19 +18,46 @@ export default function BottomNav() {
 
   return (
     // Fixed bottom navigation bar with Bootstrap 5 styling
-    <nav className="navbar fixed-bottom bg-white border-top shadow-sm p-0 w-100" role="navigation" aria-label="Bottom navigation" style={{ zIndex: 1030, height: "64px", ["--bottom-nav-h" as any]: "64px" }}>
+    <nav 
+      className="navbar fixed-bottom bg-white border-top p-0" 
+      role="navigation" 
+      aria-label="Bottom navigation" 
+      style={{ 
+        background: '#fff', 
+        height: '64px', 
+        zIndex: 1030, 
+        boxShadow: '0 -1px 0 rgba(0,0,0,.08)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        ["--bottom-nav-h" as any]: "64px"
+      }}
+    >
       <div className="container-fluid p-0">
-        <ul className="nav nav-justified w-100 mb-0">
+        <ul 
+          className="nav w-100 mb-0" 
+          style={{ 
+            display: 'flex', 
+            height: '100%'
+          }}
+        >
           {navItems.map((item) => {
             // Check if this tab is currently active
             const isActive = pathname === item.path
             
             return (
-              <li key={item.path} className="nav-item flex-fill">
+              <li 
+                key={item.path} 
+                className="nav-item" 
+                style={{ 
+                  flex: '1 1 0', 
+                  height: '100%'
+                }}
+              >
                 <Link
                   href={item.path}
-                  className={`nav-link d-flex flex-column align-items-center justify-content-center text-decoration-none small h-100 gap-1 text-nowrap py-1 px-0 ${isActive ? 'fw-bold text-white' : 'text-muted'}`}
-                  style={isActive ? { backgroundColor: "rgba(255, 49, 130, 0.85)" } : {}}
+                  className={`nav-link d-flex flex-column align-items-center justify-content-center text-decoration-none small h-100 w-100 px-0 ${isActive ? 'fw-bold text-white' : 'text-muted'}`}
+                  style={{ 
+                    ...(isActive ? { backgroundColor: "rgba(255, 49, 130, 0.85)" } : {})
+                  }}
                   aria-label={item.label}
                   title={item.label}
                 >

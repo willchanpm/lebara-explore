@@ -243,12 +243,13 @@ export default function DiscoverPage() {
               }}
             >
               <div className="card-body">
-                {/* Header row */}
-                <div className="d-flex justify-content-between align-items-start mb-2">
+                {/* Title + favourite star row */}
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  {/* Left: Title with price band */}
                   <h5 className="card-title fw-bold mb-0">
                     {place.name} {place.price_band && <small className="text-muted">({place.price_band})</small>}
                   </h5>
-                  {/* Favorite button - show for all users */}
+                  {/* Right: Favorite button - show for all users */}
                   {currentUser && (
                     <button
                       type="button"
@@ -268,10 +269,9 @@ export default function DiscoverPage() {
                   )}
                 </div>
                 
-                {/* Meta row (tags) */}
-                <div className="mb-2">
-                  {/* Category badge */}
-                  <span className="badge rounded-pill bg-white border shadow-sm text-muted me-2">
+                {/* Category chip */}
+                <div className="mb-2 mt-1">
+                  <span className="badge rounded-pill bg-light text-dark small">
                     {place.category.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                   </span>
                   {/* User submitted badge */}
@@ -282,9 +282,9 @@ export default function DiscoverPage() {
                   )}
                 </div>
                 
-                {/* Description */}
+                {/* Subtitle/description */}
                 {place.notes && (
-                  <p className="card-text text-muted mb-2">{place.notes}</p>
+                  <p className="card-text text-muted mb-3">{place.notes}</p>
                 )}
                 
                 {/* Actions row (equal width) */}

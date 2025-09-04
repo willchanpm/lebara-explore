@@ -337,7 +337,7 @@ export default function AddPlaceModal({ isOpen, onClose, onPlaceAdded }: AddPlac
                   {errors.url && (
                     <div className="invalid-feedback">{errors.url}</div>
                   )}
-                  <div className="form-text">Optional - the place's website</div>
+                  <div className="form-text">Optional - Website URL</div>
                 </div>
 
                 {/* Google Maps URL */}

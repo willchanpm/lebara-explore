@@ -56,3 +56,25 @@ body, main {
   overflow-x: hidden;
   overflow-y: auto;
 }
+
+/* BottomNav layout fixes - override legacy styles */
+.navbar .nav-item {
+  display: block !important;
+  flex-direction: unset !important;
+  align-items: unset !important;
+  width: auto !important;
+  height: auto !important;
+  transform: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.navbar .nav-item:hover {
+  transform: none !important;
+  background-color: transparent !important;
+}
+
+.navbar .nav-item.active {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
