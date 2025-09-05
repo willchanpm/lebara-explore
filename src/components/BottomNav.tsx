@@ -28,8 +28,8 @@ export default function BottomNav() {
         zIndex: 1030, 
         boxShadow: '0 -1px 0 rgba(0,0,0,.08)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        ["--bottom-nav-h" as any]: "64px"
-      }}
+        '--bottom-nav-h': '64px'
+      } as React.CSSProperties}
     >
       <div className="container-fluid p-0">
         <ul 
