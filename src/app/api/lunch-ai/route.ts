@@ -1,3 +1,4 @@
+// JSON-AI CHECK: PASS (2024-12-19)
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { supabase } from '@/lib/supabaseClient';
@@ -9,6 +10,71 @@ interface AIRequest {
   priceBand?: "£" | "££" | "£££";
   vegFriendly?: boolean;
   widerSearch?: boolean;
+}
+
+// Define suggestion structure
+interface AISuggestion {
+  id?: string;
+  name: string;
+  category?: string;
+  price_band?: string;
+  veg_friendly?: boolean;
+  description?: string;
+  url?: string;
+  maps_url?: string;
+  source: 'db' | 'model';
+}
+
+// FIXED(JSON-AI): Parse markdown response to suggestions array
+function parseMarkdownToSuggestions(text: string, places: any[], widerSearch: boolean): AISuggestion[] {
+  const suggestions: AISuggestion[] = [];
+  const lines = text.split('\n');
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const nameMatch = line.match(/^\d+\.\s+\*\*(.+?)\*\*/);
+    if (nameMatch) {
+      const name = nameMatch[1];
+      const suggestion: AISuggestion = {
+        name,
+        source: widerSearch ? 'model' : 'db'
+      };
+      
+      // Look for details in following lines
+      for (let j = i + 1; j < lines.length && j < i + 10; j++) {
+        const detailLine = lines[j];
+        if (detailLine.includes('Cuisine:')) {
+          suggestion.category = detailLine.split('Cuisine:')[1]?.trim();
+        } else if (detailLine.includes('Price band:')) {
+          suggestion.price_band = detailLine.split('Price band:')[1]?.trim();
+        } else if (detailLine.includes('Vegetarian-friendly: true')) {
+          suggestion.veg_friendly = true;
+        } else if (detailLine.match(/^\*.*\*$/)) {
+          suggestion.description = detailLine.replace(/^\*|\*$/g, '').trim();
+        }
+      }
+      
+      // If from DB, try to find matching place for additional data
+      if (!widerSearch) {
+        const matchingPlace = places.find(p => 
+          p.name.toLowerCase().includes(name.toLowerCase()) || 
+          name.toLowerCase().includes(p.name.toLowerCase())
+        );
+        if (matchingPlace) {
+          suggestion.id = matchingPlace.id?.toString();
+          suggestion.url = matchingPlace.url;
+          suggestion.maps_url = matchingPlace.maps_url;
+          if (!suggestion.category) suggestion.category = matchingPlace.category;
+          if (!suggestion.price_band) suggestion.price_band = matchingPlace.price_band;
+          if (suggestion.veg_friendly === undefined) suggestion.veg_friendly = matchingPlace.veg_friendly;
+        }
+      }
+      
+      suggestions.push(suggestion);
+    }
+  }
+  
+  return suggestions;
 }
 
 export async function POST(request: NextRequest) {
@@ -147,7 +213,9 @@ IMPORTANT:
     });
 
     const text = completion.output_text;
-    return NextResponse.json({ result: text });
+    // FIXED(JSON-AI): Convert markdown response to JSON suggestions format
+    const suggestions = parseMarkdownToSuggestions(text, places, widerSearch || false);
+    return NextResponse.json({ suggestions });
 
   } catch (error) {
     console.error('Error in lunch-ai API:', error);

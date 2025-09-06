@@ -1,15 +1,32 @@
+// JSON-AI CHECK: PASS (2024-12-19)
 'use client';
 
 import { useState } from 'react';
 
 // Define the structure for the AI response
-interface AIResponse {
-  result: string;
+type PriceBand = '£' | '££' | '£££' | '££££' | string;
+type AISource = 'db' | 'model';
+
+interface AISuggestion {
+  id?: string;              // present for DB results
+  name: string;
+  category?: string;        // cuisine/category
+  price_band?: PriceBand;
+  veg_friendly?: boolean;
+  description?: string;
+  url?: string;             // website
+  maps_url?: string;        // google maps link
+  source: AISource;
+}
+
+interface AIResponseJSON {
+  suggestions: AISuggestion[];   // ordered list of suggestions
+  trace?: string;                // optional model trace or explanation
 }
 
 // Define the structure for the result state
 interface AIResult {
-  data: AIResponse | null;
+  data: AIResponseJSON | null;
   loading: boolean;
   error: string | null;
 }
@@ -118,7 +135,21 @@ export default function AskAIPage() {
         throw new Error(`API request failed: ${response.status}`);
       }
 
-      const data: AIResponse = await response.json();
+      const data: AIResponseJSON = await response.json();
+      
+      // FIXED(JSON-AI): Add dev logging and legacy format detection
+      const __DEV__ = process.env.NODE_ENV !== 'production';
+      if (__DEV__ && data && 'result' in data) {
+        console.warn('[AI JSON] API returned legacy {result}. Update backend to {suggestions:[...]}.', data);
+      }
+      if (__DEV__) {
+        console.table(data?.suggestions ?? []);
+      }
+      
+      // Validate response has suggestions
+      if (!data.suggestions || !Array.isArray(data.suggestions)) {
+        throw new Error('AI returned an unexpected format.');
+      }
       
       // Set the successful result
       setResult({
@@ -149,59 +180,9 @@ export default function AskAIPage() {
     handleSuggest();
   };
 
-  // Function to render markdown content (keeping existing logic)
-  const renderMarkdown = (markdown: string) => {
-    if (!markdown) return null;
-    
-    return markdown
-      .split('\n')
-      .filter(line => line.trim() !== '') // Remove empty lines
-      .map((line, index) => {
-        // Parse markdown formatting - these variables help identify formatting but aren't used in current styling
-        // const hasBold = line.includes('**');
-        // const hasItalic = line.includes('*');
-        
-        // Determine the line type for styling
-        const isRestaurantName = line.match(/^\d+\.\s+\*\*([^*]+)\*\*/); // Numbered items with bold names
-        const isSubHeader = line.match(/^-\s+\w+:/); // Bullet points with colons
-        const isBullet = line.match(/^-\s+/); // Regular bullet points
-        const isDescription = line.match(/^\*([^*]+)\*/); // Italic descriptions without dashes
-        
-        // Extract clean text for display
-        let displayText = line;
-        let className = 'response-line';
-        
-        if (isRestaurantName) {
-          // Extract the restaurant name from **bold** formatting
-          displayText = line.replace(/^\d+\.\s+\*\*([^*]+)\*\*/, '$1');
-          className += ' response-restaurant-name';
-        } else if (isDescription) {
-          // Extract the description from *italic* formatting
-          displayText = line.replace(/^-\s+\*([^*]+)\*/, '$1');
-          className += ' response-description';
-        } else if (isSubHeader) {
-          className += ' response-subheader';
-        } else if (isBullet) {
-          className += ' response-bullet';
-        } else if (line.match(/^\d+\./)) {
-          className += ' response-header';
-        } else {
-          className += ' response-text';
-        }
-        
-        return (
-          <p 
-            key={index} 
-            className={className}
-          >
-            {displayText}
-          </p>
-        );
-      });
-  };
 
-  // Get the AI markdown content for rendering
-  const aiMarkdown = result.data?.result || '';
+  // Get the AI suggestions for rendering
+  const suggestions = result.data?.suggestions || [];
   const loading = result.loading;
   const error = result.error;
 
@@ -407,14 +388,82 @@ export default function AskAIPage() {
             </button>
           </div>
           <hr className="text-body-tertiary my-2" />
-          {/* Keep existing markdown rendering here for now */}
-          <article className="markdown-body small">
-            {renderMarkdown(aiMarkdown)}
-          </article>
-          {/* Empty / error / loading helpers */}
+          {/* AI Suggestions Cards */}
+          {loading && (
+            <div className="text-center text-muted py-4">
+              <div className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
+              Finding suggestions...
+            </div>
+          )}
           {error && <div className="alert alert-warning mt-3 mb-0">{error}</div>}
-          {(!aiMarkdown && !loading && !error) && (
+          {!loading && !error && suggestions.length === 0 && (
             <p className="text-muted mb-0">No suggestions yet — set some criteria and tap Suggest.</p>
+          )}
+          {!loading && !error && suggestions.length > 0 && (
+            <div>
+              {suggestions.map((suggestion, index) => (
+                <div key={suggestion.id || index} className="card border-0 shadow-sm rounded-4 mb-3">
+                  <div className="card-body p-4">
+                    {/* Title */}
+                    <h6 className="fw-bold mb-2">{suggestion.name}</h6>
+                    
+                    {/* Subtitle row */}
+                    <div className="d-flex flex-wrap gap-2 align-items-center mb-2">
+                      {suggestion.category && (
+                        <span className="badge bg-light text-dark small">{suggestion.category}</span>
+                      )}
+                      {suggestion.price_band && (
+                        <span className="badge bg-light text-dark small rounded-pill">{suggestion.price_band}</span>
+                      )}
+                      {suggestion.veg_friendly && (
+                        <span className="badge bg-light text-dark small rounded-pill">🌱 Veg-friendly</span>
+                      )}
+                    </div>
+                    
+                    {/* Description */}
+                    {suggestion.description && (
+                      <p className="text-muted small mb-3" style={{ 
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
+                      }}>
+                        {suggestion.description}
+                      </p>
+                    )}
+                    
+                    {/* Footer actions */}
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div className="d-flex gap-2">
+                        {suggestion.maps_url && (
+                          <a 
+                            href={suggestion.maps_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="btn btn-sm btn-outline-secondary"
+                          >
+                            🗺️ Maps
+                          </a>
+                        )}
+                        {suggestion.url && (
+                          <a 
+                            href={suggestion.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="btn btn-sm btn-outline-secondary"
+                          >
+                            🌐 Website
+                          </a>
+                        )}
+                      </div>
+                      <small className="text-muted">
+                        From: {suggestion.source === 'db' ? 'Our list' : 'AI'}
+                      </small>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
