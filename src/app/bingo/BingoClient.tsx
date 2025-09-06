@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import BingoModal from '@/components/BingoModal'
+import ResetConfirmationModal from '@/components/ResetConfirmationModal'
+import { supabase } from '@/lib/supabaseClient'
+import { getCurrentUserId } from '@/lib/saveCheckIn'
 
 // Define TypeScript interfaces for our data structures
 interface Place {
@@ -130,28 +133,92 @@ export default function BingoClient({ tiles, month }: BingoClientProps) {
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedTile, setSelectedTile] = useState<BingoTile | null>(null)
+  
+  // Reset modal state
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false)
 
   // Load saved progress when component mounts
   useEffect(() => {
     loadSavedProgress()
-  }, [])
+  }, [month]) // Re-sync when month changes
 
-  // Function to load saved progress from localStorage
-  const loadSavedProgress = () => {
+  // Function to sync with database and load saved progress
+  const loadSavedProgress = async () => {
     try {
-      // Load completed squares
+      // First, try to get current user and sync with database
+      try {
+        const userId = await getCurrentUserId(supabase)
+        
+        // Get all check-ins for this user for the current month (excluding reset ones)
+        let { data: checkIns, error } = await supabase
+          .from('check_ins')
+          .select('tile_id, rating, comment, photo_url, created_at, is_reset')
+          .eq('user_id', userId)
+          .eq('board_month', month)
+          .eq('is_reset', false)
+        
+        console.log('Database query result:', { checkIns, error, userId, month })
+        
+        // If the is_reset column doesn't exist yet, fall back to loading all check-ins
+        if (error && error.message?.includes('is_reset')) {
+          console.log('is_reset column not found, falling back to loading all check-ins')
+          const fallbackResult = await supabase
+            .from('check_ins')
+            .select('tile_id, rating, comment, photo_url, created_at')
+            .eq('user_id', userId)
+            .eq('board_month', month)
+          
+          // Add is_reset: false to fallback data for type compatibility
+          checkIns = fallbackResult.data?.map(item => ({ ...item, is_reset: false })) || null
+          error = fallbackResult.error
+          console.log('Fallback query result:', { checkIns, error })
+        }
+        
+        if (error) {
+          console.warn('Failed to load check-ins from database:', error)
+        } else {
+          // Always update state based on database (even if empty)
+          const completedTileIds = checkIns?.map(checkIn => checkIn.tile_id) || []
+          setCompletedSquares(new Set(completedTileIds))
+          
+          // Convert check-ins to completion data format
+          const dbCompletionData: Record<string, StoredCompletionData> = {}
+          checkIns?.forEach(checkIn => {
+            dbCompletionData[checkIn.tile_id] = {
+              image: checkIn.photo_url,
+              rating: checkIn.rating,
+              comment: checkIn.comment,
+              photoUrl: checkIn.photo_url,
+              completedAt: checkIn.created_at
+            }
+          })
+          setCompletionData(dbCompletionData)
+          
+          // Update localStorage to match database
+          localStorage.setItem('lsx:bingo:v1', JSON.stringify(completedTileIds))
+          localStorage.setItem('lsx:bingo:completion:v1', JSON.stringify(dbCompletionData))
+          
+          console.log('Synced with database - loaded completed squares:', completedTileIds)
+          console.log('Synced with database - loaded completion data:', dbCompletionData)
+          return
+        }
+      } catch (dbError) {
+        console.warn('Database sync failed, falling back to localStorage:', dbError)
+      }
+      
+      // Fallback to localStorage if database sync fails
       const savedSquares = localStorage.getItem('lsx:bingo:v1')
       if (savedSquares) {
         const savedArray = JSON.parse(savedSquares)
         setCompletedSquares(new Set(savedArray))
-        console.log('Loaded completed squares:', savedArray)
+        console.log('Loaded completed squares from localStorage:', savedArray)
       }
       
       // Load completion data
       const savedCompletionData = localStorage.getItem('lsx:bingo:completion:v1')
       if (savedCompletionData) {
         setCompletionData(JSON.parse(savedCompletionData))
-        console.log('Loaded completion data:', JSON.parse(savedCompletionData))
+        console.log('Loaded completion data from localStorage:', JSON.parse(savedCompletionData))
       }
     } catch (error) {
       console.warn('Failed to load bingo progress:', error)
@@ -216,16 +283,30 @@ export default function BingoClient({ tiles, month }: BingoClientProps) {
       
       // Save to localStorage
       saveProgress()
+      
+      // Reload from database to ensure sync
+      await loadSavedProgress()
     }
   }
 
-  // Function to reset all progress
-  const resetProgress = () => {
-    if (window.confirm('Are you sure you want to reset all your progress? This cannot be undone.')) {
-      setCompletedSquares(new Set())
-      setCompletionData({})
-      saveProgress()
-    }
+  // Function to open reset modal
+  const openResetModal = () => {
+    setIsResetModalOpen(true)
+  }
+
+  // Function to handle reset confirmation
+  const handleReset = async (deletePosts: boolean) => {
+    // Clear local state
+    setCompletedSquares(new Set())
+    setCompletionData({})
+    saveProgress()
+    
+    // Reload from database to ensure sync
+    // The modal will have marked entries as reset, so they won't appear as completed
+    await loadSavedProgress()
+    
+    // Close the modal
+    setIsResetModalOpen(false)
   }
 
   // Calculate progress
@@ -252,7 +333,7 @@ export default function BingoClient({ tiles, month }: BingoClientProps) {
             </span>
             <button
               className="btn btn-outline-secondary btn-sm rounded-pill px-3"
-              onClick={resetProgress}
+              onClick={openResetModal}
               disabled={completedCount === 0}
             >
               Reset
@@ -392,6 +473,15 @@ export default function BingoClient({ tiles, month }: BingoClientProps) {
       tileId={selectedTile?.id || ''}
       boardMonth={month}
     />
+
+    {/* Reset Confirmation Modal */}
+    <ResetConfirmationModal
+      isOpen={isResetModalOpen}
+      onClose={() => setIsResetModalOpen(false)}
+      onReset={handleReset}
+      completedCount={completedCount}
+    />
     </>
   )
 }
+

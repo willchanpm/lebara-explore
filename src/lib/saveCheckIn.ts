@@ -23,6 +23,7 @@ interface CheckInRecord {
   photo_url: string | null
   author_name: string | null
   created_at: string
+  is_reset: boolean
 }
 
 // Helper to get current user ID
@@ -120,28 +121,62 @@ export async function saveCheckIn({
       // Keep default 'Member' if there's an error
     }
     
-    // Insert check-in record
-    const { data: checkInData, error: insertError } = await supabase
+    // Check if an active record already exists for this user/tile/month
+    const { data: existingActiveRecord, error: checkError } = await supabase
       .from('check_ins')
-      .insert({
-        user_id: userId,
-        tile_id: tileId,
-        board_month: boardMonth,
-        comment: comment.trim(),
-        rating: clampedRating,
-        photo_url: photoUrl,
-        author_name: authorName
-      })
-      .select()
+      .select('id, is_reset')
+      .eq('user_id', userId)
+      .eq('tile_id', tileId)
+      .eq('board_month', boardMonth)
+      .eq('is_reset', false) // Only check for active records
       .single()
     
-    if (insertError) {
-      // Check if it's a duplicate error
-      if (insertError.code === '23505') { // Unique constraint violation
-        return { data: null, error: 'Already completed this tile for this month' }
-      }
+    let checkInData: CheckInRecord | null = null
+    let insertError: any = null
+    
+    if (existingActiveRecord) {
+      // Active record exists - update it with new data
+      console.log('Updating existing active record:', existingActiveRecord.id)
+      const { data: updateData, error: updateError } = await supabase
+        .from('check_ins')
+        .update({
+          comment: comment.trim(),
+          rating: clampedRating,
+          photo_url: photoUrl,
+          author_name: authorName,
+          created_at: new Date().toISOString() // Update timestamp
+        })
+        .eq('id', existingActiveRecord.id)
+        .select()
+        .single()
       
-      console.error('Database insert error:', insertError)
+      checkInData = updateData
+      insertError = updateError
+    } else {
+      // No active record exists - insert new one
+      // This allows multiple records per user/tile/month (one active, others reset)
+      console.log('Inserting new record')
+      const { data: insertData, error: insertErr } = await supabase
+        .from('check_ins')
+        .insert({
+          user_id: userId,
+          tile_id: tileId,
+          board_month: boardMonth,
+          comment: comment.trim(),
+          rating: clampedRating,
+          photo_url: photoUrl,
+          author_name: authorName,
+          is_reset: false
+        })
+        .select()
+        .single()
+      
+      checkInData = insertData
+      insertError = insertErr
+    }
+    
+    if (insertError) {
+      console.error('Database operation error:', insertError)
       return { data: null, error: 'Failed to save check-in' }
     }
     

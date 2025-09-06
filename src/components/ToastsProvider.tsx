@@ -195,8 +195,8 @@ function ToastContainer({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: 
           bottom: 'calc(64px + env(safe-area-inset-bottom, 0px) + 1rem)',
           left: '50%',
           transform: 'translateX(-50%)',
-          right: '1rem',
-          maxWidth: 'calc(100vw - 2rem)',
+          width: 'calc(100vw - 2rem)',
+          maxWidth: '400px',
         }
       : {
           top: '1rem',

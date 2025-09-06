@@ -19,6 +19,7 @@ interface CheckIn {
   photo_url: string | null
   author_name: string | null
   created_at: string
+  is_reset: boolean
   tile_label?: string
   tile_description?: string | null
   place_id?: string // Add place_id for favorites functionality
@@ -209,7 +210,7 @@ export default function Feed() {
         .from('check_ins')
         .select(`
           id, user_id, tile_id, board_month, comment, rating, 
-          photo_url, author_name, created_at
+          photo_url, author_name, created_at, is_reset
         `)
         .order('created_at', { ascending: false })
         .limit(20)
