@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuthLoading } from '@/components/AuthLoadingContext'
 
@@ -35,12 +35,6 @@ export default function AccountPage() {
     }
   }, [resendCooldown])
 
-  // Auto-submit OTP when 6 digits are entered
-  useEffect(() => {
-    if (otpCode.length === 6 && otpSent) {
-      handleVerifyOtp()
-    }
-  }, [otpCode, otpSent])
 
   // Handle form submission - send OTP
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,7 +79,7 @@ export default function AccountPage() {
   }
 
   // Handle OTP verification
-  const handleVerifyOtp = async () => {
+  const handleVerifyOtp = useCallback(async () => {
     if (otpCode.length !== 6) {
       setStatus('error')
       setMessage('Please enter the complete 6-digit code')
@@ -127,7 +121,14 @@ export default function AccountPage() {
       setOtpCode('') // Clear the OTP input
       console.error('OTP verification error:', err)
     }
-  }
+  }, [otpCode, email, setStatus, setMessage, setOtpCode, setEmail, setOtpSent])
+
+  // Auto-submit OTP when 6 digits are entered
+  useEffect(() => {
+    if (otpCode.length === 6 && otpSent) {
+      handleVerifyOtp()
+    }
+  }, [otpCode, otpSent, handleVerifyOtp])
 
   // Handle resend OTP
   const handleResendOtp = async () => {
@@ -160,13 +161,6 @@ export default function AccountPage() {
     }
   }
 
-  // Handle OTP input changes with formatting
-  const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '') // Only allow digits
-    if (value.length <= 6) {
-      setOtpCode(value)
-    }
-  }
 
   // Handle OTP paste events
   const handleOtpPaste = (e: React.ClipboardEvent, index: number) => {

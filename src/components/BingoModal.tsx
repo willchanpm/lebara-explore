@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabaseClient'
 import { saveCheckIn, getCurrentUserId } from '@/lib/saveCheckIn'
 import Toast from './Toast'
@@ -385,7 +386,7 @@ export default function BingoModal({
               {/* Display captured/uploaded image */}
               {image && (
                 <div className="image-preview">
-                  <img src={image} alt="Bingo completion" className="preview-image" />
+                  <Image src={image} alt="Bingo completion" className="preview-image" width={200} height={200} />
                   <button
                     type="button"
                     className="remove-image-button"

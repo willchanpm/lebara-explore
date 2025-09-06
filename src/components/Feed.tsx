@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabaseClient'
 import type { User } from '@supabase/supabase-js'
 import ImageModal from './ImageModal'
@@ -729,7 +730,7 @@ export default function Feed() {
             {/* Photo */}
             <div className="feed-card-photo">
               {checkIn.photo_url ? (
-                <img
+                <Image
                   src={checkIn.photo_url}
                   alt={`${getAuthorName(checkIn, currentUser)}'s check-in for ${getTileTitle(checkIn)}`}
                   className="feed-card-image clickable"
@@ -737,6 +738,8 @@ export default function Feed() {
                   onClick={() => openImageModal(checkIn.photo_url!, `${getAuthorName(checkIn, currentUser)}'s check-in for ${getTileTitle(checkIn)}`)}
                   role="button"
                   tabIndex={0}
+                  width={300}
+                  height={200}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault()

@@ -161,13 +161,6 @@ export default function ProfileEditor() {
     setIsEditing(false)
   }
 
-  // Function to use email name (extract prefix before @)
-  const useEmailName = () => {
-    if (user?.email) {
-      const emailPrefix = user.email.split('@')[0]
-      setDisplayName(emailPrefix)
-    }
-  }
 
   // Function to close toast
   const closeToast = () => {

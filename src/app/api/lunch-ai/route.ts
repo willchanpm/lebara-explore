@@ -70,10 +70,14 @@ const mapsSearch = (name: string) =>
   `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' near Liverpool Street London')}`;
 
 // Normalize model response with safe fallbacks
-const normaliseModel = (s: any): AISuggestion => {
-  const name = String(s.name || '').trim();
-  let url = typeof s.url === 'string' ? s.url.trim() : '';
-  let maps_url = typeof s.maps_url === 'string' ? s.maps_url.trim() : '';
+const normaliseModel = (s: unknown): AISuggestion => {
+  // Type guard to check if s is an object with expected properties
+  const isObject = (obj: unknown): obj is Record<string, unknown> => 
+    typeof obj === 'object' && obj !== null;
+  
+  const name = isObject(s) && typeof s.name === 'string' ? s.name.trim() : '';
+  let url = isObject(s) && typeof s.url === 'string' ? s.url.trim() : '';
+  let maps_url = isObject(s) && typeof s.maps_url === 'string' ? s.maps_url.trim() : '';
 
   // Always provide a Maps link; fallback to deterministic search
   if (!/^https:\/\/www\.google\.com\/maps\//.test(maps_url)) {
@@ -87,41 +91,16 @@ const normaliseModel = (s: any): AISuggestion => {
 
   return {
     name,
-    category: s.category ?? undefined,
-    price_band: s.price_band ?? undefined,
-    veg_friendly: Boolean(s.veg_friendly),
-    description: s.description ?? undefined,
+    category: isObject(s) && typeof s.category === 'string' ? s.category : undefined,
+    price_band: isObject(s) && typeof s.price_band === 'string' ? s.price_band : undefined,
+    veg_friendly: isObject(s) ? Boolean(s.veg_friendly) : false,
+    description: isObject(s) && typeof s.description === 'string' ? s.description : undefined,
     url,
     maps_url,
     source: 'model'
   };
 };
 
-// De-duplicate suggestions preferring DB over model
-const dedupeSuggestions = (dbSuggestions: AISuggestion[], modelSuggestions: AISuggestion[]): AISuggestion[] => {
-  const seen = new Set<string>();
-  const result: AISuggestion[] = [];
-
-  // Add DB suggestions first (preferred)
-  for (const suggestion of dbSuggestions) {
-    const key = suggestion.name.toLowerCase().trim();
-    if (!seen.has(key)) {
-      seen.add(key);
-      result.push(suggestion);
-    }
-  }
-
-  // Add model suggestions that don't conflict
-  for (const suggestion of modelSuggestions) {
-    const key = suggestion.name.toLowerCase().trim();
-    if (!seen.has(key)) {
-      seen.add(key);
-      result.push(suggestion);
-    }
-  }
-
-  return result;
-};
 
 export async function POST(request: NextRequest) {
   try {
@@ -263,13 +242,6 @@ ${JSON.stringify(dbContext, null, 2)}`;
       source: 'db'
     }));
 
-    // De-duplication helper: treat as same if same maps_url or same name (case-insensitive)
-    const isDuplicate = (a: AISuggestion, b: AISuggestion): boolean => {
-      if (a.maps_url && b.maps_url) {
-        return a.maps_url.toLowerCase() === b.maps_url.toLowerCase();
-      }
-      return a.name.toLowerCase() === b.name.toLowerCase();
-    };
 
     // Clean and de-duplicate lists
     const cleanDbSuggestions: AISuggestion[] = [];

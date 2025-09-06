@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuthLoading } from '@/components/AuthLoadingContext'
@@ -58,12 +58,6 @@ export default function LoginPage() {
     }
   }, [resendCooldown])
 
-  // Auto-submit OTP when 6 digits are entered
-  useEffect(() => {
-    if (otpCode.length === 6 && otpSent) {
-      handleVerifyOtp()
-    }
-  }, [otpCode, otpSent])
 
   // Cleanup effect to ensure checkingAuth is reset when component unmounts
   useEffect(() => {
@@ -72,7 +66,64 @@ export default function LoginPage() {
     }
   }, [])
 
+  // Handle OTP verification
+  const handleVerifyOtp = useCallback(async () => {
+    if (otpCode.length !== 6) {
+      setStatus('Please enter the complete 6-digit code')
+      return
+    }
 
+    try {
+      setIsVerifying(true) // Show verifying state
+      setStatus('Verifying code...')
+
+      // Verify the OTP code with Supabase
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: otpCode,
+        type: 'email'
+      })
+
+      if (error) {
+        // If there's an error, show it to the user
+        setStatus(`Error: ${error.message}`)
+        setOtpCode('') // Clear the OTP input
+      } else if (data.user) {
+        // Success! User is now logged in
+        setStatus('Login successful! Redirecting...')
+        
+        // Set global navigation loading state
+        setIsNavigating(true)
+        
+        // Reset checkingAuth state since user is now authenticated
+        setCheckingAuth(false)
+        
+        // Redirect immediately - the simplified AuthWrapper will handle the rest
+        router.push('/')
+        
+        // Reset navigation state after a short delay
+        setTimeout(() => {
+          setIsNavigating(false)
+        }, 1000)
+      } else {
+        throw new Error('Authentication failed - no user data received')
+      }
+    } catch (err) {
+      // Catch any unexpected errors
+      setStatus('Invalid verification code. Please try again.')
+      setOtpCode('') // Clear the OTP input
+      console.error('OTP verification error:', err)
+    } finally {
+      setIsVerifying(false) // Always reset verifying state
+    }
+  }, [otpCode, email, setStatus, setIsVerifying, setOtpCode, setIsNavigating, setCheckingAuth, router])
+
+  // Auto-submit OTP when 6 digits are entered
+  useEffect(() => {
+    if (otpCode.length === 6 && otpSent) {
+      handleVerifyOtp()
+    }
+  }, [otpCode, otpSent, handleVerifyOtp])
 
   // Show loading while checking authentication
   if (checkingAuth) {
@@ -125,57 +176,6 @@ export default function LoginPage() {
     }
   }
 
-  // Handle OTP verification
-  const handleVerifyOtp = async () => {
-    if (otpCode.length !== 6) {
-      setStatus('Please enter the complete 6-digit code')
-      return
-    }
-
-    try {
-      setIsVerifying(true) // Show verifying state
-      setStatus('Verifying code...')
-
-      // Verify the OTP code with Supabase
-      const { data, error } = await supabase.auth.verifyOtp({
-        email: email.trim(),
-        token: otpCode,
-        type: 'email'
-      })
-
-      if (error) {
-        // If there's an error, show it to the user
-        setStatus(`Error: ${error.message}`)
-        setOtpCode('') // Clear the OTP input
-      } else if (data.user) {
-        // Success! User is now logged in
-        setStatus('Login successful! Redirecting...')
-        
-        // Set global navigation loading state
-        setIsNavigating(true)
-        
-        // Reset checkingAuth state since user is now authenticated
-        setCheckingAuth(false)
-        
-        // Redirect immediately - the simplified AuthWrapper will handle the rest
-        router.push('/')
-        
-        // Reset navigation state after a short delay
-        setTimeout(() => {
-          setIsNavigating(false)
-        }, 1000)
-      } else {
-        throw new Error('Authentication failed - no user data received')
-      }
-    } catch (err) {
-      // Catch any unexpected errors
-      setStatus('Invalid verification code. Please try again.')
-      setOtpCode('') // Clear the OTP input
-      console.error('OTP verification error:', err)
-    } finally {
-      setIsVerifying(false) // Always reset verifying state
-    }
-  }
 
   // Handle resend OTP
   const handleResendOtp = async () => {
@@ -216,13 +216,6 @@ export default function LoginPage() {
     setResendCooldown(0)
   }
 
-  // Handle OTP input changes with formatting
-  const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '') // Only allow digits
-    if (value.length <= 6) {
-      setOtpCode(value)
-    }
-  }
 
   // Handle OTP paste events
   const handleOtpPaste = (e: React.ClipboardEvent, index: number) => {

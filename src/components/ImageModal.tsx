@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import Image from 'next/image'
 
 interface ImageModalProps {
   isOpen: boolean
@@ -48,10 +49,13 @@ export default function ImageModal({ isOpen, onClose, imageUrl, imageAlt }: Imag
         </button>
         
         {/* Full-size image */}
-        <img 
+        <Image 
           src={imageUrl} 
           alt={imageAlt}
           className="image-modal-image"
+          width={800}
+          height={600}
+          style={{ width: '100%', height: 'auto' }}
         />
       </div>
     </div>

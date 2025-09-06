@@ -57,8 +57,6 @@ export default function AskAIPage() {
     { key: 'outdoor', label: 'Outdoor', emoji: '🌳' }
   ];
 
-  // Price range options
-  const priceOptions = ['£', '££', '£££'];
 
   // Function to handle mood selection (multi-select)
   const toggleMood = (mood: string) => {
@@ -174,11 +172,6 @@ export default function AskAIPage() {
     handleSuggest();
   };
 
-  // Function to handle re-roll (get new suggestions with same prompt)
-  const handleReroll = () => {
-    // Re-run the suggest logic with the same inputs
-    handleSuggest();
-  };
 
 
   // Get the AI suggestions for rendering
@@ -195,7 +188,7 @@ export default function AskAIPage() {
     <div className="container py-4 pb-5">
       {/* Hero section */}
       <h1 className="display-5 fw-bold text-center mb-2">Ask AI</h1>
-      <p className="lead text-center text-muted mb-4">Tell us your mood or constraints. We'll suggest a spot nearby.</p>
+      <p className="lead text-center text-muted mb-4">Tell us your mood or constraints. We&apos;ll suggest a spot nearby.</p>
 
       {/* Search Criteria card (collapsible) */}
       <div className="card border-0 shadow-sm rounded-4 mb-4">
@@ -220,7 +213,7 @@ export default function AskAIPage() {
               <div className="d-flex flex-wrap gap-2 align-items-center">
                 {/* Free text */}
                 {textQuery?.trim() && (
-                  <span className="badge rounded-pill bg-light text-dark small">"{textQuery.trim()}"</span>
+                  <span className="badge rounded-pill bg-light text-dark small">&quot;{textQuery.trim()}&quot;</span>
                 )}
 
                 {/* Moods */}
