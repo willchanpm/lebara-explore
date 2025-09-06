@@ -47,6 +47,31 @@ img,svg,video{max-width:100%;height:auto;display:block;}
   background-color: #f8f9fa; /* subtle hover */
 }
 
+/* Ghost outline button utility */
+.btn-ghost {
+  --ghost-fg: #495057;         /* text color */
+  --ghost-border: #ced4da;     /* border color */
+  background-color: #fff;
+  color: var(--ghost-fg);
+  border: 1px solid var(--ghost-border);
+}
+.btn-ghost:hover {
+  background-color: #f8f9fa;
+  color: var(--ghost-fg);
+  border-color: var(--ghost-border);
+}
+.btn-ghost:active,
+.btn-ghost:focus,
+.btn-ghost:focus-visible {
+  background-color: #fff !important;
+  color: var(--ghost-fg) !important;
+  border-color: var(--ghost-border) !important;
+  box-shadow: none !important;
+}
+.btn-ghost:disabled {
+  opacity: .6;
+}
+
 /* FAB hover effect */
 a[data-testid="fab-add-place"]:hover {
   filter: brightness(0.9);
