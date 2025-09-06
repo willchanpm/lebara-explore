@@ -234,110 +234,164 @@ export default function BingoClient({ tiles, month }: BingoClientProps) {
   const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
 
   return (
-    <div className="bingo-page">
-      <div className="bingo-container">
-        {/* Header section with title and subtitle */}
-        <div className="bingo-header">
-          <h1 className="bingo-title">Bingo</h1>
-          <p className="bingo-subtitle">Tick them off as you go</p>
-
-        </div>
-        
-        {/* Progress section with progress bar and reset button */}
-        <div className="bingo-progress">
-          <div className="progress-header">
-            <span className="progress-text">
+    <>
+    <div className="container py-4 pb-5">
+      {/* Header section with title and subtitle */}
+      <div className="bingo-header">
+        <h1 className="display-5 fw-bold text-center mb-2">Bingo</h1>
+        <p className="lead text-center text-muted mb-4">Tick them off as you go</p>
+      </div>
+      
+      {/* Progress section with Bootstrap card styling */}
+      <div className="card shadow-sm rounded-4 mb-4">
+        <div className="card-body p-3">
+          {/* Progress header row */}
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <span className="fw-medium text-muted">
               Progress: {completedCount} / {totalCount}
             </span>
             <button
-              className="reset-button"
+              className="btn btn-outline-secondary btn-sm rounded-pill px-3"
               onClick={resetProgress}
+              disabled={completedCount === 0}
             >
               Reset
             </button>
           </div>
           
-          {/* Progress bar showing completion percentage */}
-          <div className="progress-bar">
+          {/* Bootstrap progress bar with smooth animation */}
+          <div className="progress rounded-pill" style={{ height: '12px' }}>
             <div 
-              className="progress-fill"
-              style={{ width: `${progressPercentage}%` }}
-            />
+              className="progress-bar bg-primary"
+              role="progressbar"
+              aria-valuenow={completedCount}
+              aria-valuemin={0}
+              aria-valuemax={totalCount}
+              style={{ 
+                width: `${progressPercentage}%`,
+                transition: 'width 0.6s ease-in-out'
+              }}
+            >
+              {/* Show percentage label when there's enough space */}
+              {progressPercentage >= 15 && (
+                <span className="text-white fw-medium" style={{ fontSize: '0.75rem' }}>
+                  {Math.round(progressPercentage)}%
+                </span>
+              )}
+              {/* Screen reader fallback */}
+              <span className="visually-hidden">
+                {completedCount} of {totalCount} challenges completed
+              </span>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Bingo grid - 3 columns on mobile, 4 columns on medium screens and up */}
-        <div className="bingo-grid">
-          {tiles.map((tile) => {
-            const isCompleted = completedSquares.has(tile.id)
-            const tileCompletionData = completionData[tile.id]
-            
-            return (
+      {/* Bingo grid with Bootstrap responsive columns */}
+      <div className="row g-2 g-sm-3">
+        {tiles.map((tile) => {
+          const isCompleted = completedSquares.has(tile.id)
+          const tileCompletionData = completionData[tile.id]
+          
+          return (
+            <div key={tile.id} className="col-6 col-sm-4">
               <button
-                key={tile.id}
-                className={`bingo-square ${isCompleted ? 'bingo-square-completed' : 'bingo-square-incomplete'}`}
+                className={`bingo-tile-card w-100 h-100 position-relative border-0 bg-white rounded-3 shadow-sm text-start ${isCompleted ? 'bingo-completed' : ''}`}
                 onClick={() => handleTileClick(tile)}
+                style={{ 
+                  aspectRatio: '1',
+                  cursor: isCompleted ? 'default' : 'pointer',
+                  transition: 'all 0.2s ease',
+                  padding: '0.75rem' // Reduced from p-3 (1rem) to ~20% less
+                }}
               >
-                {/* Square content with aligned title at top */}
-                <div className="bingo-content">
-                  {/* Title text - aligned at the top */}
-                  <div className="bingo-title-text">
+                {/* Completion badge */}
+                {isCompleted && (
+                  <div className="position-absolute top-0 end-0 m-2">
+                    <span className="badge bg-success rounded-pill">
+                      ✓
+                    </span>
+                  </div>
+                )}
+                
+                {/* Tile content - centered stack */}
+                <div className="d-flex flex-column align-items-center justify-content-center h-100 text-center">
+                  {/* Title (category) */}
+                  <div className="fw-medium mb-2" style={{ fontSize: '0.875rem', lineHeight: '1.2' }}>
                     {tile.label}
                   </div>
                   
-                  {/* Small icon between title and description */}
-                  <div className="bingo-icon">
+                  {/* Emoji/Icon */}
+                  <div className="mb-2" style={{ fontSize: '1.5rem' }}>
                     {tile.place?.category ? getActivityIcon(tile.place.category) : '🍽️'}
                   </div>
                   
-                  {/* Description text if available */}
+                  {/* Subtitle (hint) - clamped to 2 lines */}
                   {tile.description && (
-                    <div className="bingo-description">
+                    <div 
+                      className="text-muted"
+                      style={{ 
+                        fontSize: '0.625rem', // Reduced from 0.75rem (small) to 0.625rem
+                        lineHeight: '1.2',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
                       {tile.description}
                     </div>
                   )}
                   
                   {/* Show rating if completed */}
                   {isCompleted && tileCompletionData && (
-                    <div className="bingo-rating">
+                    <div className="mt-2 text-warning" style={{ fontSize: '0.75rem' }}>
                       {'★'.repeat(tileCompletionData.rating)}
                     </div>
                   )}
                 </div>
                 
-                {/* Completion overlay with pink checkmark */}
+                {/* Dim overlay for completed state */}
                 {isCompleted && (
-                  <div className="bingo-overlay">
-                    <div className="bingo-checkmark">✓</div>
-                  </div>
+                  <div 
+                    className="position-absolute top-0 start-0 w-100 h-100 rounded-3"
+                    style={{ 
+                      backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                      pointerEvents: 'none'
+                    }}
+                  />
                 )}
               </button>
-            )
-          })}
-        </div>
-
-        {/* Completion message when all squares are done */}
-        {completedCount === totalCount && totalCount > 0 && (
-          <div className="bingo-completion">
-            <div className="completion-emoji">🎉</div>
-            <h3 className="completion-title">Bingo!</h3>
-            <p className="completion-text">Congratulations! You&apos;ve completed all the challenges!</p>
-          </div>
-        )}
+            </div>
+          )
+        })}
       </div>
 
-      {/* Bingo Modal */}
-      <BingoModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false)
-          setSelectedTile(null)
-        }}
-        onSave={handleModalSave}
-        tileLabel={selectedTile?.label || ''}
-        tileId={selectedTile?.id || ''}
-        boardMonth={month}
-      />
+      {/* Completion message when all squares are done */}
+      {completedCount === totalCount && totalCount > 0 && (
+        <div className="card bg-success bg-opacity-10 border border-success mt-4">
+          <div className="card-body text-center">
+            <div className="fs-1 mb-2">🎉</div>
+            <h3 className="card-title text-success">Bingo!</h3>
+            <p className="card-text text-muted">Congratulations! You&apos;ve completed all the challenges!</p>
+          </div>
+        </div>
+      )}
     </div>
+
+    {/* Bingo Modal */}
+    <BingoModal
+      isOpen={isModalOpen}
+      onClose={() => {
+        setIsModalOpen(false)
+        setSelectedTile(null)
+      }}
+      onSave={handleModalSave}
+      tileLabel={selectedTile?.label || ''}
+      tileId={selectedTile?.id || ''}
+      boardMonth={month}
+    />
+    </>
   )
 }

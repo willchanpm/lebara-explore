@@ -28,6 +28,7 @@ img,svg,video{max-width:100%;height:auto;display:block;}
 
 /* helpers (safe with BS) */
 .rounded-xl{border-radius:var(--radius)!important;}
+.rounded-4{border-radius:1rem!important;}
 .shadow-soft{box-shadow:0 6px 20px rgba(0,0,0,.06);}
 .switch-lg { transform: scale(1.5); transform-origin: right center; }
 
@@ -81,6 +82,78 @@ a[data-testid="fab-add-place"]:hover {
 body, main {
   overflow-x: hidden;
   overflow-y: auto;
+}
+
+/* Bingo page styles */
+.bingo-header {
+  padding: 1.5rem 0;
+}
+
+/* Bingo tile card styles */
+.bingo-tile-card {
+  /* Remove default button styling */
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-decoration: none;
+  outline: none;
+}
+
+.bingo-tile-card:hover:not(.bingo-completed) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.bingo-tile-card:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.bingo-tile-card.bingo-completed {
+  opacity: 0.8;
+}
+
+/* Responsive adjustments for mobile density */
+@media (max-width: 575.98px) {
+  .bingo-tile-card {
+    padding: 0.6rem !important; /* Further reduced padding on mobile */
+  }
+}
+
+/* Bingo Modal Styles */
+.star-rating .btn { 
+  line-height: 1;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.star-rating .text-warning { 
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.1));
+  color: #ffc107 !important;
+}
+
+.star-rating .text-muted {
+  color: #6c757d !important;
+}
+
+.camera-video { 
+  border-radius: .75rem; 
+}
+
+.image-preview img { 
+  border-radius: .75rem; 
+}
+
+/* Modal responsive adjustments */
+@media (max-width: 575.98px) {
+  .modal-dialog {
+    margin: 1rem;
+  }
 }
 
 /* BottomNav layout fixes - override legacy styles */
