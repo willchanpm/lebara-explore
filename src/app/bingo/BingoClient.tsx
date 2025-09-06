@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import BingoModal from '@/components/BingoModal'
 import ResetConfirmationModal from '@/components/ResetConfirmationModal'
 import { supabase } from '@/lib/supabaseClient'
@@ -137,13 +137,8 @@ export default function BingoClient({ tiles, month }: BingoClientProps) {
   // Reset modal state
   const [isResetModalOpen, setIsResetModalOpen] = useState(false)
 
-  // Load saved progress when component mounts
-  useEffect(() => {
-    loadSavedProgress()
-  }, [month]) // Re-sync when month changes
-
   // Function to sync with database and load saved progress
-  const loadSavedProgress = async () => {
+  const loadSavedProgress = useCallback(async () => {
     try {
       // First, try to get current user and sync with database
       try {
@@ -223,7 +218,12 @@ export default function BingoClient({ tiles, month }: BingoClientProps) {
     } catch (error) {
       console.warn('Failed to load bingo progress:', error)
     }
-  }
+  }, [month])
+
+  // Load saved progress when component mounts
+  useEffect(() => {
+    loadSavedProgress()
+  }, [month, loadSavedProgress]) // Re-sync when month changes
 
   // Function to save progress to localStorage
   const saveProgress = () => {
@@ -295,7 +295,7 @@ export default function BingoClient({ tiles, month }: BingoClientProps) {
   }
 
   // Function to handle reset confirmation
-  const handleReset = async (deletePosts: boolean) => {
+  const handleReset = async () => {
     // Clear local state
     setCompletedSquares(new Set())
     setCompletionData({})

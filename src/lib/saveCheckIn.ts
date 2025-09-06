@@ -122,7 +122,7 @@ export async function saveCheckIn({
     }
     
     // Check if an active record already exists for this user/tile/month
-    const { data: existingActiveRecord, error: checkError } = await supabase
+    const { data: existingActiveRecord } = await supabase
       .from('check_ins')
       .select('id, is_reset')
       .eq('user_id', userId)
@@ -132,7 +132,7 @@ export async function saveCheckIn({
       .single()
     
     let checkInData: CheckInRecord | null = null
-    let insertError: any = null
+    let insertError: Error | null = null
     
     if (existingActiveRecord) {
       // Active record exists - update it with new data
