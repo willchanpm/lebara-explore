@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-import Toast from './Toast'
+import { useToast } from './ToastsProvider'
 
 // Interface for the modal props
 interface AddPlaceModalProps {
@@ -43,16 +43,8 @@ export default function AddPlaceModal({ isOpen, onClose, onPlaceAdded }: AddPlac
   // State for loading and submission
   const [isSubmitting, setIsSubmitting] = useState(false)
   
-  // State for toast notifications
-  const [toast, setToast] = useState<{
-    message: string
-    type: 'success' | 'error'
-    isVisible: boolean
-  }>({
-    message: '',
-    type: 'success',
-    isVisible: false
-  })
+  // Toast hook
+  const toast = useToast()
 
   // Available categories (matching the existing ones from the Discover page)
   const categories = [
@@ -184,11 +176,7 @@ export default function AddPlaceModal({ isOpen, onClose, onPlaceAdded }: AddPlac
       }
       
       // Show success message
-      setToast({
-        message: 'Place submitted successfully! It will be reviewed and added to the platform.',
-        type: 'success',
-        isVisible: true
-      })
+      toast.success('Place submitted successfully! It will be reviewed and added to the platform.')
       
       // Reset form and close modal after a short delay
       setTimeout(() => {
@@ -199,11 +187,7 @@ export default function AddPlaceModal({ isOpen, onClose, onPlaceAdded }: AddPlac
       
     } catch (error) {
       // Show error message
-      setToast({
-        message: error instanceof Error ? error.message : 'Failed to submit place. Please try again.',
-        type: 'error',
-        isVisible: true
-      })
+      toast.error(error instanceof Error ? error.message : 'Failed to submit place. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -229,10 +213,6 @@ export default function AddPlaceModal({ isOpen, onClose, onPlaceAdded }: AddPlac
     onClose()
   }
 
-  // Function to close toast
-  const closeToast = () => {
-    setToast(prev => ({ ...prev, isVisible: false }))
-  }
 
   return isOpen ? (
     <>
@@ -407,13 +387,6 @@ export default function AddPlaceModal({ isOpen, onClose, onPlaceAdded }: AddPlac
       {/* backdrop */}
       <div className="modal-backdrop fade show" style={{ zIndex: 1190 }}></div>
 
-      {/* Toast Notifications */}
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.isVisible}
-        onClose={closeToast}
-      />
     </>
   ) : null
 }

@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { supabase } from '@/lib/supabaseClient'
 import type { User } from '@supabase/supabase-js'
 import ImageModal from './ImageModal'
-import Toast from './Toast'
+import { useToast } from './ToastsProvider'
 import { toggleFavorite, getFavoriteStatusForPlaces } from '@/lib/favorites'
 
 // Interface for check-in data from the database
@@ -101,8 +101,9 @@ function renderStars(rating: number): React.ReactElement[] {
     stars.push(
       <span 
         key={i} 
-        className={`star ${i < rating ? 'filled' : 'empty'}`}
+        className={`fs-4 ${i < rating ? 'text-warning' : 'text-muted'}`}
         aria-label={i < rating ? 'Filled star' : 'Empty star'}
+        style={{ filter: i < rating ? 'drop-shadow(0 2px 4px rgba(0,0,0,.1))' : 'none' }}
       >
         ★
       </span>
@@ -146,16 +147,8 @@ export default function Feed() {
     checkIn: null
   })
 
-  // State for toast notifications
-  const [toast, setToast] = useState<{
-    message: string
-    type: 'success' | 'error'
-    isVisible: boolean
-  }>({
-    message: '',
-    type: 'success',
-    isVisible: false
-  })
+  // Toast hook
+  const toast = useToast()
 
   // State for favorites functionality
   const [userFavorites, setUserFavorites] = useState<Set<string>>(new Set())
@@ -183,6 +176,13 @@ export default function Feed() {
   useEffect(() => {
     fetchCheckIns()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Refetch check-ins when filters change
+  useEffect(() => {
+    if (currentUser !== null) { // Only refetch after user state is determined
+      fetchCheckIns()
+    }
+  }, [selectedMonth, showMyPosts, currentUser]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch user favorites when user changes or check-ins change
   useEffect(() => {
@@ -326,16 +326,15 @@ export default function Feed() {
         
         // Show success toast
         const isFavorited = userFavorites.has(placeId)
-        showToast(
-          isFavorited ? 'Removed from favorites' : 'Added to favorites',
-          'success'
+        toast.success(
+          isFavorited ? 'Removed from favorites' : 'Added to favorites'
         )
       } else {
-        showToast(error || 'Failed to update favorite', 'error')
+        toast.error(error || 'Failed to update favorite')
       }
     } catch (err) {
       console.error('Error toggling favorite:', err)
-      showToast('Failed to update favorite', 'error')
+      toast.error('Failed to update favorite')
     }
   }
 
@@ -401,14 +400,6 @@ export default function Feed() {
 
 
   
-  // Function to filter existing check-ins for "My posts only" without refetching
-  const filterMyPosts = (checkInsData: CheckIn[]) => {
-    if (!showMyPosts || !currentUser) {
-      return checkInsData
-    }
-    return checkInsData.filter(checkIn => checkIn.user_id === currentUser.id)
-  }
-  
   // Function to open image modal
   const openImageModal = (imageUrl: string, imageAlt: string) => {
     setImageModal({
@@ -442,7 +433,7 @@ export default function Feed() {
     closeDeleteModal()
     // Use setTimeout to ensure the modal closes before showing toast
     setTimeout(() => {
-      showToast('Check-in deleted successfully!', 'success')
+      toast.success('Check-in deleted successfully!')
     }, 100)
     // No need to refetch since we already updated local state
   }
@@ -452,7 +443,7 @@ export default function Feed() {
     closeDeleteModal()
     // Use setTimeout to ensure the modal closes before showing toast
     setTimeout(() => {
-      showToast(`Error deleting check-in: ${error}`, 'error')
+      toast.error(`Error deleting check-in: ${error}`)
     }, 100)
   }
 
@@ -534,28 +525,19 @@ export default function Feed() {
     }
   }
 
-  // Function to show toast notification
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type, isVisible: true })
-  }
-
-  // Function to close toast
-  const closeToast = () => {
-    setToast(prev => ({ ...prev, isVisible: false }))
-  }
 
 
   // If user is not authenticated, show sign-in CTA
   if (!currentUser) {
     return (
-      <div className="feed-signin-cta">
-        <div className="feed-signin-content">
-          <div className="feed-signin-icon">🔐</div>
-          <h3 className="feed-signin-title">Sign in to view the feed</h3>
-          <p className="feed-signin-text">
+      <div className="text-center py-5">
+        <div className="mb-4">
+          <div className="display-1 mb-3">🔐</div>
+          <h3 className="h4 mb-3">Sign in to view the feed</h3>
+          <p className="text-muted mb-4">
             Join the community to see check-ins from other food explorers!
           </p>
-          <a href="/login" className="btn btn-primary">
+          <a href="/login" className="btn btn-primary btn-lg rounded-pill">
             Sign in
           </a>
         </div>
@@ -566,17 +548,29 @@ export default function Feed() {
   // Loading skeleton
   if (loading) {
     return (
-      <div className="feed-skeleton">
+      <div>
         {[1, 2, 3].map(i => (
-          <div key={i} className="feed-card feed-skeleton-card">
-            <div className="feed-card-header">
-              <div className="feed-skeleton-title"></div>
-              <div className="feed-skeleton-date"></div>
+          <div key={i} className="card border-0 shadow-sm rounded-4 mb-3">
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-start mb-2">
+                <div className="placeholder-glow">
+                  <span className="placeholder col-7"></span>
+                </div>
+                <div className="placeholder-glow">
+                  <span className="placeholder col-4"></span>
+                </div>
+              </div>
+              <div className="placeholder-glow mb-2">
+                <span className="placeholder col-3"></span>
+              </div>
+              <div className="placeholder-glow mb-3">
+                <span className="placeholder col-12"></span>
+                <span className="placeholder col-8"></span>
+              </div>
+              <div className="placeholder-glow">
+                <span className="placeholder col-12" style={{height: '200px'}}></span>
+              </div>
             </div>
-            <div className="feed-skeleton-stars"></div>
-            <div className="feed-skeleton-comment"></div>
-            <div className="feed-skeleton-photo"></div>
-            <div className="feed-skeleton-chip"></div>
           </div>
         ))}
       </div>
@@ -586,12 +580,12 @@ export default function Feed() {
   // Error state
   if (error) {
     return (
-      <div className="feed-error">
-        <div className="feed-error-content">
-          <div className="feed-error-icon">⚠️</div>
-          <h3 className="feed-error-title">Something went wrong</h3>
-          <p className="feed-error-text">{error}</p>
-          <button onClick={() => fetchCheckIns()} className="btn btn-primary">
+      <div className="text-center py-5">
+        <div className="mb-4">
+          <div className="display-1 mb-3">⚠️</div>
+          <h3 className="h4 mb-3">Something went wrong</h3>
+          <p className="text-muted mb-4">{error}</p>
+          <button onClick={() => fetchCheckIns()} className="btn btn-primary btn-lg rounded-pill">
             Try again
           </button>
         </div>
@@ -602,39 +596,37 @@ export default function Feed() {
 
 
   return (
-    <div className="feed-component">
+    <div>
       {/* Filters */}
-      <div className="feed-filters">
-        <div className="simple-month-filter">
-          <label htmlFor="month-select">Month:</label>
-          <select
-            id="month-select"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-          >
-            <option value="all">All months</option>
-            {availableMonths.map(month => (
-              <option key={month} value={month}>
-                {formatMonthName(month)}
-              </option>
-            ))}
-          </select>
-        </div>
-        
-        <div className="feed-filter-group">
-          <div className="feed-filter-toggle">
-            <span className="feed-filter-toggle-text">My posts only:</span>
-            <div className="toggle-switch">
+      <div className="card border-0 shadow-sm rounded-4 mb-3">
+        <div className="card-body d-flex flex-wrap align-items-center gap-3">
+          <div className="d-flex align-items-center gap-2">
+            <label htmlFor="month-select" className="form-label mb-0">Month:</label>
+            <select
+              id="month-select"
+              className="form-select form-select-sm"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+            >
+              <option value="all">All months</option>
+              {availableMonths.map(month => (
+                <option key={month} value={month}>
+                  {formatMonthName(month)}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="d-flex align-items-center justify-content-between my-2">
+            <span className="text-muted me-3">My posts only</span>
+            <div className="form-check form-switch m-0">
               <input
+                className="form-check-input switch-lg"
                 type="checkbox"
                 checked={showMyPosts}
                 onChange={(e) => setShowMyPosts(e.target.checked)}
-                className="toggle-switch-input"
                 id="my-posts-toggle"
               />
-              <label htmlFor="my-posts-toggle" className="toggle-switch-label">
-                <span className="toggle-switch-slider"></span>
-              </label>
             </div>
           </div>
         </div>
@@ -642,40 +634,52 @@ export default function Feed() {
 
       {/* Content based on state */}
       {loading ? (
-        <div className="feed-skeleton">
+        <div>
           {[1, 2, 3].map(i => (
-            <div key={i} className="feed-card feed-skeleton-card">
-              <div className="feed-card-header">
-                <div className="feed-skeleton-title"></div>
-                <div className="feed-skeleton-date"></div>
+            <div key={i} className="card border-0 shadow-sm rounded-4 mb-3">
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-start mb-2">
+                  <div className="placeholder-glow">
+                    <span className="placeholder col-7"></span>
+                  </div>
+                  <div className="placeholder-glow">
+                    <span className="placeholder col-4"></span>
+                  </div>
+                </div>
+                <div className="placeholder-glow mb-2">
+                  <span className="placeholder col-3"></span>
+                </div>
+                <div className="placeholder-glow mb-3">
+                  <span className="placeholder col-12"></span>
+                  <span className="placeholder col-8"></span>
+                </div>
+                <div className="placeholder-glow">
+                  <span className="placeholder col-12" style={{height: '200px'}}></span>
+                </div>
               </div>
-              <div className="feed-skeleton-stars"></div>
-              <div className="feed-skeleton-comment"></div>
-              <div className="feed-skeleton-photo"></div>
-              <div className="feed-skeleton-chip"></div>
             </div>
           ))}
         </div>
       ) : error ? (
-        <div className="feed-error">
-          <div className="feed-error-content">
-            <div className="feed-error-icon">⚠️</div>
-            <h3 className="feed-error-title">Something went wrong</h3>
-            <p className="feed-error-text">{error}</p>
-            <button onClick={() => fetchCheckIns()} className="btn btn-primary">
+        <div className="text-center py-5">
+          <div className="mb-4">
+            <div className="display-1 mb-3">⚠️</div>
+            <h3 className="h4 mb-3">Something went wrong</h3>
+            <p className="text-muted mb-4">{error}</p>
+            <button onClick={() => fetchCheckIns()} className="btn btn-primary btn-lg rounded-pill">
               Try again
             </button>
           </div>
         </div>
       ) : checkIns.length === 0 ? (
-        <div className="feed-empty">
-          <div className="feed-empty-content">
-            <div className="feed-empty-icon">🍽️</div>
-            <h3 className="feed-empty-title">No check-ins yet</h3>
-            <p className="feed-empty-text">
+        <div className="text-center py-5">
+          <div className="mb-4">
+            <div className="display-1 mb-3">🍽️</div>
+            <h3 className="h4 mb-3">No check-ins yet</h3>
+            <p className="text-muted mb-4">
               Complete a bingo tile to add your first post to the feed!
             </p>
-            <a href="/bingo" className="btn btn-primary">
+            <a href="/bingo" className="btn btn-primary btn-lg rounded-pill">
               Start exploring
             </a>
           </div>
@@ -683,106 +687,108 @@ export default function Feed() {
       ) : (
         <>
           {/* Check-ins list */}
-          <div className="feed-list">
-        {filterMyPosts(checkIns).map((checkIn) => (
-          <div key={checkIn.id} className="feed-card">
-            {/* Card header with tile label, date, and favorite button */}
-            <div className="feed-card-header">
-              <div className="feed-card-title-section">
-                <h3 className="feed-card-title">
-                  {getTileTitle(checkIn)}
-                </h3>
-                <span className="feed-card-author" title={getAuthorName(checkIn, currentUser)}>
-                  by {getAuthorName(checkIn, currentUser)}
-                </span>
-              </div>
-              <div className="feed-card-header-right">
-                <time className="feed-card-date" dateTime={checkIn.created_at}>
-                  {formatDateTime(checkIn.created_at)}
-                </time>
-                {/* Favorite button - show for all users if place_id exists */}
-                {checkIn.place_id && currentUser && (
-                  <button
-                    onClick={() => handleFavoriteToggle(checkIn.place_id!)}
-                    className={`feed-card-favorite-btn ${userFavorites.has(checkIn.place_id!) ? 'favorited' : ''}`}
-                    aria-label={userFavorites.has(checkIn.place_id!) ? 'Remove from favorites' : 'Add to favorites'}
-                    title={userFavorites.has(checkIn.place_id!) ? 'Remove from favorites' : 'Add to favorites'}
-                    disabled={favoritesLoading}
-                  >
-                    {userFavorites.has(checkIn.place_id!) ? '⭐' : '☆'}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Star rating */}
-            <div className="feed-card-rating" aria-label={`Rating: ${checkIn.rating} out of 5 stars`}>
-              {renderStars(checkIn.rating)}
-            </div>
-
-            {/* Comment */}
-            {checkIn.comment && (
-              <p className="feed-card-comment" title={checkIn.comment}>
-                {checkIn.comment}
-              </p>
-            )}
-
-            {/* Photo */}
-            <div className="feed-card-photo">
-              {checkIn.photo_url ? (
-                <Image
-                  src={checkIn.photo_url}
-                  alt={`${getAuthorName(checkIn, currentUser)}'s check-in for ${getTileTitle(checkIn)}`}
-                  className="feed-card-image clickable"
-                  loading="lazy"
-                  onClick={() => openImageModal(checkIn.photo_url!, `${getAuthorName(checkIn, currentUser)}'s check-in for ${getTileTitle(checkIn)}`)}
-                  role="button"
-                  tabIndex={0}
-                  width={300}
-                  height={200}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      openImageModal(checkIn.photo_url!, `${getAuthorName(checkIn, currentUser)}'s check-in for ${getTileTitle(checkIn)}`)
-                    }
-                  }}
-                />
-              ) : (
-                <div className="feed-card-photo-placeholder">
-                  <span className="feed-card-photo-icon">📷</span>
+          <div>
+        {checkIns.map((checkIn) => (
+          <div key={checkIn.id} className="card border-0 shadow-sm rounded-4 mb-3">
+            <div className="card-body">
+              {/* Card header with tile label, date, and favorite button */}
+              <div className="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <h5 className="card-title mb-1">
+                    {getTileTitle(checkIn)}
+                  </h5>
+                  <small className="text-muted" title={getAuthorName(checkIn, currentUser)}>
+                    by {getAuthorName(checkIn, currentUser)}
+                  </small>
                 </div>
-              )}
-            </div>
-
-            {/* Board month chip and action buttons container */}
-            <div className="feed-card-bottom">
-              <div className="feed-card-chip">
-                {checkIn.board_month}
+                <div className="d-flex align-items-center gap-2">
+                  <time className="text-muted small" dateTime={checkIn.created_at}>
+                    {formatDateTime(checkIn.created_at)}
+                  </time>
+                  {/* Favorite button - show for all users if place_id exists */}
+                  {checkIn.place_id && currentUser && (
+                    <button
+                      onClick={() => handleFavoriteToggle(checkIn.place_id!)}
+                      className={`btn btn-sm ${userFavorites.has(checkIn.place_id!) ? 'btn-warning' : 'btn-outline-warning'}`}
+                      aria-label={userFavorites.has(checkIn.place_id!) ? 'Remove from favorites' : 'Add to favorites'}
+                      title={userFavorites.has(checkIn.place_id!) ? 'Remove from favorites' : 'Add to favorites'}
+                      disabled={favoritesLoading}
+                    >
+                      {userFavorites.has(checkIn.place_id!) ? '⭐' : '☆'}
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="feed-card-actions">
-                {/* Favorite button - show for all users if place_id exists */}
-                {checkIn.place_id && currentUser && (
-                  <button
-                    onClick={() => handleFavoriteToggle(checkIn.place_id!)}
-                    className={`feed-card-favorite-btn ${userFavorites.has(checkIn.place_id!) ? 'favorited' : ''}`}
-                    aria-label={userFavorites.has(checkIn.place_id!) ? 'Remove from favorites' : 'Add to favorites'}
-                    title={userFavorites.has(checkIn.place_id!) ? 'Remove from favorites' : 'Add to favorites'}
-                    disabled={favoritesLoading}
-                  >
-                    {userFavorites.has(checkIn.place_id!) ? '⭐' : '☆'}
-                  </button>
+
+              {/* Star rating */}
+              <div className="d-flex align-items-center gap-1 mb-2" aria-label={`Rating: ${checkIn.rating} out of 5 stars`}>
+                {renderStars(checkIn.rating)}
+              </div>
+
+              {/* Comment */}
+              {checkIn.comment && (
+                <p className="card-text" title={checkIn.comment}>
+                  {checkIn.comment}
+                </p>
+              )}
+
+              {/* Photo */}
+              <div className="mb-3">
+                {checkIn.photo_url ? (
+                  <Image
+                    src={checkIn.photo_url}
+                    alt={`${getAuthorName(checkIn, currentUser)}'s check-in for ${getTileTitle(checkIn)}`}
+                    className="img-fluid rounded-3"
+                    loading="lazy"
+                    onClick={() => openImageModal(checkIn.photo_url!, `${getAuthorName(checkIn, currentUser)}'s check-in for ${getTileTitle(checkIn)}`)}
+                    role="button"
+                    tabIndex={0}
+                    width={300}
+                    height={200}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        openImageModal(checkIn.photo_url!, `${getAuthorName(checkIn, currentUser)}'s check-in for ${getTileTitle(checkIn)}`)
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className="bg-light rounded-3 d-flex align-items-center justify-content-center" style={{height: '200px'}}>
+                    <span className="display-4 text-muted">📷</span>
+                  </div>
                 )}
-                {/* Delete button - only show for current user's posts */}
-                {currentUser && checkIn.user_id === currentUser.id && (
-                  <button
-                    onClick={() => openDeleteModal(checkIn)}
-                    className="feed-card-delete-btn"
-                    aria-label="Delete check-in"
-                    title="Delete this check-in"
-                  >
-                    🗑️
-                  </button>
-                )}
+              </div>
+
+              {/* Board month chip and action buttons container */}
+              <div className="d-flex justify-content-between align-items-center mt-3">
+                <span className="badge bg-secondary">
+                  {checkIn.board_month}
+                </span>
+                <div className="d-flex gap-2">
+                  {/* Favorite button - show for all users if place_id exists */}
+                  {checkIn.place_id && currentUser && (
+                    <button
+                      onClick={() => handleFavoriteToggle(checkIn.place_id!)}
+                      className={`btn btn-sm ${userFavorites.has(checkIn.place_id!) ? 'btn-warning' : 'btn-outline-warning'}`}
+                      aria-label={userFavorites.has(checkIn.place_id!) ? 'Remove from favorites' : 'Add to favorites'}
+                      title={userFavorites.has(checkIn.place_id!) ? 'Remove from favorites' : 'Add to favorites'}
+                      disabled={favoritesLoading}
+                    >
+                      {userFavorites.has(checkIn.place_id!) ? '⭐' : '☆'}
+                    </button>
+                  )}
+                  {/* Delete button - only show for current user's posts */}
+                  {currentUser && checkIn.user_id === currentUser.id && (
+                    <button
+                      onClick={() => openDeleteModal(checkIn)}
+                      className="btn btn-sm btn-outline-danger"
+                      aria-label="Delete check-in"
+                      title="Delete this check-in"
+                    >
+                      🗑️
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -791,15 +797,15 @@ export default function Feed() {
 
       {/* Load more button */}
       {hasMore && (
-        <div className="feed-load-more">
+        <div className="text-center mt-4">
           <button
             onClick={loadMore}
             disabled={loadingMore}
-            className="btn btn-secondary feed-load-more-btn"
+            className="btn btn-outline-primary"
           >
             {loadingMore ? (
               <>
-                <span className="feed-loading-spinner"></span>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                 Loading...
               </>
             ) : (
@@ -821,42 +827,40 @@ export default function Feed() {
 
              {/* Delete Confirmation Modal */}
        {deleteModal.isOpen && deleteModal.checkIn && (
-         <div className="modal-overlay">
-           <div className="modal-content">
-             <div className="modal-header">
-               <h3 className="modal-title">Delete Check-in?</h3>
-             </div>
-             <div className="modal-body">
-               <p>Are you sure you want to delete your check-in about:</p>
-               <div className="delete-modal-details">
-                 <strong>{getTileTitle(deleteModal.checkIn)}</strong>
-                 <span className="delete-modal-date">
-                   {formatDateTime(deleteModal.checkIn.created_at)}
-                 </span>
+         <div className="modal fade show d-block" tabIndex={-1} role="dialog" style={{ zIndex: 1050 }} onClick={closeDeleteModal}>
+           <div className="modal-backdrop fade show" style={{ zIndex: 1040 }}></div>
+           <div className="modal-dialog modal-dialog-centered" style={{ zIndex: 1055 }} onClick={(e) => e.stopPropagation()}>
+             <div className="modal-content rounded-4">
+               <div className="modal-header">
+                 <h5 className="modal-title">Delete Check-in?</h5>
+                 <button type="button" className="btn-close" onClick={closeDeleteModal}></button>
                </div>
-               <p className="delete-modal-warning">
-                 This action cannot be undone. The check-in and any associated photo will be permanently removed.
-               </p>
-             </div>
-             <div className="modal-actions">
-               <button onClick={closeDeleteModal} className="btn btn-secondary">
-                 Cancel
-               </button>
-               <button onClick={deleteCheckIn} className="btn btn-danger">
-                 Delete
-               </button>
+               <div className="modal-body">
+                 <p>Are you sure you want to delete your check-in about:</p>
+                 <div className="mb-3">
+                   <strong>{getTileTitle(deleteModal.checkIn)}</strong>
+                   <br />
+                   <small className="text-muted">
+                     {formatDateTime(deleteModal.checkIn.created_at)}
+                   </small>
+                 </div>
+                 <p className="text-muted small">
+                   This action cannot be undone. The check-in and any associated photo will be permanently removed.
+                 </p>
+               </div>
+               <div className="modal-footer">
+                 <button onClick={closeDeleteModal} className="btn btn-secondary">
+                   Cancel
+                 </button>
+                 <button onClick={deleteCheckIn} className="btn btn-danger">
+                   Delete
+                 </button>
+               </div>
              </div>
            </div>
          </div>
        )}
 
-             {/* Toast Notifications */}
-       <Toast
-         message={toast.message}
-         type={toast.type}
-         isVisible={toast.isVisible}
-         onClose={closeToast}
-       />
        
 
     </div>

@@ -4,9 +4,10 @@ import ConditionalNav from "@/components/ConditionalNav";
 import AuthWrapper from "@/components/AuthWrapper";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { AuthLoadingProvider } from "@/components/AuthLoadingContext";
+import { ToastsProvider } from "@/components/ToastsProvider";
+import BootstrapClient from "@/components/BootstrapClient";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
-import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -74,7 +75,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-bg text-text`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} style={{ background: 'linear-gradient(180deg, rgb(224, 242, 247) 0%, #ffffff 100%)', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat', backgroundSize: 'cover' }}>
+        {/* Bootstrap JS for client-side functionality */}
+        <BootstrapClient />
+        
         {/* Service Worker registration for PWA functionality */}
         <ServiceWorkerRegister />
         
@@ -85,7 +89,9 @@ export default function RootLayout({
         <main className="pt-4 pt-sm-5" style={{ paddingTop: "calc(56px + env(safe-area-inset-top, 0px))" }}>
           <AuthLoadingProvider>
             <AuthWrapper>
-              {children}
+              <ToastsProvider>
+                {children}
+              </ToastsProvider>
             </AuthWrapper>
           </AuthLoadingProvider>
         </main>

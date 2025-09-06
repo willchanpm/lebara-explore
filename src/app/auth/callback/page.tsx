@@ -18,6 +18,11 @@ export default function AuthCallback() {
     // This callback is kept for backward compatibility and edge cases
     const handleAuthCallback = async () => {
       try {
+        // Check if we're on the client side
+        if (typeof window === 'undefined') {
+          return
+        }
+        
         // First, try the PKCE-style flow (with ?code= parameter)
         const url = new URL(window.location.href)
         const code = url.searchParams.get('code')

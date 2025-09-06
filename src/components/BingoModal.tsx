@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabaseClient'
 import { saveCheckIn, getCurrentUserId } from '@/lib/saveCheckIn'
-import Toast from './Toast'
+import { useToast } from './ToastsProvider'
 
 // Interface for the modal props
 interface BingoModalProps {
@@ -72,16 +72,8 @@ export default function BingoModal({
   // File state for upload
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   
-  // Toast state
-  const [toast, setToast] = useState<{
-    message: string
-    type: 'success' | 'error'
-    isVisible: boolean
-  }>({
-    message: '',
-    type: 'success',
-    isVisible: false
-  })
+  // Toast hook
+  const toast = useToast()
   
   // References to file input and camera elements
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -120,22 +112,6 @@ export default function BingoModal({
     }
   }, [isOpen, stream])
 
-  // Handle ESC key
-  useEffect(() => {
-    const handleEsc = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
-        handleClose()
-      }
-    }
-    
-    if (isOpen) {
-      document.addEventListener('keydown', handleEsc)
-    }
-    
-    return () => {
-      document.removeEventListener('keydown', handleEsc)
-    }
-  }, [isOpen])
 
   // Function to handle file selection from device
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -188,18 +164,18 @@ export default function BingoModal({
       
     } catch (error) {
       console.error('Error accessing camera:', error)
-      showToast('Unable to access camera. Please try uploading an image instead.', 'error')
+      toast.error('Unable to access camera. Please try uploading an image instead.')
     }
   }
 
   // Function to stop camera and clean up
-  const stopCamera = () => {
+  const stopCamera = useCallback(() => {
     if (stream) {
       stream.getTracks().forEach(track => track.stop())
       setStream(null)
     }
     setShowCamera(false)
-  }
+  }, [stream])
 
   // Function to capture photo from camera
   const capturePhoto = () => {
@@ -241,15 +217,11 @@ export default function BingoModal({
     }
   }
 
-  // Function to show toast notifications
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type, isVisible: true })
-  }
 
   // Function to handle form submission
   const handleSave = async () => {
     if (rating === 0) {
-      showToast('Please select a rating before saving.', 'error')
+      toast.error('Please select a rating before saving.')
       return
     }
 
@@ -274,7 +246,7 @@ export default function BingoModal({
       })
       
       if (error) {
-        showToast(error, 'error')
+        toast.error(error)
         return
       }
       
@@ -291,7 +263,7 @@ export default function BingoModal({
       })
       
       // Show success toast
-      showToast('Saved!', 'success')
+      toast.success('Saved!')
       
       // Call the onSave function with the completion data
       await onSave({
@@ -313,9 +285,9 @@ export default function BingoModal({
       console.error('Error saving bingo completion:', error)
       
       if (error instanceof Error && error.message === 'User not authenticated') {
-        showToast('Please sign in to save your progress.', 'error')
+        toast.error('Please sign in to save your progress.')
       } else {
-        showToast('Error saving. Please try again.', 'error')
+        toast.error('Error saving. Please try again.')
       }
       
       setIsLoading(false)
@@ -323,7 +295,7 @@ export default function BingoModal({
   }
 
   // Function to handle modal close
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     // Stop camera if it's running
     if (showCamera) {
       stopCamera()
@@ -336,7 +308,24 @@ export default function BingoModal({
     setSelectedFile(null)
     
     onClose()
-  }
+  }, [showCamera, onClose, stopCamera])
+
+  // Handle ESC key
+  useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        handleClose()
+      }
+    }
+    
+    if (isOpen) {
+      document.addEventListener('keydown', handleEsc)
+    }
+    
+    return () => {
+      document.removeEventListener('keydown', handleEsc)
+    }
+  }, [isOpen, handleClose])
 
   // Don't render anything if modal is not open
   if (!isOpen) return null
@@ -519,13 +508,6 @@ export default function BingoModal({
         </div>
       </div>
 
-      {/* Toast Notifications */}
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.isVisible}
-        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
-      />
     </>
   )
 

@@ -2,17 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-import Toast from './Toast'
+import { useToast } from './ToastsProvider'
 import type { User } from '@supabase/supabase-js'
 
 
 
-// Interface for toast state
-interface ToastState {
-  message: string
-  type: 'success' | 'error'
-  isVisible: boolean
-}
 
 // ProfileEditor component for editing display name
 export default function ProfileEditor() {
@@ -23,11 +17,7 @@ export default function ProfileEditor() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
-  const [toast, setToast] = useState<ToastState>({
-    message: '',
-    type: 'success',
-    isVisible: false
-  })
+  const toast = useToast()
 
   // Load user and profile data on mount
   useEffect(() => {
@@ -44,7 +34,7 @@ export default function ProfileEditor() {
       
       if (userError) {
         console.error('Error fetching user:', userError)
-        showToast('Failed to load user data', 'error')
+        toast.error('Failed to load user data')
         return
       }
       
@@ -64,7 +54,7 @@ export default function ProfileEditor() {
       
       if (profileError && profileError.code !== 'PGRST116') { // PGRST116 = no rows returned
         console.error('Error fetching profile:', profileError)
-        showToast('Failed to load profile data', 'error')
+        toast.error('Failed to load profile data')
         return
       }
       
@@ -79,33 +69,29 @@ export default function ProfileEditor() {
       
     } catch (error) {
       console.error('Unexpected error loading profile:', error)
-      showToast('An unexpected error occurred', 'error')
+      toast.error('An unexpected error occurred')
     } finally {
       setIsLoading(false)
     }
   }
 
-  // Function to show toast notifications
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type, isVisible: true })
-  }
 
   // Function to handle saving the display name
   const handleSave = async () => {
     // Validate input
     const trimmedName = displayName.trim()
     if (!trimmedName) {
-      showToast('Display name cannot be empty', 'error')
+      toast.error('Display name cannot be empty')
       return
     }
     
     if (trimmedName.length > 50) {
-      showToast('Display name must be 50 characters or less', 'error')
+      toast.error('Display name must be 50 characters or less')
       return
     }
     
     if (!user) {
-      showToast('User not authenticated', 'error')
+      toast.error('User not authenticated')
       return
     }
     
@@ -127,7 +113,7 @@ export default function ProfileEditor() {
       
       if (error) {
         console.error('Error saving profile:', error)
-        showToast('Failed to save display name', 'error')
+        toast.error('Failed to save display name')
         return
       }
       
@@ -137,14 +123,14 @@ export default function ProfileEditor() {
       setIsEditing(false)
       
       // Show success message
-      showToast('Display name saved successfully!', 'success')
+      toast.success('Display name saved successfully!')
       
       // Refetch profile to confirm
       await loadUserAndProfile()
       
     } catch (error) {
       console.error('Unexpected error saving profile:', error)
-      showToast('An unexpected error occurred', 'error')
+      toast.error('An unexpected error occurred')
     } finally {
       setIsSaving(false)
     }
@@ -162,10 +148,6 @@ export default function ProfileEditor() {
   }
 
 
-  // Function to close toast
-  const closeToast = () => {
-    setToast(prev => ({ ...prev, isVisible: false }))
-  }
 
   // Show loading state
   if (isLoading) {
@@ -251,13 +233,6 @@ export default function ProfileEditor() {
         </div>
       </div>
 
-      {/* Toast notifications */}
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.isVisible}
-        onClose={closeToast}
-      />
     </>
   )
 }

@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { getUserFavorites, toggleFavorite } from '@/lib/favorites'
 import type { User } from '@supabase/supabase-js'
 import type { PlaceWithFavorite } from '@/lib/favorites'
-import Toast from './Toast'
+import { useToast } from './ToastsProvider'
 
 // Interface for the component props
 interface FavoritesProps {
@@ -19,16 +19,8 @@ export default function Favorites({ currentUser }: FavoritesProps) {
   const [error, setError] = useState<string | null>(null)
   const [removingFavorite, setRemovingFavorite] = useState<string | null>(null)
   
-  // State for toast notifications
-  const [toast, setToast] = useState<{
-    message: string
-    type: 'success' | 'error'
-    isVisible: boolean
-  }>({
-    message: '',
-    type: 'success',
-    isVisible: false
-  })
+  // Toast hook
+  const toast = useToast()
 
   // Function to fetch user favorites
   const fetchFavorites = useCallback(async () => {
@@ -77,27 +69,18 @@ export default function Favorites({ currentUser }: FavoritesProps) {
       if (success) {
         // Remove from local state
         setFavorites(prev => prev.filter(fav => fav.id !== placeId))
-        showToast('Removed from favorites', 'success')
+        toast.success('Removed from favorites')
       } else {
-        showToast(error || 'Failed to remove favorite', 'error')
+        toast.error(error || 'Failed to remove favorite')
       }
     } catch (err) {
       console.error('Error removing favorite:', err)
-      showToast('Failed to remove favorite', 'error')
+      toast.error('Failed to remove favorite')
     } finally {
       setRemovingFavorite(null)
     }
   }
 
-  // Function to show toast notification
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type, isVisible: true })
-  }
-
-  // Function to close toast
-  const closeToast = () => {
-    setToast(prev => ({ ...prev, isVisible: false }))
-  }
 
   // Function to get activity icon based on category
   const getActivityIcon = (category: string): string => {
@@ -251,13 +234,6 @@ export default function Favorites({ currentUser }: FavoritesProps) {
         ))}
       </div>
 
-      {/* Toast Notifications */}
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.isVisible}
-        onClose={closeToast}
-      />
     </div>
   )
 }
