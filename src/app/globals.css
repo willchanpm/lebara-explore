@@ -7,8 +7,11 @@
   --radius:16px;
 }
 
-/* base */
-html,body{height:100%;}
+/* ===== BASE STYLES ===== */
+html, body {
+  height: 100%;
+}
+
 body {
   min-height: 100vh;
   background: linear-gradient(180deg, rgb(224, 242, 247) 0%, #ffffff 100%);
@@ -17,23 +20,52 @@ body {
   background-size: cover;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
-/* typography inherits from Bootstrap; keep links simple */
-a{text-decoration:none;}
-a:hover{text-decoration:underline;}
+/* ===== TYPOGRAPHY ===== */
+a {
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
 
-/* media */
-img,svg,video{max-width:100%;height:auto;display:block;}
+/* ===== MEDIA ===== */
+img, svg, video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
 
-/* helpers (safe with BS) */
-.rounded-xl{border-radius:var(--radius)!important;}
-.rounded-4{border-radius:1rem!important;}
-.shadow-soft{box-shadow:0 6px 20px rgba(0,0,0,.06);}
-.switch-lg { transform: scale(1.5); transform-origin: right center; }
+/* ===== LAYOUT ===== */
+main {
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+  z-index: 1;
+}
 
-/* account icon hover effect */
-.btn-light.rounded-circle:hover { filter: brightness(0.97); }
+/* ===== BOOTSTRAP UTILITIES ===== */
+.rounded-xl {
+  border-radius: var(--radius) !important;
+}
+
+.rounded-4 {
+  border-radius: 1rem !important;
+}
+
+.shadow-soft {
+  box-shadow: 0 6px 20px rgba(0,0,0,.06);
+}
+
+/* ===== COMPONENT STYLES ===== */
+
+/* Account icon hover effect */
+.btn-light.rounded-circle:hover {
+  filter: brightness(0.97);
+}
 
 /* Maps button overrides - prevent solid fill on active/focus */
 .maps-btn:active,
@@ -44,6 +76,7 @@ img,svg,video{max-width:100%;height:auto;display:block;}
   border-color: #6c757d !important;
   box-shadow: none !important;
 }
+
 .maps-btn:hover {
   background-color: #f8f9fa; /* subtle hover */
 }
@@ -56,11 +89,13 @@ img,svg,video{max-width:100%;height:auto;display:block;}
   color: var(--ghost-fg);
   border: 1px solid var(--ghost-border);
 }
+
 .btn-ghost:hover {
   background-color: #f8f9fa;
   color: var(--ghost-fg);
   border-color: var(--ghost-border);
 }
+
 .btn-ghost:active,
 .btn-ghost:focus,
 .btn-ghost:focus-visible {
@@ -69,6 +104,7 @@ img,svg,video{max-width:100%;height:auto;display:block;}
   border-color: var(--ghost-border) !important;
   box-shadow: none !important;
 }
+
 .btn-ghost:disabled {
   opacity: .6;
 }
@@ -78,28 +114,9 @@ a[data-testid="fab-add-place"]:hover {
   filter: brightness(0.9);
 }
 
-/* Ensure proper scrolling and layout */
-body {
-  overflow-x: hidden;
-  overflow-y: auto;
-  height: 100%;
-}
+/* ===== BINGO COMPONENT STYLES ===== */
 
-main {
-  overflow-x: hidden;
-  overflow-y: auto;
-  position: relative;
-  z-index: 1;
-}
-
-/* Override legacy home-page styles that conflict with Bootstrap */
-.home-page {
-  min-height: auto !important;
-  padding: 0 !important;
-  background-color: transparent !important;
-}
-
-/* Bingo page styles */
+/* Bingo header */
 .bingo-header {
   padding: 1.5rem 0;
 }
@@ -130,13 +147,6 @@ main {
   opacity: 0.8;
 }
 
-/* Responsive adjustments for mobile density */
-@media (max-width: 575.98px) {
-  .bingo-tile-card {
-    padding: 0.6rem !important; /* Further reduced padding on mobile */
-  }
-}
-
 /* Bingo Modal Styles */
 .star-rating .btn { 
   line-height: 1;
@@ -164,11 +174,65 @@ main {
   border-radius: .75rem; 
 }
 
-/* Modal responsive adjustments */
+/* ===== RESPONSIVE ADJUSTMENTS ===== */
+
+/* Mobile density adjustments */
 @media (max-width: 575.98px) {
+  .bingo-tile-card {
+    padding: 0.6rem !important; /* Further reduced padding on mobile */
+  }
+  
   .modal-dialog {
     margin: 1rem;
   }
+}
+
+/* ===== OTP INPUT STYLES ===== */
+.otp-input-container {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.otp-input-box {
+  width: 3rem;
+  height: 3rem;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: bold;
+  border: 2px solid #dee2e6;
+  border-radius: 0.5rem;
+  background-color: #fff;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.otp-input-box:focus {
+  border-color: var(--brand);
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.otp-input-box:disabled {
+  background-color: #f8f9fa;
+  opacity: 0.65;
+}
+
+.otp-paste-hint {
+  font-size: 0.875rem;
+  color: #6c757d;
+  text-align: center;
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+/* ===== LEGACY OVERRIDES ===== */
+
+/* Override legacy home-page styles that conflict with Bootstrap */
+.home-page {
+  min-height: auto !important;
+  padding: 0 !important;
+  background-color: transparent !important;
 }
 
 /* BottomNav layout fixes - override legacy styles */
