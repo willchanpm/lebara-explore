@@ -30,28 +30,26 @@ export default function ProfilePage() {
   }, [])
 
   return (
-    <div className="profile-page">
-      <div className="profile-container">
-        {/* Header */}
-        <div className="profile-header">
-          <h1 className="profile-title">Profile</h1>
-          <p className="profile-subtitle">Manage your account</p>
-        </div>
-        
-        {/* Authentication Status */}
-        <div className="profile-auth-section">
-          <AuthStatus />
-        </div>
-        
-        {/* Profile Editor */}
-        <div className="profile-editor-section">
-          <ProfileEditor />
-        </div>
-        
-        {/* Favorites Section */}
-        <div className="profile-favorites-section">
-          <Favorites currentUser={currentUser} />
-        </div>
+    <div className="container py-4 pb-5">
+      {/* Header - matches other pages */}
+      <div className="profile-header">
+        <h1 className="display-5 fw-bold text-center mb-2">Profile</h1>
+        <p className="lead text-center text-muted mb-4">Manage your account and preferences</p>
+      </div>
+      
+      {/* Authentication Status - using Bootstrap card */}
+      <div className="mb-4">
+        <AuthStatus />
+      </div>
+      
+      {/* Profile Editor - using Bootstrap card */}
+      <div className="mb-4">
+        <ProfileEditor />
+      </div>
+      
+      {/* Favorites Section - using Bootstrap card */}
+      <div className="mb-4">
+        <Favorites currentUser={currentUser} />
       </div>
     </div>
   )

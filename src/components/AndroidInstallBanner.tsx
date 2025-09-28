@@ -187,56 +187,107 @@ export default function AndroidInstallBanner() {
     <div 
       role="region" 
       aria-label="Install app banner"
-      className="android-install-banner"
+      className="position-sticky top-0 mb-3 mx-2"
+      style={{ zIndex: 10 }}
       aria-live="polite"
     >
-      {/* Card container with Lebara-inspired design */}
-      <div className="install-banner-card">
-        {/* Close X button on the far left */}
-        <button
-          onClick={handleDismiss}
-          className="install-banner-close-left"
-          aria-label="Close install banner"
-        >
-          ✕
-        </button>
+      {/* Bootstrap card with custom pink styling */}
+      <div 
+        className="card border-0 shadow-sm rounded-xl"
+        style={{ 
+          background: 'linear-gradient(135deg, #ffe7f1 0%, #ffc1d7 100%)',
+          border: '1px solid #ffc1d7'
+        }}
+      >
+        <div className="card-body p-3">
+          <div className="d-flex align-items-center gap-3">
+            {/* Close X button */}
+            <button
+              onClick={handleDismiss}
+              className="btn btn-outline-secondary rounded-circle p-0 d-flex align-items-center justify-content-center"
+              style={{ 
+                width: '32px', 
+                height: '32px',
+                background: 'rgba(255, 90, 167, 0.1)',
+                borderColor: 'rgba(255, 90, 167, 0.2)',
+                color: '#ff5aa7',
+                transition: 'all 0.2s ease'
+              }}
+              aria-label="Close install banner"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 90, 167, 0.2)'
+                e.currentTarget.style.borderColor = 'rgba(255, 90, 167, 0.4)'
+                e.currentTarget.style.transform = 'scale(1.1)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 90, 167, 0.1)'
+                e.currentTarget.style.borderColor = 'rgba(255, 90, 167, 0.2)'
+                e.currentTarget.style.transform = 'scale(1)'
+              }}
+            >
+              <i className="bi bi-x-lg" style={{ fontSize: '1rem', fontWeight: 'bold' }}></i>
+            </button>
 
-        {/* Left icon section */}
-        <div className="install-banner-icon">
-          <Image
-            src="/AppIcons/Assets.xcassets/AppIcon.appiconset/192.png"
-            alt="Lebara Explore app icon"
-            width={48}
-            height={48}
-            className="app-icon"
-            onError={(e) => {
-              // Fallback to initials if image fails
-              const target = e.target as HTMLImageElement
-              target.style.display = 'none'
-              const fallback = target.nextElementSibling as HTMLElement
-              if (fallback) fallback.style.display = 'flex'
-            }}
-          />
-          {/* Fallback initials if image fails */}
-          <div className="app-icon-fallback">LE</div>
-        </div>
+            {/* App icon */}
+            <div className="position-relative flex-shrink-0">
+              <Image
+                src="/AppIcons/Assets.xcassets/AppIcon.appiconset/192.png"
+                alt="Lebara Explore app icon"
+                width={48}
+                height={48}
+                className="rounded"
+                onError={(e) => {
+                  // Fallback to initials if image fails
+                  const target = e.target as HTMLImageElement
+                  target.style.display = 'none'
+                  const fallback = target.nextElementSibling as HTMLElement
+                  if (fallback) fallback.style.display = 'flex'
+                }}
+              />
+              {/* Fallback initials if image fails */}
+              <div 
+                className="bg-primary text-white rounded d-none align-items-center justify-content-center fw-bold"
+                style={{ width: '48px', height: '48px', fontSize: '1.25rem' }}
+              >
+                LE
+              </div>
+            </div>
 
-        {/* Text content section */}
-        <div className="install-banner-content">
-          <h3 className="install-banner-title">Install app</h3>
-        </div>
+            {/* Text content */}
+            <div className="flex-grow-1 text-center">
+              <h5 className="fw-bold mb-0 text-dark">Install app</h5>
+            </div>
 
-        {/* Actions section */}
-        <div className="install-banner-actions">
-          {/* Install button */}
-          <button
-            onClick={handleInstallClick}
-            disabled={!deferredPrompt}
-            className={`install-banner-btn install-banner-btn-primary ${!deferredPrompt ? 'install-banner-btn-disabled' : ''}`}
-            aria-label={deferredPrompt ? "Install app" : "Waiting for install prompt"}
-          >
-            {deferredPrompt ? 'Install' : 'Preparing...'}
-          </button>
+            {/* Install button */}
+            <div className="flex-shrink-0">
+              <button
+                onClick={handleInstallClick}
+                disabled={!deferredPrompt}
+                className={`btn btn-sm px-3 py-2 ${
+                  deferredPrompt 
+                    ? 'text-white' 
+                    : 'btn-outline-secondary'
+                }`}
+                style={deferredPrompt ? { 
+                  backgroundColor: '#ff5aa7',
+                  borderColor: '#ff5aa7'
+                } : {}}
+                aria-label={deferredPrompt ? "Install app" : "Waiting for install prompt"}
+              >
+                {deferredPrompt ? (
+                  <>
+                    <i className="bi bi-download me-1"></i>
+                    Install
+                  </>
+                ) : (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    Preparing...
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

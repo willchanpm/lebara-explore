@@ -78,10 +78,25 @@ a[data-testid="fab-add-place"]:hover {
   filter: brightness(0.9);
 }
 
-/* Ensure fixed elements like FAB are not clipped */
-body, main {
+/* Ensure proper scrolling and layout */
+body {
   overflow-x: hidden;
   overflow-y: auto;
+  height: 100%;
+}
+
+main {
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* Override legacy home-page styles that conflict with Bootstrap */
+.home-page {
+  min-height: auto !important;
+  padding: 0 !important;
+  background-color: transparent !important;
 }
 
 /* Bingo page styles */

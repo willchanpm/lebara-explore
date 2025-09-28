@@ -4,7 +4,7 @@ import Link from 'next/link'
 
 export default function ProfileIcon() {
   return (
-    <div className="position-fixed" style={{ top: "calc(env(safe-area-inset-top, 0px) + 12px)", right: "12px", zIndex: 1080 }}>
+    <div className="position-fixed" style={{ top: "calc(env(safe-area-inset-top, 0px) + 12px)", right: "12px", zIndex: 1050 }}>
       <Link 
         href="/profile" 
         className="btn btn-light rounded-circle shadow-sm border text-decoration-none d-flex align-items-center justify-content-center"

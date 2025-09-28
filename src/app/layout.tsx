@@ -85,8 +85,17 @@ export default function RootLayout({
         {/* Conditional navigation (profile icon and bottom nav) */}
         <ConditionalNav />
         
-        {/* Main content area with proper spacing for bottom navigation */}
-        <main className="pt-4 pt-sm-5" style={{ paddingTop: "calc(56px + env(safe-area-inset-top, 0px))" }}>
+        {/* Main content area with proper spacing for navigation */}
+        <main 
+          className="pt-4 pt-sm-5" 
+          style={{ 
+            paddingTop: "calc(56px + env(safe-area-inset-top, 0px))",
+            paddingBottom: "calc(64px + env(safe-area-inset-bottom, 0px))",
+            minHeight: "100vh",
+            position: "relative",
+            zIndex: 1
+          }}
+        >
           <AuthLoadingProvider>
             <AuthWrapper>
               <ToastsProvider>

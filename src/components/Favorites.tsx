@@ -117,11 +117,13 @@ export default function Favorites({ currentUser }: FavoritesProps) {
   // If no user, show sign-in message
   if (!currentUser) {
     return (
-      <div className="favorites-signin">
-        <div className="favorites-signin-content">
-          <div className="favorites-signin-icon">🔐</div>
-          <h3 className="favorites-signin-title">Sign in to view favorites</h3>
-          <p className="favorites-signin-text">
+      <div className="card bg-white shadow-sm rounded-xl">
+        <div className="card-body text-center py-5">
+          <div className="bg-white rounded-4 shadow-sm d-flex align-items-center justify-content-center mb-3 mx-auto" style={{ width: 64, height: 64 }}>
+            <span style={{ fontSize: '1.5rem' }}>🔐</span>
+          </div>
+          <h4 className="fw-bold mb-2">Sign in to view favorites</h4>
+          <p className="text-muted mb-4">
             Join the community to save your favorite places!
           </p>
           <a href="/login" className="btn btn-primary">
@@ -135,9 +137,13 @@ export default function Favorites({ currentUser }: FavoritesProps) {
   // Loading state
   if (loading) {
     return (
-      <div className="favorites-loading">
-        <div className="favorites-loading-spinner"></div>
-        <p>Loading your favorites...</p>
+      <div className="card bg-white shadow-sm rounded-xl">
+        <div className="card-body text-center py-5">
+          <div className="spinner-border text-primary mb-3" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="text-muted mb-0">Loading your favorites...</p>
+        </div>
       </div>
     )
   }
@@ -145,11 +151,13 @@ export default function Favorites({ currentUser }: FavoritesProps) {
   // Error state
   if (error) {
     return (
-      <div className="favorites-error">
-        <div className="favorites-error-content">
-          <div className="favorites-error-icon">⚠️</div>
-          <h3 className="favorites-error-title">Something went wrong</h3>
-          <p className="favorites-error-text">{error}</p>
+      <div className="card bg-white shadow-sm rounded-xl">
+        <div className="card-body text-center py-5">
+          <div className="bg-white rounded-4 shadow-sm d-flex align-items-center justify-content-center mb-3 mx-auto" style={{ width: 64, height: 64 }}>
+            <span style={{ fontSize: '1.5rem' }}>⚠️</span>
+          </div>
+          <h4 className="fw-bold mb-2">Something went wrong</h4>
+          <p className="text-muted mb-4">{error}</p>
           <button onClick={fetchFavorites} className="btn btn-primary">
             Try again
           </button>
@@ -161,18 +169,20 @@ export default function Favorites({ currentUser }: FavoritesProps) {
   // Empty state
   if (favorites.length === 0) {
     return (
-      <div className="favorites-empty">
-        <div className="favorites-empty-content">
-          <div className="favorites-empty-icon">⭐</div>
-          <h3 className="favorites-empty-title">No favorites yet</h3>
-          <p className="favorites-empty-text">
+      <div className="card bg-white shadow-sm rounded-xl">
+        <div className="card-body text-center py-5">
+          <div className="bg-white rounded-4 shadow-sm d-flex align-items-center justify-content-center mb-3 mx-auto" style={{ width: 64, height: 64 }}>
+            <span style={{ fontSize: '1.5rem' }}>⭐</span>
+          </div>
+          <h4 className="fw-bold mb-2">No favorites yet</h4>
+          <p className="text-muted mb-4">
             Start exploring places and add them to your favorites!
           </p>
-          <div className="favorites-empty-actions">
+          <div className="d-flex flex-column gap-2">
             <a href="/bingo" className="btn btn-primary">
               Explore Bingo
             </a>
-            <a href="/discover" className="btn btn-secondary">
+            <a href="/discover" className="btn btn-outline-secondary">
               Discover Places
             </a>
           </div>
@@ -182,58 +192,70 @@ export default function Favorites({ currentUser }: FavoritesProps) {
   }
 
   return (
-    <div className="favorites-component">
-      {/* Header */}
-      <div className="favorites-header">
-        <h2 className="favorites-title">Your Favorites</h2>
-        <p className="favorites-subtitle">
-          {favorites.length} place{favorites.length !== 1 ? 's' : ''} saved
-        </p>
-      </div>
+    <div className="card bg-white shadow-sm rounded-xl">
+      <div className="card-body">
+        {/* Header */}
+        <div className="text-center mb-4">
+          <h5 className="fw-bold mb-1">Your Favorites</h5>
+          <p className="text-muted mb-0">
+            {favorites.length} place{favorites.length !== 1 ? 's' : ''} saved
+          </p>
+        </div>
 
-      {/* Favorites grid */}
-      <div className="favorites-grid">
-        {favorites.map((favorite) => (
-          <div key={favorite.id} className="favorite-card">
-            {/* Card header with icon and remove button */}
-            <div className="favorite-card-header">
-              <div className="favorite-card-icon">
-                {getActivityIcon(favorite.category)}
+        {/* Favorites grid */}
+        <div className="row g-3">
+          {favorites.map((favorite) => (
+            <div key={favorite.id} className="col-12">
+              <div className="card bg-light border-0 rounded-3">
+                <div className="card-body">
+                  {/* Card header with icon and remove button */}
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <div className="d-flex align-items-center">
+                      <span className="me-2" style={{ fontSize: '1.25rem' }}>
+                        {getActivityIcon(favorite.category)}
+                      </span>
+                      <div>
+                        <h6 className="fw-bold mb-0">{favorite.name}</h6>
+                        <small className="text-muted text-capitalize">
+                          {favorite.category.replace('_', ' ')}
+                        </small>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveFavorite(favorite.id)}
+                      className="btn btn-outline-danger btn-sm"
+                      aria-label="Remove from favorites"
+                      title="Remove from favorites"
+                      disabled={removingFavorite === favorite.id}
+                    >
+                      {removingFavorite === favorite.id ? (
+                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      ) : (
+                        <i className="bi bi-trash"></i>
+                      )}
+                    </button>
+                  </div>
+                  
+                  {/* Action buttons */}
+                  {favorite.maps_url && (
+                    <div className="mt-2">
+                      <a
+                        href={favorite.maps_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-outline-secondary btn-sm w-100"
+                      >
+                        <i className="bi bi-geo-alt me-1"></i>
+                        View on Maps
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
-              <button
-                onClick={() => handleRemoveFavorite(favorite.id)}
-                className="favorite-card-remove-btn"
-                aria-label="Remove from favorites"
-                title="Remove from favorites"
-                disabled={removingFavorite === favorite.id}
-              >
-                {removingFavorite === favorite.id ? '⏳' : '🗑️'}
-              </button>
             </div>
-
-            {/* Card content */}
-            <div className="favorite-card-content">
-              <h3 className="favorite-card-title">{favorite.name}</h3>
-              <p className="favorite-card-category">{favorite.category}</p>
-              
-              {/* Action buttons */}
-              <div className="favorite-card-actions">
-                {favorite.maps_url && (
-                  <a
-                    href={favorite.maps_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="favorite-card-maps-btn"
-                  >
-                    📍 View on Maps
-                  </a>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-
     </div>
   )
 }

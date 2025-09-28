@@ -39,97 +39,140 @@ export default function IOSInstallModal({
   if (!isOpen) return null
 
   return (
-    <>
+    <div 
+      className={`modal fade ${isOpen ? 'show' : ''}`}
+      style={{ 
+        display: isOpen ? 'block' : 'none',
+        zIndex: 99999,
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh'
+      }}
+      tabIndex={-1}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="ios-install-modal-title"
+      aria-describedby="ios-install-modal-description"
+    >
       {/* Backdrop */}
       <div 
-        className="ios-install-modal-backdrop"
+        className="modal-backdrop fade show"
+        style={{ 
+          zIndex: 99998,
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh'
+        }}
         onClick={onClose}
         aria-hidden="true"
       />
       
       {/* Modal */}
       <div 
-        className="ios-install-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="ios-install-modal-title"
-        aria-describedby="ios-install-modal-description"
+        className="modal-dialog modal-dialog-centered modal-dialog-scrollable"
+        style={{ zIndex: 99999 }}
       >
-        {/* Header */}
-        <div className="ios-install-modal-header">
-          <h2 id="ios-install-modal-title" className="ios-install-modal-title">
-            Install on iPhone/iPad
-          </h2>
-          <button
-            onClick={onClose}
-            className="ios-install-modal-close"
-            aria-label="Close installation guide"
-          >
-            ✕
-          </button>
-        </div>
+        <div className="modal-content">
+          {/* Header */}
+          <div className="modal-header">
+            <h2 id="ios-install-modal-title" className="modal-title h5 fw-bold">
+              Install on iPhone/iPad
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn-close"
+              aria-label="Close installation guide"
+            ></button>
+          </div>
 
-        {/* Content */}
-        <div className="ios-install-modal-content">
-          <p id="ios-install-modal-description" className="ios-install-modal-description">
-            Follow these steps to add Lebara Explore to your home screen:
-          </p>
-          
-          {/* Step-by-step instructions */}
-          <div className="ios-install-steps">
-            <div className="ios-install-step">
-              <div className="ios-install-step-number">1</div>
-              <div className="ios-install-step-content">
-                <h3>Tap the Share button</h3>
-                <p>Look for the Share button (📤) in your Safari browser toolbar</p>
+          {/* Content */}
+          <div className="modal-body">
+            <p id="ios-install-modal-description" className="text-muted mb-4">
+              Follow these steps to add Lebara Explore to your home screen:
+            </p>
+            
+            {/* Step-by-step instructions */}
+            <div className="d-flex flex-column gap-3 mb-4">
+              <div className="d-flex gap-3">
+                <div 
+                  className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
+                  style={{ width: '32px', height: '32px', fontSize: '0.875rem' }}
+                >
+                  1
+                </div>
+                <div>
+                  <h6 className="fw-semibold mb-1">Tap the Share button</h6>
+                  <p className="text-muted mb-0 small">Look for the Share button (📤) in your Safari browser toolbar</p>
+                </div>
+              </div>
+              
+              <div className="d-flex gap-3">
+                <div 
+                  className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
+                  style={{ width: '32px', height: '32px', fontSize: '0.875rem' }}
+                >
+                  2
+                </div>
+                <div>
+                  <h6 className="fw-semibold mb-1">Scroll down and tap &ldquo;Add to Home Screen&rdquo;</h6>
+                  <p className="text-muted mb-0 small">You&apos;ll see this option in the Share menu</p>
+                </div>
+              </div>
+              
+              <div className="d-flex gap-3">
+                <div 
+                  className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
+                  style={{ width: '32px', height: '32px', fontSize: '0.875rem' }}
+                >
+                  3
+                </div>
+                <div>
+                  <h6 className="fw-semibold mb-1">Customize the name (optional)</h6>
+                  <p className="text-muted mb-0 small">You can change the app name or keep &ldquo;Lebara Explore&rdquo;</p>
+                </div>
+              </div>
+              
+              <div className="d-flex gap-3">
+                <div 
+                  className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
+                  style={{ width: '32px', height: '32px', fontSize: '0.875rem' }}
+                >
+                  4
+                </div>
+                <div>
+                  <h6 className="fw-semibold mb-1">Tap &ldquo;Add&rdquo;</h6>
+                  <p className="text-muted mb-0 small">The app will appear on your home screen like a native app</p>
+                </div>
               </div>
             </div>
             
-            <div className="ios-install-step">
-              <div className="ios-install-step-number">2</div>
-              <div className="ios-install-step-content">
-                <h3>Scroll down and tap &ldquo;Add to Home Screen&rdquo;</h3>
-                <p>You&apos;ll see this option in the Share menu</p>
-              </div>
-            </div>
-            
-            <div className="ios-install-step">
-              <div className="ios-install-step-number">3</div>
-              <div className="ios-install-step-content">
-                <h3>Customize the name (optional)</h3>
-                <p>You can change the app name or keep &ldquo;Lebara Explore&rdquo;</p>
-              </div>
-            </div>
-            
-            <div className="ios-install-step">
-              <div className="ios-install-step-number">4</div>
-              <div className="ios-install-step-content">
-                <h3>Tap &ldquo;Add&rdquo;</h3>
-                <p>The app will appear on your home screen like a native app</p>
+            {/* Pro tip */}
+            <div className="alert alert-info d-flex gap-3">
+              <div className="flex-shrink-0" style={{ fontSize: '1.25rem' }}>💡</div>
+              <div>
+                <h6 className="alert-heading mb-1">Pro Tip</h6>
+                <p className="mb-0 small">Once installed, you can access Lebara Explore directly from your home screen, just like any other app!</p>
               </div>
             </div>
           </div>
-          
-          {/* Pro tip */}
-          <div className="ios-install-pro-tip">
-            <div className="ios-install-pro-tip-icon">💡</div>
-            <div className="ios-install-pro-tip-content">
-              <h4>Pro Tip</h4>
-              <p>Once installed, you can access Lebara Explore directly from your home screen, just like any other app!</p>
-            </div>
-          </div>
-        </div>
 
-        {/* Footer */}
-        <div className="ios-install-modal-footer">
-          <button
-            onClick={onClose}
-            className="ios-install-modal-btn ios-install-modal-btn-primary"
-          >
-            Got it!
-          </button>
+          {/* Footer */}
+          <div className="modal-footer">
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn btn-primary"
+            >
+              Got it!
+            </button>
+          </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }

@@ -25,7 +25,7 @@ export default function BottomNav() {
       style={{ 
         background: '#fff', 
         height: '64px', 
-        zIndex: 1030, 
+        zIndex: 1040, 
         boxShadow: '0 -1px 0 rgba(0,0,0,.08)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         '--bottom-nav-h': '64px'
