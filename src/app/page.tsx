@@ -4,74 +4,97 @@ import IOSInstallBanner from '@/components/IOSInstallBanner'; // Import the iOS 
 
 export default function Home() {
   return (
-    <div className="home-page">
-      {/* Main hero section */}
-      <main className="home-container">
-        {/* Install Banners - only show on respective platforms */}
-        <AndroidInstallBanner />
-        <IOSInstallBanner />
-        
-        {/* App title and description */}
-        <div className="home-hero">
-          <h1 className="home-title">
+    <div className="container py-3 pb-4">
+      {/* Install Banners - only show on respective platforms */}
+      <div className="row">
+        <div className="col-12">
+          <AndroidInstallBanner />
+          <IOSInstallBanner />
+        </div>
+      </div>
+      
+      {/* App title and description */}
+      <div className="row mb-3">
+        <div className="col-12 text-center">
+          <h1 className="display-5 mb-2">
             Welcome to Liverpool St Explorer! 🎉
           </h1>
-          <p className="home-subtitle">
-          Explore. Play. Discover. Your Liverpool Street adventure starts here.
+          <p className="lead mb-0" style={{ fontSize: '1.1rem' }}>
+            Explore. Play. Discover. Your Liverpool Street adventure starts here.
           </p>
         </div>
+      </div>
 
-        {/* Feature cards grid - inspired by Lebara design */}
-        <div className="home-cards-grid">
-          {/* Discover Card */}
-          <Link href="/discover" className="card-compact home-card-link">
-            <div className="home-card-header">
-              <div className="home-card-title-section">
-                <div className="home-card-emoji">🗺️</div>
-                <h3 className="home-card-title">Discover</h3>
+      {/* Feature cards grid - Horizontal rectangles */}
+      <div className="row g-2">
+        {/* Discover Card */}
+        <div className="col-12 col-md-6 col-lg-3 mb-2">
+          <Link href="/discover" className="text-decoration-none">
+            <div className="card shadow-sm horizontal-card">
+              <div className="card-body d-flex align-items-center" style={{ padding: '0.75rem 1rem' }}>
+                <div className="d-inline-flex align-items-center justify-content-center bg-light rounded-circle me-2" style={{ width: 36, height: 36 }}>
+                  🗺️
+                </div>
+                <div className="flex-grow-1">
+                  <h5 className="card-title fw-bold mb-1" style={{ fontSize: '0.95rem' }}>Discover</h5>
+                  <p className="card-text text-muted mb-0 small">Browse places around Liverpool Street</p>
+                </div>
               </div>
-              <div className="home-card-chevron">›</div>
             </div>
-            <p className="home-card-subtitle">Browse places around Liverpool Street</p>
-          </Link>
-
-          {/* What's for lunch? Card */}
-          <Link href="/hungry" className="card-compact home-card-link">
-            <div className="home-card-header">
-              <div className="home-card-title-section">
-                <div className="home-card-emoji">🍽️</div>
-                <h3 className="home-card-title">What&apos;s for lunch?</h3>
-              </div>
-              <div className="home-card-chevron">›</div>
-            </div>
-            <p className="home-card-subtitle">Spin the wheel or ask the AI</p>
-          </Link>
-
-          {/* Bingo Card */}
-          <Link href="/bingo" className="card-compact home-card-link">
-            <div className="home-card-header">
-              <div className="home-card-title-section">
-                <div className="home-card-emoji">🎯</div>
-                <h3 className="home-card-title">Bingo</h3>
-              </div>
-              <div className="home-card-chevron">›</div>
-            </div>
-            <p className="home-card-subtitle">Play the monthly challenge</p>
-          </Link>
-
-          {/* Social / Feed Card */}
-          <Link href="/social" className="card-compact home-card-link">
-            <div className="home-card-header">
-              <div className="home-card-title-section">
-                <div className="home-card-emoji">👥</div>
-                <h3 className="home-card-title">Social / Feed</h3>
-              </div>
-              <div className="home-card-chevron">›</div>
-            </div>
-            <p className="home-card-subtitle">See what others are up to</p>
           </Link>
         </div>
-      </main>
+
+        {/* What's for lunch? Card */}
+        <div className="col-12 col-md-6 col-lg-3 mb-2">
+          <Link href="/hungry" className="text-decoration-none">
+            <div className="card shadow-sm horizontal-card">
+              <div className="card-body d-flex align-items-center" style={{ padding: '0.75rem 1rem' }}>
+                <div className="d-inline-flex align-items-center justify-content-center bg-light rounded-circle me-2" style={{ width: 36, height: 36 }}>
+                  🍽️
+                </div>
+                <div className="flex-grow-1">
+                  <h5 className="card-title fw-bold mb-1" style={{ fontSize: '0.95rem' }}>What&apos;s for lunch?</h5>
+                  <p className="card-text text-muted mb-0 small">Spin the wheel or ask the AI</p>
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
+
+        {/* Bingo Card */}
+        <div className="col-12 col-md-6 col-lg-3 mb-2">
+          <Link href="/bingo" className="text-decoration-none">
+            <div className="card shadow-sm horizontal-card">
+              <div className="card-body d-flex align-items-center" style={{ padding: '0.75rem 1rem' }}>
+                <div className="d-inline-flex align-items-center justify-content-center bg-light rounded-circle me-2" style={{ width: 36, height: 36 }}>
+                  🎯
+                </div>
+                <div className="flex-grow-1">
+                  <h5 className="card-title fw-bold mb-1" style={{ fontSize: '0.95rem' }}>Bingo</h5>
+                  <p className="card-text text-muted mb-0 small">Play the monthly challenge</p>
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
+
+        {/* Social / Feed Card */}
+        <div className="col-12 col-md-6 col-lg-3 mb-2">
+          <Link href="/social" className="text-decoration-none">
+            <div className="card shadow-sm horizontal-card">
+              <div className="card-body d-flex align-items-center" style={{ padding: '0.75rem 1rem' }}>
+                <div className="d-inline-flex align-items-center justify-content-center bg-light rounded-circle me-2" style={{ width: 36, height: 36 }}>
+                  👥
+                </div>
+                <div className="flex-grow-1">
+                  <h5 className="card-title fw-bold mb-1" style={{ fontSize: '0.95rem' }}>Social / Feed</h5>
+                  <p className="card-text text-muted mb-0 small">See what others are up to</p>
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

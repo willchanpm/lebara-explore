@@ -31,12 +31,15 @@ export async function toggleFavorite(
   placeId: string | number
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Convert place ID to string for consistent database queries
+    const stringPlaceId = placeId.toString()
+    
     // First check if this place is already favorited
     const { data: existingFavorite, error: checkError } = await supabase
       .from('favorites')
       .select('id')
       .eq('user_id', userId)
-      .eq('place_id', placeId)
+      .eq('place_id', stringPlaceId)
       .single()
 
     if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
@@ -63,7 +66,7 @@ export async function toggleFavorite(
         .from('favorites')
         .insert({
           user_id: userId,
-          place_id: placeId
+          place_id: stringPlaceId
         })
 
       if (insertError) {
@@ -149,11 +152,14 @@ export async function isPlaceFavorited(
   placeId: string | number
 ): Promise<{ isFavorited: boolean; error?: string }> {
   try {
+    // Convert place ID to string for consistent database queries
+    const stringPlaceId = placeId.toString()
+    
     const { data, error } = await supabase
       .from('favorites')
       .select('id')
       .eq('user_id', userId)
-      .eq('place_id', placeId)
+      .eq('place_id', stringPlaceId)
       .single()
 
     if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
@@ -185,18 +191,21 @@ export async function getFavoriteStatusForPlaces(
       return { data: new Set() }
     }
 
+    // Convert all place IDs to strings to ensure consistent data types
+    const stringPlaceIds = placeIds.map(id => id.toString())
+
     const { data, error } = await supabase
       .from('favorites')
       .select('place_id')
       .eq('user_id', userId)
-      .in('place_id', placeIds)
+      .in('place_id', stringPlaceIds)
 
     if (error) {
       console.error('Error fetching favorite status for places:', error)
       return { data: null, error: 'Failed to fetch favorite status' }
     }
 
-    const favoritedIds = new Set(data?.map(fav => fav.place_id) || [])
+    const favoritedIds = new Set(data?.map(fav => fav.place_id.toString()) || [])
     return { data: favoritedIds }
   } catch (error) {
     console.error('Unexpected error in getFavoriteStatusForPlaces:', error)

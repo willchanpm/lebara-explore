@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import Image from 'next/image'
 
 interface ImageModalProps {
   isOpen: boolean
@@ -36,23 +37,30 @@ export default function ImageModal({ isOpen, onClose, imageUrl, imageAlt }: Imag
   }
 
   return (
-    <div className="image-modal-overlay" onClick={onClose}>
-      <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
-        {/* Close button */}
-        <button 
-          className="image-modal-close" 
-          onClick={onClose}
-          aria-label="Close image modal"
-        >
-          ×
-        </button>
-        
-        {/* Full-size image */}
-        <img 
-          src={imageUrl} 
-          alt={imageAlt}
-          className="image-modal-image"
-        />
+    <div className="modal fade show d-block" tabIndex={-1} role="dialog" onClick={onClose}>
+      <div className="modal-backdrop fade show" style={{backgroundColor: 'rgba(0,0,0,0.9)'}}></div>
+      <div className="modal-dialog modal-dialog-centered modal-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-content bg-transparent border-0">
+          <div className="modal-header border-0 justify-content-end">
+            <button 
+              type="button" 
+              className="btn-close btn-close-white" 
+              onClick={onClose}
+              aria-label="Close image modal"
+            ></button>
+          </div>
+          <div className="modal-body text-center p-0">
+            {/* Full-size image */}
+            <Image 
+              src={imageUrl} 
+              alt={imageAlt}
+              className="img-fluid rounded-3"
+              width={800}
+              height={600}
+              style={{ maxHeight: '80vh', width: 'auto', height: 'auto' }}
+            />
+          </div>
+        </div>
       </div>
     </div>
   )

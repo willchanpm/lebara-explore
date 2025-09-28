@@ -1,7 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import BingoModal from '@/components/BingoModal'
+import ResetConfirmationModal from '@/components/ResetConfirmationModal'
+import { supabase } from '@/lib/supabaseClient'
+import { getCurrentUserId } from '@/lib/saveCheckIn'
 
 // Define TypeScript interfaces for our data structures
 interface Place {
@@ -130,33 +133,97 @@ export default function BingoClient({ tiles, month }: BingoClientProps) {
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedTile, setSelectedTile] = useState<BingoTile | null>(null)
+  
+  // Reset modal state
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false)
 
-  // Load saved progress when component mounts
-  useEffect(() => {
-    loadSavedProgress()
-  }, [])
-
-  // Function to load saved progress from localStorage
-  const loadSavedProgress = () => {
+  // Function to sync with database and load saved progress
+  const loadSavedProgress = useCallback(async () => {
     try {
-      // Load completed squares
+      // First, try to get current user and sync with database
+      try {
+        const userId = await getCurrentUserId(supabase)
+        
+        // Get all check-ins for this user for the current month (excluding reset ones)
+        let { data: checkIns, error } = await supabase
+          .from('check_ins')
+          .select('tile_id, rating, comment, photo_url, created_at, is_reset')
+          .eq('user_id', userId)
+          .eq('board_month', month)
+          .eq('is_reset', false)
+        
+        console.log('Database query result:', { checkIns, error, userId, month })
+        
+        // If the is_reset column doesn't exist yet, fall back to loading all check-ins
+        if (error && error.message?.includes('is_reset')) {
+          console.log('is_reset column not found, falling back to loading all check-ins')
+          const fallbackResult = await supabase
+            .from('check_ins')
+            .select('tile_id, rating, comment, photo_url, created_at')
+            .eq('user_id', userId)
+            .eq('board_month', month)
+          
+          // Add is_reset: false to fallback data for type compatibility
+          checkIns = fallbackResult.data?.map(item => ({ ...item, is_reset: false })) || null
+          error = fallbackResult.error
+          console.log('Fallback query result:', { checkIns, error })
+        }
+        
+        if (error) {
+          console.warn('Failed to load check-ins from database:', error)
+        } else {
+          // Always update state based on database (even if empty)
+          const completedTileIds = checkIns?.map(checkIn => checkIn.tile_id) || []
+          setCompletedSquares(new Set(completedTileIds))
+          
+          // Convert check-ins to completion data format
+          const dbCompletionData: Record<string, StoredCompletionData> = {}
+          checkIns?.forEach(checkIn => {
+            dbCompletionData[checkIn.tile_id] = {
+              image: checkIn.photo_url,
+              rating: checkIn.rating,
+              comment: checkIn.comment,
+              photoUrl: checkIn.photo_url,
+              completedAt: checkIn.created_at
+            }
+          })
+          setCompletionData(dbCompletionData)
+          
+          // Update localStorage to match database
+          localStorage.setItem('lsx:bingo:v1', JSON.stringify(completedTileIds))
+          localStorage.setItem('lsx:bingo:completion:v1', JSON.stringify(dbCompletionData))
+          
+          console.log('Synced with database - loaded completed squares:', completedTileIds)
+          console.log('Synced with database - loaded completion data:', dbCompletionData)
+          return
+        }
+      } catch (dbError) {
+        console.warn('Database sync failed, falling back to localStorage:', dbError)
+      }
+      
+      // Fallback to localStorage if database sync fails
       const savedSquares = localStorage.getItem('lsx:bingo:v1')
       if (savedSquares) {
         const savedArray = JSON.parse(savedSquares)
         setCompletedSquares(new Set(savedArray))
-        console.log('Loaded completed squares:', savedArray)
+        console.log('Loaded completed squares from localStorage:', savedArray)
       }
       
       // Load completion data
       const savedCompletionData = localStorage.getItem('lsx:bingo:completion:v1')
       if (savedCompletionData) {
         setCompletionData(JSON.parse(savedCompletionData))
-        console.log('Loaded completion data:', JSON.parse(savedCompletionData))
+        console.log('Loaded completion data from localStorage:', JSON.parse(savedCompletionData))
       }
     } catch (error) {
       console.warn('Failed to load bingo progress:', error)
     }
-  }
+  }, [month])
+
+  // Load saved progress when component mounts
+  useEffect(() => {
+    loadSavedProgress()
+  }, [month, loadSavedProgress]) // Re-sync when month changes
 
   // Function to save progress to localStorage
   const saveProgress = () => {
@@ -216,16 +283,30 @@ export default function BingoClient({ tiles, month }: BingoClientProps) {
       
       // Save to localStorage
       saveProgress()
+      
+      // Reload from database to ensure sync
+      await loadSavedProgress()
     }
   }
 
-  // Function to reset all progress
-  const resetProgress = () => {
-    if (window.confirm('Are you sure you want to reset all your progress? This cannot be undone.')) {
-      setCompletedSquares(new Set())
-      setCompletionData({})
-      saveProgress()
-    }
+  // Function to open reset modal
+  const openResetModal = () => {
+    setIsResetModalOpen(true)
+  }
+
+  // Function to handle reset confirmation
+  const handleReset = async () => {
+    // Clear local state
+    setCompletedSquares(new Set())
+    setCompletionData({})
+    saveProgress()
+    
+    // Reload from database to ensure sync
+    // The modal will have marked entries as reset, so they won't appear as completed
+    await loadSavedProgress()
+    
+    // Close the modal
+    setIsResetModalOpen(false)
   }
 
   // Calculate progress
@@ -234,110 +315,173 @@ export default function BingoClient({ tiles, month }: BingoClientProps) {
   const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
 
   return (
-    <div className="bingo-page">
-      <div className="bingo-container">
-        {/* Header section with title and subtitle */}
-        <div className="bingo-header">
-          <h1 className="bingo-title">Bingo</h1>
-          <p className="bingo-subtitle">Tick them off as you go</p>
-
-        </div>
-        
-        {/* Progress section with progress bar and reset button */}
-        <div className="bingo-progress">
-          <div className="progress-header">
-            <span className="progress-text">
+    <>
+    <div className="container py-4 pb-5">
+      {/* Header section with title and subtitle */}
+      <div className="bingo-header">
+        <h1 className="display-5 fw-bold text-center mb-2">Bingo</h1>
+        <p className="lead text-center text-muted mb-4">Tick them off as you go</p>
+      </div>
+      
+      {/* Progress section with Bootstrap card styling */}
+      <div className="card shadow-sm rounded-4 mb-4">
+        <div className="card-body p-3">
+          {/* Progress header row */}
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <span className="fw-medium text-muted">
               Progress: {completedCount} / {totalCount}
             </span>
             <button
-              className="reset-button"
-              onClick={resetProgress}
+              className="btn btn-outline-secondary btn-sm rounded-pill px-3"
+              onClick={openResetModal}
+              disabled={completedCount === 0}
             >
               Reset
             </button>
           </div>
           
-          {/* Progress bar showing completion percentage */}
-          <div className="progress-bar">
+          {/* Bootstrap progress bar with smooth animation */}
+          <div className="progress rounded-pill" style={{ height: '12px' }}>
             <div 
-              className="progress-fill"
-              style={{ width: `${progressPercentage}%` }}
-            />
+              className="progress-bar bg-primary"
+              role="progressbar"
+              aria-valuenow={completedCount}
+              aria-valuemin={0}
+              aria-valuemax={totalCount}
+              style={{ 
+                width: `${progressPercentage}%`,
+                transition: 'width 0.6s ease-in-out'
+              }}
+            >
+              {/* Show percentage label when there's enough space */}
+              {progressPercentage >= 15 && (
+                <span className="text-white fw-medium" style={{ fontSize: '0.75rem' }}>
+                  {Math.round(progressPercentage)}%
+                </span>
+              )}
+              {/* Screen reader fallback */}
+              <span className="visually-hidden">
+                {completedCount} of {totalCount} challenges completed
+              </span>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Bingo grid - 3 columns on mobile, 4 columns on medium screens and up */}
-        <div className="bingo-grid">
-          {tiles.map((tile) => {
-            const isCompleted = completedSquares.has(tile.id)
-            const tileCompletionData = completionData[tile.id]
-            
-            return (
+      {/* Bingo grid with Bootstrap responsive columns */}
+      <div className="row g-2 g-sm-3">
+        {tiles.map((tile) => {
+          const isCompleted = completedSquares.has(tile.id)
+          const tileCompletionData = completionData[tile.id]
+          
+          return (
+            <div key={tile.id} className="col-6 col-sm-4">
               <button
-                key={tile.id}
-                className={`bingo-square ${isCompleted ? 'bingo-square-completed' : 'bingo-square-incomplete'}`}
+                className={`bingo-tile-card w-100 h-100 position-relative border-0 bg-white rounded-3 shadow-sm text-start ${isCompleted ? 'bingo-completed' : ''}`}
                 onClick={() => handleTileClick(tile)}
+                style={{ 
+                  aspectRatio: '1',
+                  cursor: isCompleted ? 'default' : 'pointer',
+                  transition: 'all 0.2s ease',
+                  padding: '0.75rem' // Reduced from p-3 (1rem) to ~20% less
+                }}
               >
-                {/* Square content with aligned title at top */}
-                <div className="bingo-content">
-                  {/* Title text - aligned at the top */}
-                  <div className="bingo-title-text">
+                {/* Completion badge */}
+                {isCompleted && (
+                  <div className="position-absolute top-0 end-0 m-2">
+                    <span className="badge bg-success rounded-pill">
+                      ✓
+                    </span>
+                  </div>
+                )}
+                
+                {/* Tile content - centered stack */}
+                <div className="d-flex flex-column align-items-center justify-content-center h-100 text-center">
+                  {/* Title (category) */}
+                  <div className="fw-medium mb-2" style={{ fontSize: '0.875rem', lineHeight: '1.2' }}>
                     {tile.label}
                   </div>
                   
-                  {/* Small icon between title and description */}
-                  <div className="bingo-icon">
+                  {/* Emoji/Icon */}
+                  <div className="mb-2" style={{ fontSize: '1.5rem' }}>
                     {tile.place?.category ? getActivityIcon(tile.place.category) : '🍽️'}
                   </div>
                   
-                  {/* Description text if available */}
+                  {/* Subtitle (hint) - clamped to 2 lines */}
                   {tile.description && (
-                    <div className="bingo-description">
+                    <div 
+                      className="text-muted"
+                      style={{ 
+                        fontSize: '0.625rem', // Reduced from 0.75rem (small) to 0.625rem
+                        lineHeight: '1.2',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
                       {tile.description}
                     </div>
                   )}
                   
                   {/* Show rating if completed */}
                   {isCompleted && tileCompletionData && (
-                    <div className="bingo-rating">
+                    <div className="mt-2 text-warning" style={{ fontSize: '0.75rem' }}>
                       {'★'.repeat(tileCompletionData.rating)}
                     </div>
                   )}
                 </div>
                 
-                {/* Completion overlay with pink checkmark */}
+                {/* Dim overlay for completed state */}
                 {isCompleted && (
-                  <div className="bingo-overlay">
-                    <div className="bingo-checkmark">✓</div>
-                  </div>
+                  <div 
+                    className="position-absolute top-0 start-0 w-100 h-100 rounded-3"
+                    style={{ 
+                      backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                      pointerEvents: 'none'
+                    }}
+                  />
                 )}
               </button>
-            )
-          })}
-        </div>
-
-        {/* Completion message when all squares are done */}
-        {completedCount === totalCount && totalCount > 0 && (
-          <div className="bingo-completion">
-            <div className="completion-emoji">🎉</div>
-            <h3 className="completion-title">Bingo!</h3>
-            <p className="completion-text">Congratulations! You&apos;ve completed all the challenges!</p>
-          </div>
-        )}
+            </div>
+          )
+        })}
       </div>
 
-      {/* Bingo Modal */}
-      <BingoModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false)
-          setSelectedTile(null)
-        }}
-        onSave={handleModalSave}
-        tileLabel={selectedTile?.label || ''}
-        tileId={selectedTile?.id || ''}
-        boardMonth={month}
-      />
+      {/* Completion message when all squares are done */}
+      {completedCount === totalCount && totalCount > 0 && (
+        <div className="card bg-success bg-opacity-10 border border-success mt-4">
+          <div className="card-body text-center">
+            <div className="fs-1 mb-2">🎉</div>
+            <h3 className="card-title text-success">Bingo!</h3>
+            <p className="card-text text-muted">Congratulations! You&apos;ve completed all the challenges!</p>
+          </div>
+        </div>
+      )}
     </div>
+
+    {/* Bingo Modal */}
+    <BingoModal
+      isOpen={isModalOpen}
+      onClose={() => {
+        setIsModalOpen(false)
+        setSelectedTile(null)
+      }}
+      onSave={handleModalSave}
+      tileLabel={selectedTile?.label || ''}
+      tileId={selectedTile?.id || ''}
+      boardMonth={month}
+    />
+
+    {/* Reset Confirmation Modal */}
+    <ResetConfirmationModal
+      isOpen={isResetModalOpen}
+      onClose={() => setIsResetModalOpen(false)}
+      onReset={handleReset}
+      completedCount={completedCount}
+    />
+    </>
   )
 }
+

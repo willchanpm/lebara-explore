@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabaseClient'
 import { saveCheckIn, getCurrentUserId } from '@/lib/saveCheckIn'
-import Toast from './Toast'
+import { useToast } from './ToastsProvider'
 
 // Interface for the modal props
 interface BingoModalProps {
@@ -33,15 +35,16 @@ interface StarRatingProps {
 // This component displays 5 stars that users can click to rate their experience
 function StarRating({ rating, onRatingChange }: StarRatingProps) {
   return (
-    <div className="star-rating">
+    <div className="star-rating d-flex gap-2">
       {/* Display 5 stars, each can be clicked to set the rating */}
       {[1, 2, 3, 4, 5].map((star) => (
         <button
           key={star}
           type="button"
-          className={`star ${star <= rating ? 'star-filled' : 'star-empty'}`}
+          className={`btn btn-link p-0 text-decoration-none ${star <= rating ? 'text-warning' : 'text-muted'}`}
           onClick={() => onRatingChange(star)}
           aria-label={`Rate ${star} star${star !== 1 ? 's' : ''}`}
+          style={{ fontSize: '2rem', lineHeight: '1' }}
         >
           {/* Star icon - filled or empty based on rating */}
           {star <= rating ? '★' : '☆'}
@@ -69,16 +72,8 @@ export default function BingoModal({
   // File state for upload
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   
-  // Toast state
-  const [toast, setToast] = useState<{
-    message: string
-    type: 'success' | 'error'
-    isVisible: boolean
-  }>({
-    message: '',
-    type: 'success',
-    isVisible: false
-  })
+  // Toast hook
+  const toast = useToast()
   
   // References to file input and camera elements
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -88,7 +83,34 @@ export default function BingoModal({
   // State to control camera mode
   const [showCamera, setShowCamera] = useState(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
+  
+  // Refs for focus management
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const firstInputRef = useRef<HTMLButtonElement>(null)
 
+  // Handle body scroll and focus when modal opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      // Prevent background scroll
+      document.body.classList.add('modal-open')
+      
+      // Focus the close button when modal opens
+      setTimeout(() => {
+        closeButtonRef.current?.focus()
+      }, 100)
+    } else {
+      // Restore background scroll
+      document.body.classList.remove('modal-open')
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.classList.remove('modal-open')
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop())
+      }
+    }
+  }, [isOpen, stream])
 
 
   // Function to handle file selection from device
@@ -142,18 +164,18 @@ export default function BingoModal({
       
     } catch (error) {
       console.error('Error accessing camera:', error)
-      showToast('Unable to access camera. Please try uploading an image instead.', 'error')
+      toast.error('Unable to access camera. Please try uploading an image instead.')
     }
   }
 
   // Function to stop camera and clean up
-  const stopCamera = () => {
+  const stopCamera = useCallback(() => {
     if (stream) {
       stream.getTracks().forEach(track => track.stop())
       setStream(null)
     }
     setShowCamera(false)
-  }
+  }, [stream])
 
   // Function to capture photo from camera
   const capturePhoto = () => {
@@ -195,15 +217,11 @@ export default function BingoModal({
     }
   }
 
-  // Function to show toast notifications
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type, isVisible: true })
-  }
 
   // Function to handle form submission
   const handleSave = async () => {
     if (rating === 0) {
-      showToast('Please select a rating before saving.', 'error')
+      toast.error('Please select a rating before saving.')
       return
     }
 
@@ -228,7 +246,7 @@ export default function BingoModal({
       })
       
       if (error) {
-        showToast(error, 'error')
+        toast.error(error)
         return
       }
       
@@ -245,7 +263,7 @@ export default function BingoModal({
       })
       
       // Show success toast
-      showToast('Saved!', 'success')
+      toast.success('Saved!')
       
       // Call the onSave function with the completion data
       await onSave({
@@ -267,9 +285,9 @@ export default function BingoModal({
       console.error('Error saving bingo completion:', error)
       
       if (error instanceof Error && error.message === 'User not authenticated') {
-        showToast('Please sign in to save your progress.', 'error')
+        toast.error('Please sign in to save your progress.')
       } else {
-        showToast('Error saving. Please try again.', 'error')
+        toast.error('Error saving. Please try again.')
       }
       
       setIsLoading(false)
@@ -277,7 +295,7 @@ export default function BingoModal({
   }
 
   // Function to handle modal close
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     // Stop camera if it's running
     if (showCamera) {
       stopCamera()
@@ -290,162 +308,209 @@ export default function BingoModal({
     setSelectedFile(null)
     
     onClose()
-  }
+  }, [showCamera, onClose, stopCamera])
+
+  // Handle ESC key
+  useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        handleClose()
+      }
+    }
+    
+    if (isOpen) {
+      document.addEventListener('keydown', handleEsc)
+    }
+    
+    return () => {
+      document.removeEventListener('keydown', handleEsc)
+    }
+  }, [isOpen, handleClose])
 
   // Don't render anything if modal is not open
   if (!isOpen) return null
 
-  return (
+  const modalContent = (
     <>
-      <div className="modal-overlay">
-        <div className="modal-content">
-          {/* Modal Header */}
-          <div className="modal-header">
-            <h2 className="modal-title">Complete: {tileLabel}</h2>
-            <button 
-              type="button" 
-              className="modal-close"
-              onClick={handleClose}
-              aria-label="Close modal"
-            >
-              ×
-            </button>
-          </div>
-
-          {/* Modal Body */}
-          <div className="modal-body">
-            {/* Image Section */}
-            <div className="image-section">
-              <h3 className="section-title">Add a Photo</h3>
-              
-              {!image && !showCamera && (
-                <div className="image-upload-options">
-                  {/* Upload from device button */}
-                  <button
-                    type="button"
-                    className="upload-button"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    📁 Upload Photo
-                  </button>
-                  
-                  {/* Take photo button */}
-                  <button
-                    type="button"
-                    className="camera-button"
-                    onClick={startCamera}
-                  >
-                    📷 Take Photo
-                  </button>
-                  
-                  {/* Hidden file input */}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileSelect}
-                    style={{ display: 'none' }}
-                  />
-                </div>
-              )}
-
-              {/* Camera view */}
-              {showCamera && (
-                <div className="camera-view">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="camera-video"
-                    style={{ width: '100%', height: '200px', objectFit: 'cover' }}
-                    
-                    onError={(e) => console.error('Video element error:', e)}
-                  />
-                  <div className="camera-controls">
-                    <button
-                      type="button"
-                      className="capture-button"
-                      onClick={capturePhoto}
-                    >
-                      📸 Capture
-                    </button>
-                    <button
-                      type="button"
-                      className="cancel-button"
-                      onClick={stopCamera}
-                    >
-                      ❌ Cancel
-                    </button>
-                  </div>
-                  <canvas ref={canvasRef} style={{ display: 'none' }} />
-                </div>
-              )}
-
-              {/* Display captured/uploaded image */}
-              {image && (
-                <div className="image-preview">
-                  <img src={image} alt="Bingo completion" className="preview-image" />
-                  <button
-                    type="button"
-                    className="remove-image-button"
-                    onClick={removeImage}
-                  >
-                    ❌ Remove
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Rating Section */}
-            <div className="rating-section">
-              <h3 className="section-title">Rate Your Experience</h3>
-              <StarRating rating={rating} onRatingChange={setRating} />
-              <p className="rating-hint">Click the stars to rate from 1-5</p>
-            </div>
-
-            {/* Comment Section */}
-            <div className="comment-section">
-              <h3 className="section-title">Add a Comment (Optional)</h3>
-              <textarea
-                className="comment-input"
-                placeholder="Share your thoughts about this experience..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                rows={3}
+      <div 
+        className="modal fade show d-block" 
+        role="dialog" 
+        aria-modal="true"
+        style={{ backgroundColor: 'rgba(0,0,0,.5)' }}
+      >
+        <div className="modal-dialog modal-dialog-centered modal-md modal-lg modal-xl">
+          <div className="modal-content rounded-4 shadow-lg" style={{ maxHeight: '90vh', overflow: 'auto' }}>
+            {/* Modal Header */}
+            <div className="modal-header border-0 px-4 py-3 px-sm-4 py-sm-4">
+              <h4 className="modal-title fw-bold mb-0" id="bingo-modal-title">
+                Complete: {tileLabel}
+              </h4>
+              <button 
+                ref={closeButtonRef}
+                type="button" 
+                className="btn-close"
+                onClick={handleClose}
+                aria-label="Close"
               />
             </div>
-          </div>
 
-          {/* Modal Footer */}
-          <div className="modal-footer">
-            <button
-              type="button"
-              className="cancel-button"
-              onClick={handleClose}
-              disabled={isLoading}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="footer-save-button"
-              onClick={handleSave}
-              disabled={isLoading || rating === 0}
-            >
-              {isLoading ? 'Saving...' : 'Save & Complete'}
-            </button>
+            {/* Modal Body */}
+            <div className="modal-body px-4 py-3 px-sm-4 py-sm-4">
+              <div className="d-flex flex-column gap-3 gap-sm-4">
+                {/* Photo Section */}
+                <div>
+                  <h6 className="text-muted small fw-medium mb-3">Add a Photo</h6>
+                  
+                  <div className="card border-0 bg-body-tertiary rounded-4 p-4">
+                    {!image && !showCamera && (
+                      <div className="d-flex flex-column flex-sm-row gap-3">
+                        {/* Upload from device button */}
+                        <button
+                          ref={firstInputRef}
+                          type="button"
+                          className="btn btn-outline-secondary rounded-pill px-4 py-2"
+                          onClick={() => fileInputRef.current?.click()}
+                          style={{ minHeight: '44px' }}
+                        >
+                          📁 Upload Photo
+                        </button>
+                        
+                        {/* Take photo button */}
+                        <button
+                          type="button"
+                          className="btn btn-outline-secondary rounded-pill px-4 py-2"
+                          onClick={startCamera}
+                          style={{ minHeight: '44px' }}
+                        >
+                          📷 Take Photo
+                        </button>
+                        
+                        {/* Hidden file input */}
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileSelect}
+                          style={{ display: 'none' }}
+                        />
+                      </div>
+                    )}
+
+                    {/* Camera view */}
+                    {showCamera && (
+                      <div>
+                        <video
+                          ref={videoRef}
+                          autoPlay
+                          playsInline
+                          muted
+                          className="camera-video w-100 rounded-3"
+                          style={{ height: '240px', objectFit: 'cover' }}
+                          onError={(e) => console.error('Video element error:', e)}
+                        />
+                        <div className="d-flex flex-column flex-sm-row gap-3 mt-3">
+                          <button
+                            type="button"
+                            className="btn btn-primary rounded-pill px-4 py-2"
+                            onClick={capturePhoto}
+                            style={{ minHeight: '44px' }}
+                          >
+                            📸 Capture
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-outline-secondary rounded-pill px-4 py-2"
+                            onClick={stopCamera}
+                            style={{ minHeight: '44px' }}
+                          >
+                            ❌ Cancel
+                          </button>
+                        </div>
+                        <canvas ref={canvasRef} style={{ display: 'none' }} />
+                      </div>
+                    )}
+
+                    {/* Display captured/uploaded image */}
+                    {image && (
+                      <div className="text-center">
+                        <div className="card border-0 bg-white rounded-4 p-3 mb-3 d-inline-block">
+                          <Image 
+                            src={image} 
+                            alt="Bingo completion" 
+                            className="image-preview rounded-3" 
+                            width={140} 
+                            height={140}
+                            style={{ objectFit: 'cover' }}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-outline-danger rounded-pill px-4 py-2"
+                          onClick={removeImage}
+                          style={{ minHeight: '44px' }}
+                        >
+                          ❌ Remove
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Rating Section */}
+                <div>
+                  <h6 className="text-muted small fw-medium mb-3">Rate Your Experience</h6>
+                  <StarRating rating={rating} onRatingChange={setRating} />
+                  <p className="form-text text-muted mt-2">Click the stars to rate from 1-5</p>
+                </div>
+
+                {/* Comment Section */}
+                <div>
+                  <h6 className="text-muted small fw-medium mb-3">Add a Comment (Optional)</h6>
+                  <textarea
+                    className="form-control rounded-3"
+                    placeholder="Share your thoughts about this experience..."
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    rows={4}
+                    style={{ resize: 'vertical', maxHeight: '120px' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="modal-footer border-0 px-4 py-3 px-sm-4 py-sm-4">
+              <div className="d-flex flex-column flex-sm-row gap-3 w-100">
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary rounded-pill px-4 py-2 order-2 order-sm-1"
+                  onClick={handleClose}
+                  disabled={isLoading}
+                  style={{ minHeight: '44px' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary rounded-pill px-4 py-2 order-1 order-sm-2"
+                  onClick={handleSave}
+                  disabled={isLoading || rating === 0}
+                  style={{ minHeight: '44px' }}
+                >
+                  {isLoading && (
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
+                  )}
+                  {isLoading ? 'Saving...' : 'Save & Complete'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Toast Notifications */}
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.isVisible}
-        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
-      />
     </>
   )
+
+  // Render modal via portal to document.body
+  return createPortal(modalContent, document.body)
 }

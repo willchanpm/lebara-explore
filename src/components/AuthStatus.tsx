@@ -70,10 +70,12 @@ export default function AuthStatus() {
   // Show loading state while fetching user data
   if (loading) {
     return (
-      <div className="card-small">
-        <div className="status-loading">
-          <div className="spinner"></div>
-          <p className="text-muted">Loading authentication status...</p>
+      <div className="card bg-white shadow-sm rounded-xl">
+        <div className="card-body text-center py-4">
+          <div className="spinner-border text-primary mb-3" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="text-muted mb-0">Loading authentication status...</p>
         </div>
       </div>
     )
@@ -82,20 +84,24 @@ export default function AuthStatus() {
   // Show signed in state with user email and sign out button
   if (user) {
     return (
-      <div className="auth-status-signed-in">
-        <div className="auth-status-content">
-          <div className="auth-status-info">
-            <div className="status-dot success"></div>
-            <p className="auth-status-text">
-              Signed in as <span className="auth-status-email">{user.email}</span>
-            </p>
+      <div className="card bg-white shadow-sm rounded-xl">
+        <div className="card-body">
+          <div className="d-flex justify-content-between align-items-center">
+            <div className="d-flex align-items-center">
+              <div className="bg-success rounded-circle me-3" style={{ width: '12px', height: '12px' }}></div>
+              <div>
+                <p className="mb-0 fw-semibold text-dark">
+                  Signed in as <span className="text-primary">{user.email}</span>
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleSignOut}
+              className="btn btn-outline-danger btn-sm"
+            >
+              Sign out
+            </button>
           </div>
-          <button
-            onClick={handleSignOut}
-            className="btn btn-primary auth-signout-button"
-          >
-            Sign out
-          </button>
         </div>
       </div>
     )
@@ -103,18 +109,20 @@ export default function AuthStatus() {
 
   // Show not signed in state
   return (
-    <div className="card-small">
-      <div className="auth-status-not-signed">
-        <div className="auth-status-info">
-          <div className="status-dot inactive"></div>
-          <p className="auth-status-text">Not signed in</p>
+    <div className="card bg-white shadow-sm rounded-xl">
+      <div className="card-body">
+        <div className="d-flex justify-content-between align-items-center">
+          <div className="d-flex align-items-center">
+            <div className="bg-secondary rounded-circle me-3" style={{ width: '12px', height: '12px' }}></div>
+            <p className="mb-0 fw-semibold text-dark">Not signed in</p>
+          </div>
+          <a 
+            href="/login" 
+            className="btn btn-primary btn-sm"
+          >
+            Sign in
+          </a>
         </div>
-        <a 
-          href="/login" 
-          className="btn btn-primary auth-signin-button"
-        >
-          Sign in
-        </a>
       </div>
     </div>
   )

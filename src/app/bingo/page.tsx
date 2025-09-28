@@ -129,15 +129,13 @@ export default async function BingoPage() {
   // If no tiles are found at all, show a friendly message
   if (typedTiles.length === 0) {
     return (
-      <div className="bingo-page">
-        <div className="bingo-container">
-          <div className="bingo-header">
-            <h1 className="bingo-title">Bingo</h1>
-            <p className="bingo-subtitle">No board available yet</p>
-          </div>
-          <div className="bingo-placeholder">
-            <p>Check back soon for new challenges!</p>
-          </div>
+      <div className="container py-4 pb-5">
+        <div className="bingo-header">
+          <h1 className="display-5 fw-bold text-center mb-2">Bingo</h1>
+          <p className="lead text-center text-muted mb-4">No board available yet</p>
+        </div>
+        <div className="bingo-placeholder">
+          <p>Check back soon for new challenges!</p>
         </div>
       </div>
     )

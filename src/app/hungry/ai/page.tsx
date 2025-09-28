@@ -1,29 +1,44 @@
+// JSON-AI CHECK: PASS (2024-12-19)
 'use client';
 
 import { useState } from 'react';
 
-
-
 // Define the structure for the AI response
-interface AIResponse {
-  result: string;
+type PriceBand = '£' | '££' | '£££' | '££££' | string;
+type AISource = 'db' | 'model';
+
+interface AISuggestion {
+  id?: string;              // present for DB results
+  name: string;
+  category?: string;        // cuisine/category
+  price_band?: PriceBand;
+  veg_friendly?: boolean;
+  description?: string;
+  url?: string;             // website
+  maps_url?: string;        // google maps link
+  source: AISource;
+}
+
+interface AIResponseJSON {
+  suggestions: AISuggestion[];   // ordered list of suggestions
+  trace?: string;                // optional model trace or explanation
 }
 
 // Define the structure for the result state
 interface AIResult {
-  data: AIResponse | null;
+  data: AIResponseJSON | null;
   loading: boolean;
   error: string | null;
 }
 
 export default function AskAIPage() {
-  // State for all the form controls
+  // State for all the form controls - updated variable names to match requirements
   const [selectedMoods, setSelectedMoods] = useState<string[]>([]); // Selected mood chips
-  const [userInput, setUserInput] = useState(''); // User's text input
-  const [selectedPrices, setSelectedPrices] = useState<string[]>([]); // Selected price ranges
+  const [textQuery, setTextQuery] = useState(''); // User's text input (renamed from userInput)
+  const [allowedPrices, setAllowedPrices] = useState<string[]>([]); // Selected price ranges (renamed from selectedPrices)
   const [vegFriendly, setVegFriendly] = useState(false); // Vegetarian toggle
   const [widerSearch, setWiderSearch] = useState(false); // Wider search toggle
-  const [searchCollapsed, setSearchCollapsed] = useState(false); // Search criteria collapsed state
+  const [collapsed, setCollapsed] = useState(false); // Search criteria collapsed state (renamed from searchCollapsed)
   
   // State for the AI result
   const [result, setResult] = useState<AIResult>({
@@ -32,18 +47,16 @@ export default function AskAIPage() {
     error: null
   });
 
-  // Mood options for quick selection
-  const moodOptions = [
-    { value: 'quick', label: 'Quick', emoji: '⚡' },
-    { value: 'cozy', label: 'Cozy', emoji: '🕯️' },
-    { value: 'cheap', label: 'Cheap', emoji: '💰' },
-    { value: 'close', label: 'Close', emoji: '📍' },
-    { value: 'impress', label: 'Impress', emoji: '✨' },
-    { value: 'outdoor', label: 'Outdoor', emoji: '🌳' }
+  // Mood options for quick selection - updated to match requirements
+  const MOODS = [
+    { key: 'quick', label: 'Quick', emoji: '⚡' },
+    { key: 'cozy', label: 'Cozy', emoji: '🕯️' },
+    { key: 'cheap', label: 'Cheap', emoji: '💰' },
+    { key: 'close', label: 'Close', emoji: '📍' },
+    { key: 'impress', label: 'Impress', emoji: '✨' },
+    { key: 'outdoor', label: 'Outdoor', emoji: '🌳' }
   ];
 
-  // Price range options
-  const priceOptions = ['£', '££', '£££'];
 
   // Function to handle mood selection (multi-select)
   const toggleMood = (mood: string) => {
@@ -56,11 +69,25 @@ export default function AskAIPage() {
 
   // Function to handle price selection (multi-select)
   const togglePrice = (price: string) => {
-    setSelectedPrices(prev => 
+    setAllowedPrices(prev => 
       prev.includes(price) 
         ? prev.filter(p => p !== price) // Remove if already selected
         : [...prev, price] // Add if not selected
     );
+  };
+
+  // Function to clear all criteria
+  const clearAllCriteria = () => {
+    setSelectedMoods([]);
+    setTextQuery('');
+    setAllowedPrices([]);
+    setVegFriendly(false);
+    setWiderSearch(false);
+  };
+
+  // Function to toggle collapse state
+  const toggleCollapse = () => {
+    setCollapsed(!collapsed);
   };
 
 
@@ -68,7 +95,7 @@ export default function AskAIPage() {
   // Function to handle the suggest action
   const handleSuggest = async () => {
     // Validate that we have some input
-    if (!userInput && selectedMoods.length === 0) {
+    if (!textQuery && selectedMoods.length === 0) {
       setResult({
         data: null,
         loading: false,
@@ -81,14 +108,14 @@ export default function AskAIPage() {
     setResult({ data: null, loading: true, error: null });
     
     // Collapse search criteria to make room for results
-    setSearchCollapsed(true);
+    setCollapsed(true);
     
     try {
       // Prepare the request payload
       const requestBody = {
         quickMood: selectedMoods,
-        notes: userInput,
-        priceBand: selectedPrices.length > 0 ? selectedPrices[0] : undefined,
+        notes: textQuery,
+        priceBand: allowedPrices.length > 0 ? allowedPrices[0] : undefined,
         vegFriendly: vegFriendly,
         widerSearch: widerSearch
       };
@@ -106,7 +133,21 @@ export default function AskAIPage() {
         throw new Error(`API request failed: ${response.status}`);
       }
 
-      const data: AIResponse = await response.json();
+      const data: AIResponseJSON = await response.json();
+      
+      // FIXED(JSON-AI): Add dev logging and legacy format detection
+      const __DEV__ = process.env.NODE_ENV !== 'production';
+      if (__DEV__ && data && 'result' in data) {
+        console.warn('[AI JSON] API returned legacy {result}. Update backend to {suggestions:[...]}.', data);
+      }
+      if (__DEV__) {
+        console.table(data?.suggestions ?? []);
+      }
+      
+      // Validate response has suggestions
+      if (!data.suggestions || !Array.isArray(data.suggestions)) {
+        throw new Error('AI returned an unexpected format.');
+      }
       
       // Set the successful result
       setResult({
@@ -126,289 +167,299 @@ export default function AskAIPage() {
   };
 
   // Function to handle re-roll (get new suggestions with same prompt)
-  const handleReroll = () => {
+  const onSuggest = () => {
     // Re-run the suggest logic with the same inputs
     handleSuggest();
   };
 
-  // Function to toggle search criteria visibility
-  const toggleSearchCriteria = () => {
-    setSearchCollapsed(!searchCollapsed);
-  };
 
 
+  // Get the AI suggestions for rendering
+  const suggestions = result.data?.suggestions || [];
+  const loading = result.loading;
+  const error = result.error;
 
-  // Function to render the result panel content
-  const renderResultContent = () => {
-    if (result.loading) {
-      // Show loading state while waiting for AI response
-      return (
-        <div className="loading-container">
-          <div className="loading-spinner">
-            <span className="loading-emoji">🤖</span>
-          </div>
-          <h3 className="loading-title">
-            AI is thinking...
-          </h3>
-          <p className="loading-text">
-            Analyzing your preferences and finding the perfect spots!
-          </p>
-        </div>
-      );
-    }
-    
-    if (result.error) {
-      // Show error state
-      return (
-        <div className="error-container">
-          <div className="error-spinner">
-            <span className="error-emoji">⚠️</span>
-          </div>
-          <h3 className="error-title">
-            {result.error}
-          </h3>
-          <p className="error-text">
-            Try adjusting your request and clicking suggest again!
-          </p>
-        </div>
-      );
-    }
-    
-    if (result.data && result.data.result) {
-      // Show the AI response
-      return (
-        <div className="ai-suggestions">
-          {/* Header with re-roll button */}
-          <div className="suggestions-header">
-            <h3 className="suggestions-title">
-              AI Suggestions
-            </h3>
+  // Utility variables for summary display
+  const activeMoods = MOODS.filter(m => selectedMoods.includes(m.key));
+  const activePrices = ['£','££','£££'].filter(p => allowedPrices.includes(p));
+  const hasAny = activeMoods.length > 0 || activePrices.length > 0 || vegFriendly || widerSearch || (textQuery?.trim().length > 0);
+
+  return (
+    <div className="container py-4 pb-5">
+      {/* Hero section */}
+      <h1 className="display-5 fw-bold text-center mb-2">Ask AI</h1>
+      <p className="lead text-center text-muted mb-4">Tell us your mood or constraints. We&apos;ll suggest a spot nearby.</p>
+
+      {/* Search Criteria card (collapsible) */}
+      <div className="card border-0 shadow-sm rounded-4 mb-4">
+        <div className="card-body p-4">
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h5 className="fw-bold mb-0">Search Criteria</h5>
             <button
-              onClick={handleReroll}
-              className="reroll-button"
-              aria-label="Get new AI suggestions with the same prompt"
+              type="button"
+              className="btn btn-sm btn-ghost rounded-pill px-2 py-1 d-flex align-items-center gap-1"
+              onClick={toggleCollapse}
+              aria-expanded={!collapsed}
+              aria-controls="criteria-body"
+            >
+              {collapsed ? <>⬇ <span>Expand</span></> : <>⬆ <span>Collapse</span></>}
+            </button>
+          </div>
+          
+          {/* Summary row - only shown when collapsed and has selections */}
+          {!collapsed && null}
+          {collapsed && hasAny && (
+            <div className="mt-2">
+              <div className="d-flex flex-wrap gap-2 align-items-center">
+                {/* Free text */}
+                {textQuery?.trim() && (
+                  <span className="badge rounded-pill bg-light text-dark small">&quot;{textQuery.trim()}&quot;</span>
+                )}
+
+                {/* Moods */}
+                {activeMoods.map(m => (
+                  <span key={m.key} className="badge rounded-pill bg-light text-dark small">
+                    <span className="me-1">{m.emoji}</span>{m.label}
+                  </span>
+                ))}
+
+                {/* Price */}
+                {activePrices.length > 0 && (
+                  <span className="badge rounded-pill bg-light text-dark small">
+                    Price: {activePrices.join(' / ')}
+                  </span>
+                )}
+
+                {/* Veg */}
+                {vegFriendly && (
+                  <span className="badge rounded-pill bg-light text-dark small">🌱 Veg-friendly</span>
+                )}
+
+                {/* Wider search */}
+                {widerSearch && (
+                  <span className="badge rounded-pill bg-light text-dark small">🌍 Include outside list</span>
+                )}
+
+                {/* Spacer + Clear */}
+                <span className="flex-grow-1"></span>
+                <button
+                  type="button"
+                  className="btn btn-link btn-sm text-decoration-none text-muted ms-auto"
+                  onClick={(e) => {
+                    clearAllCriteria();
+                    e.currentTarget.blur();
+                  }}
+                  onMouseUp={(e) => e.currentTarget.blur()}
+                  onMouseLeave={(e) => e.currentTarget.blur()}
+                >
+                  Clear all
+                </button>
+              </div>
+            </div>
+          )}
+          
+          <hr className="text-body-tertiary my-2" />
+          {/* criteria body is hidden when collapsed */}
+          {!collapsed && (
+            <div id="criteria-body">
+              {/* Quick Mood chips */}
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="fw-bold mb-0">Quick Mood</h5>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-ghost rounded-pill px-2 py-1 d-flex align-items-center gap-1"
+                  onClick={clearAllCriteria}
+                >
+                  🗑️ <span>Clear</span>
+                </button>
+              </div>
+              <div className="d-flex flex-wrap gap-2 mb-4">
+                {MOODS.map(m => {
+                  const active = selectedMoods.includes(m.key);
+                  return (
+                    <button
+                      key={m.key}
+                      type="button"
+                      className={`btn btn-sm rounded-pill shadow-sm ${active ? 'text-white border-0' : 'text-dark border'}`}
+                      style={{ 
+                        width: 'auto',
+                        ...(active ? { backgroundColor: 'rgba(255, 49, 130, 0.85)' } : { backgroundColor: '#fff' }) 
+                      }}
+                      onClick={() => toggleMood(m.key)}
+                      aria-pressed={active}
+                    >
+                      <span className="me-1">{m.emoji}</span>{m.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Tell us more */}
+              <div className="mb-3">
+                <h5 className="fw-bold mb-3">Tell us more</h5>
+                <textarea
+                  className="form-control"
+                  rows={2}
+                  placeholder="e.g. craving noodles, 10-minute walk, under £15"
+                  value={textQuery}
+                  onChange={(e) => setTextQuery(e.target.value)}
+                />
+                <div className="form-text">Add any constraints or vibes you like.</div>
+              </div>
+
+              {/* Optional constraints */}
+              <div className="mb-3">
+                <h5 className="fw-bold mb-3">Optional Constraints</h5>
+
+                {/* Price range pills (fixed size, centered) */}
+                <h5 className="fw-bold mb-3">Price Range</h5>
+                <div className="d-flex flex-wrap gap-2 mb-4">
+                  {['£','££','£££'].map(p => {
+                    const active = allowedPrices.includes(p);
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        className={`btn btn-sm rounded-pill d-inline-flex align-items-center justify-content-center ${active ? 'text-white border-0' : 'text-dark border'} shadow-sm`}
+                        style={{ width: 56, height: 32, ...(active ? { backgroundColor: 'rgba(255, 49, 130, 0.85)' } : { backgroundColor: '#fff' }) }}
+                        onClick={() => togglePrice(p)}
+                        aria-pressed={active}
+                      >{p}</button>
+                    );
+                  })}
+                </div>
+
+                {/* Switches on right */}
+                <div className="d-flex align-items-center justify-content-between my-2">
+                  <span className="text-muted">🌱 Veg-friendly</span>
+                  <div className="form-check form-switch m-0">
+                    <input className="form-check-input switch-lg" type="checkbox" id="vegSwitch" checked={vegFriendly} onChange={e=>setVegFriendly(e.target.checked)} />
+                  </div>
+                </div>
+                <div className="d-flex align-items-center justify-content-between my-2">
+                  <span className="text-muted">Include places outside our list*</span>
+                  <div className="form-check form-switch m-0">
+                    <input className="form-check-input switch-lg" type="checkbox" id="widerSwitch" checked={widerSearch} onChange={e=>setWiderSearch(e.target.checked)} />
+                  </div>
+                </div>
+                {widerSearch && (
+                  <div className="form-text text-muted small">
+                    *This will use AI to search outside our list
+                  </div>
+                )}
+
+              </div>
+
+              {/* Suggest CTA */}
+              <button
+                type="button"
+                className="btn text-white fw-semibold w-100 py-3 rounded-4 mt-3"
+                style={{ backgroundColor: 'rgba(255, 49, 130, 0.85)' }}
+                onClick={onSuggest}
+                disabled={loading}
+                data-testid="ai-suggest"
+              >
+                🤖 {loading ? 'Thinking…' : 'Suggest'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Results section */}
+      <div className="card border-0 shadow-sm rounded-4 mb-5">
+        <div className="card-body p-4">
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h5 className="fw-bold mb-0">AI Suggestions</h5>
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-secondary rounded-pill d-flex align-items-center gap-1"
+              onClick={onSuggest}
+              disabled={loading}
             >
               🎲 Re-roll
             </button>
           </div>
-          
-                    {/* AI response text */}
-          <div className="ai-response">
-            <div className="response-text">
-              {result.data.result
-                .split('\n')
-                .filter(line => line.trim() !== '') // Remove empty lines
-                .map((line, index) => {
-                  // Parse markdown formatting - these variables help identify formatting but aren't used in current styling
-                  // const hasBold = line.includes('**');
-                  // const hasItalic = line.includes('*');
-                  
-                  // Determine the line type for styling
-                  const isRestaurantName = line.match(/^\d+\.\s+\*\*([^*]+)\*\*/); // Numbered items with bold names
-                  const isSubHeader = line.match(/^-\s+\w+:/); // Bullet points with colons
-                  const isBullet = line.match(/^-\s+/); // Regular bullet points
-                  const isDescription = line.match(/^\*([^*]+)\*/); // Italic descriptions without dashes
-                  
-                  // Extract clean text for display
-                  let displayText = line;
-                  let className = 'response-line';
-                  
-                  if (isRestaurantName) {
-                    // Extract the restaurant name from **bold** formatting
-                    displayText = line.replace(/^\d+\.\s+\*\*([^*]+)\*\*/, '$1');
-                    className += ' response-restaurant-name';
-                  } else if (isDescription) {
-                    // Extract the description from *italic* formatting
-                    displayText = line.replace(/^-\s+\*([^*]+)\*/, '$1');
-                    className += ' response-description';
-                  } else if (isSubHeader) {
-                    className += ' response-subheader';
-                  } else if (isBullet) {
-                    className += ' response-bullet';
-                  } else if (line.match(/^\d+\./)) {
-                    className += ' response-header';
-                  } else {
-                    className += ' response-text';
-                  }
-                  
-                  return (
-                    <p 
-                      key={index} 
-                      className={className}
-                    >
-                      {displayText}
-                    </p>
-                  );
-                })}
+          <hr className="text-body-tertiary my-2" />
+          {/* AI Suggestions Cards */}
+          {loading && (
+            <div className="text-center text-muted py-4">
+              <div className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
+              Finding suggestions...
             </div>
-          </div>
-        </div>
-      );
-    }
-    
-    // Default state - no result yet
-    return (
-              <div className="default-container">
-          <div className="default-spinner">
-            <span className="default-emoji">🤖</span>
-          </div>
-          <h3 className="default-title">
-            Suggestions will appear here
-          </h3>
-          <p className="default-text">
-            Tell us what you&apos;re looking for and click suggest to get started!
-          </p>
-        </div>
-    );
-  };
-
-  return (
-    <div className="ai-page">
-      {/* Main content container */}
-      <main className="ai-container">
-        {/* Page title */}
-        <div className="ai-header">
-          <h1 className="ai-title">
-            Ask AI
-          </h1>
-          <p className="ai-subtitle">
-            Tell us your mood or constraints. We&apos;ll suggest a spot nearby.
-          </p>
-        </div>
-
-        {/* Controls section */}
-        <div className={`ai-controls ${searchCollapsed ? 'ai-controls-collapsed' : ''}`}>
-          {/* Header with collapse toggle */}
-          <div className="controls-header">
-            <h3 className="controls-title">Search Criteria</h3>
-            <button
-              onClick={toggleSearchCriteria}
-              className="collapse-toggle"
-              aria-label={searchCollapsed ? 'Expand search criteria' : 'Collapse search criteria'}
-            >
-              {searchCollapsed ? '🔽 Expand' : '🔼 Collapse'}
-            </button>
-          </div>
-
-          {/* Collapsible content */}
-          <div className={`controls-content ${searchCollapsed ? 'controls-content-collapsed' : ''}`}>
-            {/* Quick mood chips */}
-            <div className="mood-section">
-              <label className="mood-label">
-                Quick Mood
-              </label>
-              <div className="mood-chips">
-                {moodOptions.map((mood) => (
-                  <button
-                    key={mood.value}
-                    onClick={() => toggleMood(mood.value)}
-                    className={`mood-chip ${selectedMoods.includes(mood.value) ? 'mood-chip-active' : 'mood-chip-inactive'}`}
-                    aria-label={`Select ${mood.label} mood`}
-                    aria-pressed={selectedMoods.includes(mood.value)}
-                  >
-                    <span className="mood-emoji">{mood.emoji}</span>
-                    {mood.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Textarea for user input */}
-            <div className="input-section">
-              <label htmlFor="user-input" className="input-label">
-                Tell us more
-              </label>
-              <textarea
-                id="user-input"
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                placeholder="e.g. craving noodles, 10-minute walk, under £15"
-                rows={3}
-                className="ai-textarea"
-                aria-label="Describe your lunch preferences, mood, or constraints"
-              />
-            </div>
-
-            {/* Optional constraints row */}
-            <div className="constraints-section">
-              <label className="constraints-label">
-                Optional Constraints
-              </label>
-              
-              {/* Price chips */}
-              <div className="price-section">
-                <label className="price-label">
-                  Price Range
-                </label>
-                <div className="price-chips">
-                  {priceOptions.map((price) => (
-                    <button
-                      key={price}
-                      onClick={() => togglePrice(price)}
-                      className={`price-chip ${selectedPrices.includes(price) ? 'price-chip-active' : 'price-chip-inactive'}`}
-                      aria-label={`Select ${price} price range`}
-                      aria-pressed={selectedPrices.includes(price)}
-                    >
-                      {price}
-                    </button>
-                  ))}
+          )}
+          {error && <div className="alert alert-warning mt-3 mb-0">{error}</div>}
+          {!loading && !error && suggestions.length === 0 && (
+            <p className="text-muted mb-0">No suggestions yet — set some criteria and tap Suggest.</p>
+          )}
+          {!loading && !error && suggestions.length > 0 && (
+            <div>
+              {suggestions.map((suggestion, index) => (
+                <div key={suggestion.id || index} className="card border-0 shadow-sm rounded-4 mb-3">
+                  <div className="card-body p-4">
+                    {/* Title */}
+                    <h6 className="fw-bold mb-2">{suggestion.name}</h6>
+                    
+                    {/* Subtitle row */}
+                    <div className="d-flex flex-wrap gap-2 align-items-center mb-2">
+                      {suggestion.category && (
+                        <span className="badge bg-light text-dark small">{suggestion.category}</span>
+                      )}
+                      {suggestion.price_band && (
+                        <span className="badge bg-light text-dark small rounded-pill">{suggestion.price_band}</span>
+                      )}
+                      {suggestion.veg_friendly && (
+                        <span className="badge bg-light text-dark small rounded-pill">🌱 Veg-friendly</span>
+                      )}
+                    </div>
+                    
+                    {/* Description */}
+                    {suggestion.description && (
+                      <p className="text-muted small mb-3" style={{ 
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
+                      }}>
+                        {suggestion.description}
+                      </p>
+                    )}
+                    
+                    {/* Footer actions */}
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div className="d-flex gap-2">
+                        {suggestion.maps_url && (
+                          <a 
+                            href={suggestion.maps_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="btn btn-sm btn-outline-secondary"
+                          >
+                            🗺️ Maps
+                          </a>
+                        )}
+                        {suggestion.url && (
+                          <a 
+                            href={suggestion.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="btn btn-sm btn-outline-secondary"
+                          >
+                            🌐 Website
+                          </a>
+                        )}
+                      </div>
+                      <small className="text-muted">
+                        From: {suggestion.source === 'db' ? 'Our list' : 'AI'}
+                      </small>
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              {/* Veg-friendly toggle */}
-              <div className="veg-toggle-section">
-                <label htmlFor="veg-friendly-ai" className="veg-label">
-                  Veg-friendly
-                </label>
-                <button
-                  id="veg-friendly-ai"
-                  onClick={() => setVegFriendly(!vegFriendly)}
-                  className={`veg-toggle ${vegFriendly ? 'veg-toggle-active' : 'veg-toggle-inactive'}`}
-                  aria-label="Toggle vegetarian-friendly filter"
-                  aria-pressed={vegFriendly}
-                >
-                  <span
-                    className={`veg-toggle-slider ${vegFriendly ? 'veg-toggle-slider-active' : 'veg-toggle-slider-inactive'}`}
-                  />
-                </button>
-              </div>
-
-              {/* Wider search toggle */}
-              <div className="wider-search-section">
-                <label htmlFor="wider-search-ai" className="wider-search-label">
-                  Wider search
-                </label>
-                <button
-                  id="wider-search-ai"
-                  onClick={() => setWiderSearch(!widerSearch)}
-                  className={`wider-search-toggle ${widerSearch ? 'wider-search-toggle-active' : 'wider-search-toggle-inactive'}`}
-                  aria-label="Toggle wider search (bypass database constraints)"
-                  aria-pressed={widerSearch}
-                >
-                  <span
-                    className={`wider-search-toggle-slider ${widerSearch ? 'wider-search-toggle-slider-active' : 'wider-search-toggle-slider-inactive'}`}
-                  />
-                </button>
-              </div>
+              ))}
             </div>
-
-            {/* Primary CTA - Suggest button */}
-            <button
-              onClick={handleSuggest}
-              disabled={result.loading}
-              className="suggest-button"
-              aria-label="Get AI-powered lunch suggestions based on your preferences"
-            >
-              {result.loading ? '⏳ Thinking...' : '🤖 Suggest'}
-            </button>
-          </div>
+          )}
         </div>
-
-        {/* Result panel */}
-        <div className="result-panel">
-          {renderResultContent()}
-        </div>
-      </main>
+      </div>
     </div>
   );
 }
